@@ -1,0 +1,72 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+namespace objects {
+    Channel create_channel();
+
+    [Throws=ObjectError]
+    FallibleObject1 create_fallible_object1(string message);
+
+    Object1 return_object1(Object1 object);
+
+    i32 get_live_receiver_count();
+};
+
+[Error]
+enum ObjectError {
+    "InvalidOperation",
+};
+
+interface Object0 {
+    constructor();
+
+    [Name="new_custom"]
+    constructor();
+};
+
+interface Object1 {
+    constructor(string message);
+
+    [Name="new_custom"]
+    constructor(string message);
+
+    string get_message();
+};
+
+interface FallibleObject0 {
+    [Throws=ObjectError]
+    constructor();
+
+    [Throws=ObjectError, Name="new_custom"]
+    constructor();
+};
+
+interface FallibleObject1 {
+    [Throws=ObjectError]
+    constructor(string message);
+
+    [Throws=ObjectError, Name="new_custom"]
+    constructor(string message);
+
+    string get_message();
+};
+
+dictionary Channel {
+    SignalSender sender;
+    SignalReceiver receiver;
+};
+
+interface SignalReceiver {
+    void receive_signal();
+
+    string heart_beat();
+};
+
+interface SignalSender {
+    void send_signal();
+
+    void wait_for_receiver_to_appear();
+
+    void wait_for_receiver_to_disappear();
+};

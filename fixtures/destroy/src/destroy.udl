@@ -1,0 +1,47 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+namespace destroy {
+    ResourceJournal create_journal();
+    i32 get_live_count();
+};
+
+interface Resource {
+    constructor();
+};
+
+// TODO: add enums once they are implemented
+// TODO: complex errors once they are implemented
+dictionary ResourceJournal {
+    record<i32, Resource>? map;
+    sequence<Resource>? list;
+    Resource? object;
+    SmallJournal? record;
+    EnumJournal? enum;
+
+    // The following fields ensure that Destroy is implemented for all types
+    duration? duration;
+    timestamp? timestamp;
+    boolean? bool;
+    i8? i8;
+    i16? i16;
+    i32? i32;
+    i64? i64;
+    u8? u8;
+    u16? u16;
+    u32? u32;
+    u64? u64;
+    float? float32;
+    double? float64;
+    string str;
+};
+
+dictionary SmallJournal {
+    Resource resource;
+};
+
+[Enum]
+interface EnumJournal {
+  Journal(SmallJournal journal);
+};
