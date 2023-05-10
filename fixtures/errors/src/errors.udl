@@ -1,0 +1,105 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+//
+// In Go, when an error is returned, some kind of value must also be returned.
+// This UDL generates code to ensure that the default value for all types compiles.
+//
+// This UDL also provides functions to check that errors are correctly returned:
+// - no return value / error is returned
+// - no return value / no error is returned
+// - return value / error is returned
+// - return value / no error is returned
+//
+
+[Error]
+enum BoobyTrapError {
+  "IceSlip",
+  "HotDoorKnob",
+};
+
+[Error]
+interface ValidationError {
+  InvalidUser(i32 user_id);
+  InvalidMessage(string message);
+  InvalidUserAndMessage(i32 user_id, string message);
+};
+
+[Error]
+interface ComplexError {
+    Struct(Vec2 position_a, Vec2 position_b);
+    List(sequence<Vec2> list);
+    Map(record<i32, Vec2> map);
+    Option(i32? id_a, i32? id_b);
+};
+
+dictionary Vec2 {
+    double x;
+    double y;
+};
+
+namespace errors {
+
+  [Throws=BoobyTrapError]
+  void try_void(boolean trip);
+
+  [Throws=BoobyTrapError]
+  string try_string(boolean trip);
+
+  [Throws=ValidationError]
+  void validate_message(i32 user_id, string message);
+
+  [Throws=ComplexError]
+  void get_complex_error(string error);
+
+  // The following functions prefixed with `error_` are not actually called,
+  // they are just here to make sure that the code, that returns a default
+  // value in combination with an error, compiles.
+
+  [Throws=BoobyTrapError]
+  boolean error_boolean();
+
+  [Throws=BoobyTrapError]
+  duration error_duration();
+
+  [Throws=BoobyTrapError]
+  i8 error_i8();
+
+  [Throws=BoobyTrapError]
+  u8 error_u8();
+
+  [Throws=BoobyTrapError]
+  i16 error_i16();
+
+  [Throws=BoobyTrapError]
+  u16 error_u16();
+
+  [Throws=BoobyTrapError]
+  i32 error_i32();
+
+  [Throws=BoobyTrapError]
+  u32 error_u32();
+
+  [Throws=BoobyTrapError]
+  i64 error_i64();
+
+  [Throws=BoobyTrapError]
+  u64 error_u64();
+
+  [Throws=BoobyTrapError]
+  f32 error_f32();
+
+  [Throws=BoobyTrapError]
+  f64 error_f64();
+
+  [Throws=BoobyTrapError]
+  timestamp? error_optional_timestamp();
+
+  [Throws=BoobyTrapError]
+  string error_string();
+
+  [Throws=BoobyTrapError]
+  timestamp error_timestamp();
+
+};

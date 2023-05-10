@@ -1,0 +1,4 @@
+/binding_tests/generated
+/fixtures/*/src/uniffi
+target
+tmp

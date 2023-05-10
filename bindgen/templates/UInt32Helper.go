@@ -1,0 +1,27 @@
+{#/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */#}
+
+type {{ ffi_converter_name }} struct{}
+
+var {{ ffi_converter_name }}INSTANCE = {{ ffi_converter_name }}{}
+
+func ({{ ffi_converter_name }}) lower(value uint32) C.uint32_t {
+	return C.uint32_t(value)
+}
+
+func ({{ ffi_converter_name }}) write(writer io.Writer, value uint32) {
+	writeUint32(writer, value)
+}
+
+func ({{ ffi_converter_name }}) lift(value C.uint32_t) uint32 {
+	return uint32(value)
+}
+
+func ({{ ffi_converter_name }}) read(reader io.Reader) uint32 {
+	return readUint32(reader)
+}
+
+type {{ type_|ffi_destroyer_name }} struct {}
+
+func ({{ type_|ffi_destroyer_name }}) destroy(_ {{ type_name }}) {}

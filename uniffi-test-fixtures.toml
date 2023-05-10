@@ -1,0 +1,10 @@
+[bindings.go.custom_types.Url]
+imports = ["net/url"]
+type_name = "url.URL"
+into_custom = """u, err := url.Parse({})
+    if err != nil {
+        panic(err)
+    }
+    return *u
+"""
+from_custom = "{}.String()"
