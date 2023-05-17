@@ -69,8 +69,8 @@ func (c *FfiConverterCallbackInterface[CallbackInterface]) read(reader io.Reader
 	return c.lift(readUint64(reader))
 }
 
-func (c *FfiConverterCallbackInterface[CallbackInterface]) lower(value CallbackInterface) C.ulong {
-	return C.ulong(c.handleMap.insert(&value))
+func (c *FfiConverterCallbackInterface[CallbackInterface]) lower(value CallbackInterface) C.uint64_t {
+	return C.uint64_t(c.handleMap.insert(&value))
 }
 
 func (c *FfiConverterCallbackInterface[CallbackInterface]) write(writer io.Writer, value CallbackInterface) {
