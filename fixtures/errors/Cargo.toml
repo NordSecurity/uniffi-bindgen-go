@@ -10,8 +10,8 @@ name = "uniffi_go_errors"
 
 [dependencies]
 thiserror = "1.0"
-uniffi = {path = "../../3rd-party/uniffi-rs/uniffi"}
-uniffi_macros = {path = "../../3rd-party/uniffi-rs/uniffi_macros"}
+uniffi = {path = "../../../uniffi-rs/uniffi"}
+uniffi_macros = {path = "../../../uniffi-rs/uniffi_macros"}
 
 [build-dependencies]
-uniffi_build = {path = "../../3rd-party/uniffi-rs/uniffi_build", features=["builtin-bindgen"]}
+uniffi_build = {path = "../../../uniffi-rs/uniffi_build", features=["builtin-bindgen"]}

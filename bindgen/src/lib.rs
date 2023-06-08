@@ -32,16 +32,6 @@ struct Cli {
     udl_file: Utf8PathBuf,
 }
 
-impl uniffi_bindgen::BindingGeneratorConfig for Config {
-    fn get_entry_from_bindings_table(bindings: &toml::Value) -> Option<toml::Value> {
-        bindings.get("go").map(|v| v.clone())
-    }
-
-    fn get_config_defaults(_ci: &ComponentInterface) -> Vec<(String, toml::Value)> {
-        vec![]
-    }
-}
-
 struct BindingGeneratorGo {
     try_format_code: bool,
 }

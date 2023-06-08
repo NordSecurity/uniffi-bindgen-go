@@ -14,9 +14,19 @@ version = "0.11.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fb98f10f371286b177db5eeb9a6e5396609555686a35e1d4f7b9a9c6d8af0139"
 dependencies = [
- "askama_derive",
+ "askama_derive 0.11.2",
  "askama_escape",
  "askama_shared",
+]
+
+[[package]]
+name = "askama"
+version = "0.12.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "47cbc3cf73fa8d9833727bbee4835ba5c421a0d65b72daf9a7b5d0e0f9cfb57e"
+dependencies = [
+ "askama_derive 0.12.1",
+ "askama_escape",
 ]
 
 [[package]]
@@ -28,6 +38,22 @@ dependencies = [
  "askama_shared",
  "proc-macro2",
  "syn 1.0.109",
+]
+
+[[package]]
+name = "askama_derive"
+version = "0.12.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c22fbe0413545c098358e56966ff22cdd039e10215ae213cfbd65032b119fc94"
+dependencies = [
+ "basic-toml",
+ "mime",
+ "mime_guess",
+ "nom",
+ "proc-macro2",
+ "quote",
+ "serde",
+ "syn 2.0.15",
 ]
 
 [[package]]
@@ -680,21 +706,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "trybuild"
-version = "1.0.80"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "501dbdbb99861e4ab6b60eb6a7493956a9defb644fd034bc4a5ef27c693c8a3a"
-dependencies = [
- "basic-toml",
- "glob",
- "once_cell",
- "serde",
- "serde_derive",
- "serde_json",
- "termcolor",
-]
-
-[[package]]
 name = "unicase"
 version = "2.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -729,10 +740,6 @@ name = "uniffi"
 version = "0.23.0"
 dependencies = [
  "anyhow",
- "camino",
- "clap",
- "trybuild",
- "uniffi_bindgen",
  "uniffi_build",
  "uniffi_core",
  "uniffi_macros",
@@ -743,7 +750,7 @@ name = "uniffi-bindgen-go"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "askama",
+ "askama 0.11.1",
  "camino",
  "clap",
  "extend",
@@ -908,9 +915,9 @@ name = "uniffi_bindgen"
 version = "0.23.0"
 dependencies = [
  "anyhow",
- "askama",
- "bincode",
+ "askama 0.12.0",
  "camino",
+ "cargo_metadata",
  "fs-err",
  "glob",
  "goblin",
@@ -939,7 +946,7 @@ name = "uniffi_checksum_derive"
 version = "0.23.0"
 dependencies = [
  "quote",
- "syn 1.0.109",
+ "syn 2.0.15",
 ]
 
 [[package]]
@@ -967,7 +974,7 @@ dependencies = [
  "proc-macro2",
  "quote",
  "serde",
- "syn 1.0.109",
+ "syn 2.0.15",
  "toml",
  "uniffi_build",
  "uniffi_meta",
@@ -977,9 +984,12 @@ dependencies = [
 name = "uniffi_meta"
 version = "0.23.0"
 dependencies = [
+ "anyhow",
+ "bytes",
  "serde",
  "siphasher",
  "uniffi_checksum_derive",
+ "uniffi_core",
 ]
 
 [[package]]
@@ -1016,7 +1026,6 @@ checksum = "49874b5167b65d7193b8aba1567f5c7d93d001cafc34600cee003eda787e483f"
 name = "weedle2"
 version = "4.0.0"
 dependencies = [
- "fs-err",
  "nom",
 ]
 

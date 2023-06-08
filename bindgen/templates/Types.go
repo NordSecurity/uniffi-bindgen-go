@@ -71,7 +71,7 @@
 {%- when Type::Optional(inner_type) %}
 {% include "OptionalTemplate.go" %}
 
-{%- when Type::Object(name) %}
+{%- when Type::Object { name, imp } %}
 {% include "ObjectTemplate.go" %}
 
 {%- when Type::Record(name) %}
