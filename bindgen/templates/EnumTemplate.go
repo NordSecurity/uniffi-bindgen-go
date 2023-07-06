@@ -2,7 +2,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */#}
 
-{{ self.add_import("encoding/binary") -}}
 {% let e = ci.get_enum_definition(name).unwrap() -%}
 {%- if e.is_flat() -%}
 
