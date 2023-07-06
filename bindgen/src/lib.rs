@@ -60,6 +60,7 @@ impl uniffi_bindgen::BindingGenerator for BindingGeneratorGo {
         go_file.push(format!("{}.go", ci.namespace()));
         let mut f = File::create(&go_file)?;
         write!(f, "{}", generate_go_bindings(&config, &ci)?)?;
+        drop(f);
 
         if self.try_format_code {
             match Command::new("go").arg("fmt").arg(&go_file).output() {
