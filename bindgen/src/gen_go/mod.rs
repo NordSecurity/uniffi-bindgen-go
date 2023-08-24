@@ -85,6 +85,7 @@ impl<'a> GoWrapper<'a> {
     pub fn initialization_fns(&self) -> Vec<String> {
         self.ci
             .iter_types()
+            .map(|t| GoCodeOracle.find(t))
             .filter_map(|t| t.initialization_fn())
             .collect()
     }
@@ -133,26 +134,40 @@ impl GoCodeOracle {
             Type::String => Box::new(primitives::StringCodeType),
 
             Type::Duration => Box::new(miscellany::DurationCodeType),
-            Type::Map(key, value) => Box::new(compounds::MapCodeType::new(*key, *value)),
-            Type::Object(id) => Box::new(object::ObjectCodeType::new(id)),
-            Type::Optional(inner) => Box::new(compounds::OptionalCodeType::new(*inner)),
-            Type::Record(id) => Box::new(record::RecordCodeType::new(id)),
-            Type::Sequence(inner) => Box::new(compounds::SequenceCodeType::new(*inner)),
+            Type::Map {
+                key_type,
+                value_type,
+            } => Box::new(compounds::MapCodeType::new(*key_type, *value_type)),
+            Type::Object {
+                module_path,
+                name,
+                imp: _,
+            } => Box::new(object::ObjectCodeType::new(name, module_path)),
+            Type::Optional { inner_type } => {
+                Box::new(compounds::OptionalCodeType::new(*inner_type))
+            }
+            Type::Record { module_path, name } => {
+                Box::new(record::RecordCodeType::new(name, module_path))
+            }
+            Type::Sequence { inner_type } => {
+                Box::new(compounds::SequenceCodeType::new(*inner_type))
+            }
             Type::Timestamp => Box::new(miscellany::TimestampCodeType),
             Type::Custom { name, .. } => Box::new(custom::CustomCodeType::new(name)),
 
-            Type::Enum(id) => Box::new(enum_::EnumCodeType::new(id)),
-            Type::Error(id) => Box::new(error::ErrorCodeType::new(id)),
-            Type::CallbackInterface(id) => {
-                Box::new(callback_interface::CallbackInterfaceCodeType::new(id))
+            Type::Enum { module_path, name } => {
+                Box::new(enum_::EnumCodeType::new(name, module_path))
             }
+            Type::CallbackInterface { module_path, name } => Box::new(
+                callback_interface::CallbackInterfaceCodeType::new(name, module_path),
+            ),
 
             _ => panic!("{:?} unsupported", type_),
         }
     }
 
-    fn find(&self, type_: &Type) -> Box<dyn CodeType> {
-        self.create_code_type(type_.clone())
+    fn find(&self, type_: &impl AsType) -> Box<dyn CodeType> {
+        self.create_code_type(type_.as_type())
     }
 
     /// Get the idiomatic Swift rendering of a class name (for enums, records, errors, etc).
@@ -251,46 +266,46 @@ pub mod filters {
         &GoCodeOracle
     }
 
-    pub fn ffi_converter_name(type_: &Type) -> Result<String, askama::Error> {
+    pub fn ffi_converter_name(type_: &impl AsType) -> Result<String, askama::Error> {
         Ok(oracle().find(type_).ffi_converter_name())
     }
 
-    pub fn ffi_destroyer_name(type_: &Type) -> Result<String, askama::Error> {
+    pub fn ffi_destroyer_name(type_: &impl AsType) -> Result<String, askama::Error> {
         Ok(oracle().class_name(&format!(
             "ffiDestroyer{}",
             oracle().find(type_).canonical_name()
         )))
     }
 
-    pub fn read_fn(type_: &Type) -> Result<String, askama::Error> {
+    pub fn read_fn(type_: &impl AsType) -> Result<String, askama::Error> {
         Ok(format!(
             "{}INSTANCE.read",
             oracle().find(type_).ffi_converter_name()
         ))
     }
 
-    pub fn lift_fn(type_: &Type) -> Result<String, askama::Error> {
+    pub fn lift_fn(type_: &impl AsType) -> Result<String, askama::Error> {
         Ok(format!(
             "{}INSTANCE.lift",
             oracle().find(type_).ffi_converter_name()
         ))
     }
 
-    pub fn write_fn(type_: &Type) -> Result<String, askama::Error> {
+    pub fn write_fn(type_: &impl AsType) -> Result<String, askama::Error> {
         Ok(format!(
             "{}INSTANCE.write",
             oracle().find(type_).ffi_converter_name()
         ))
     }
 
-    pub fn lower_fn(type_: &Type) -> Result<String, askama::Error> {
+    pub fn lower_fn(type_: &impl AsType) -> Result<String, askama::Error> {
         Ok(format!(
             "{}INSTANCE.lower",
             oracle().find(type_).ffi_converter_name()
         ))
     }
 
-    pub fn destroy_fn(type_: &Type) -> Result<String, askama::Error> {
+    pub fn destroy_fn(type_: &impl AsType) -> Result<String, askama::Error> {
         Ok(format!("{}{{}}.destroy", ffi_destroyer_name(type_)?))
     }
 
@@ -303,11 +318,11 @@ pub mod filters {
         Ok(nm.to_string().to_upper_camel_case())
     }
 
-    pub fn type_name(type_: &Type) -> Result<String, askama::Error> {
+    pub fn type_name(type_: &impl AsType) -> Result<String, askama::Error> {
         Ok(oracle().find(type_).type_label())
     }
 
-    pub fn canonical_name(type_: &Type) -> Result<String, askama::Error> {
+    pub fn canonical_name(type_: &impl AsType) -> Result<String, askama::Error> {
         Ok(oracle().find(type_).canonical_name())
     }
 
@@ -318,6 +333,10 @@ pub mod filters {
     /// FFI type name to be used to define cgo types inside bridging header
     pub fn cgo_ffi_type_name(type_: &FfiType) -> Result<String, askama::Error> {
         Ok(oracle().ffi_type_label(type_))
+    }
+
+    pub fn into_ffi_type(type_: &Type) -> Result<FfiType, askama::Error> {
+        Ok(type_.into())
     }
 
     /// FFI type name to be used to reference cgo types

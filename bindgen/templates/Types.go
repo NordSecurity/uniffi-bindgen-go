@@ -56,8 +56,8 @@
 {%- when Type::String %}
 {%- include "StringHelper.go" %}
 
-{%- when Type::Error(name) %}
-{% include "ErrorTemplate.go" %}
+{# %- when Type::Error(name) % #}
+{# % include "ErrorTemplate.go" % #}
 
 {%- when Type::Timestamp %}
 {% include "TimestampHelper.go" %}
@@ -65,28 +65,28 @@
 {%- when Type::Duration %}
 {% include "DurationHelper.go" %}
 
-{%- when Type::Enum(name) %}
+{%- when Type::Enum { name, module_path } %}
 {% include "EnumTemplate.go" %}
 
-{%- when Type::Optional(inner_type) %}
+{%- when Type::Optional { inner_type } %}
 {% include "OptionalTemplate.go" %}
 
-{%- when Type::Object(name) %}
+{%- when Type::Object { name, module_path, imp } %}
 {% include "ObjectTemplate.go" %}
 
-{%- when Type::Record(name) %}
+{%- when Type::Record { name, module_path } %}
 {% include "RecordTemplate.go" %}
 
-{%- when Type::Sequence(inner_type) %}
+{%- when Type::Sequence { inner_type }  %}
 {% include "SequenceTemplate.go" %}
 
-{%- when Type::Map(key_type, value_type) %}
+{%- when Type::Map { key_type, value_type } %}
 {% include "MapTemplate.go" %}
 
-{%- when Type::CallbackInterface(name) %}
+{%- when Type::CallbackInterface { name, module_path } %}
 {% include "CallbackInterfaceTemplate.go" %}
 
-{%- when Type::Custom { name, builtin } %}
+{%- when Type::Custom { name, builtin, module_path } %}
 {% include "CustomTypeTemplate.go" %}
 
 {%- else %}

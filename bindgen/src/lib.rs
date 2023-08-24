@@ -110,6 +110,7 @@ pub fn main() {
         &cli.udl_file,
         cli.config,
         cli.out_dir,
+        None::<&str>,
     )
     .unwrap();
 }
