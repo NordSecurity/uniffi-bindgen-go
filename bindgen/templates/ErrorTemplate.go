@@ -92,7 +92,7 @@ func (c {{ e|ffi_converter_name }}) read(reader io.Reader) error {
 
 	{%- if e.is_flat() %}
 
-	message := {{ TypeIdentifier::String.borrow()|read_fn }}(reader)
+	message := {{ Type::String.borrow()|read_fn }}(reader)
 	switch errorID {
 	{%- for variant in e.variants() %}
 	case {{ loop.index }}:

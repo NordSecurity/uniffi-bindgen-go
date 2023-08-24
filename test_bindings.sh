@@ -15,7 +15,7 @@ function bindings() {
 
 bindings 3rd-party/uniffi-rs/examples/arithmetic/src/arithmetic.udl
 bindings 3rd-party/uniffi-rs/examples/callbacks/src/callbacks.udl
-bindings 3rd-party/uniffi-rs/examples/custom-types/src/custom-types.udl
+bindings 3rd-party/uniffi-rs/examples/type-limits/src/custom-types.udl
 bindings 3rd-party/uniffi-rs/examples/geometry/src/geometry.udl
 bindings 3rd-party/uniffi-rs/examples/rondpoint/src/rondpoint.udl
 bindings 3rd-party/uniffi-rs/examples/sprites/src/sprites.udl

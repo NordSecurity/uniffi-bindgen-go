@@ -32,13 +32,16 @@ struct Cli {
     udl_file: Utf8PathBuf,
 }
 
-impl uniffi_bindgen::BindingGeneratorConfig for Config {
-    fn get_entry_from_bindings_table(bindings: &toml::Value) -> Option<toml::Value> {
-        bindings.get("go").map(|v| v.clone())
-    }
+impl uniffi_bindgen::BindingsConfig for Config {
+    const TOML_KEY: &'static str = "go";
 
-    fn get_config_defaults(_ci: &ComponentInterface) -> Vec<(String, toml::Value)> {
-        vec![]
+    fn update_from_ci(&mut self, ci: &ComponentInterface) {}
+    fn update_from_cdylib_name(&mut self, cdylib_name: &str) {}
+
+    fn update_from_dependency_configs(
+        &mut self,
+        config_map: std::collections::HashMap<&str, &Self>,
+    ) {
     }
 }
 

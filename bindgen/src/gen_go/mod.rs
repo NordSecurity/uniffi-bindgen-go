@@ -9,9 +9,8 @@ use serde::{Deserialize, Serialize};
 use std::borrow::Borrow;
 use std::cell::RefCell;
 use std::collections::{BTreeSet, HashMap, HashSet};
-use uniffi_bindgen::backend::{CodeOracle, CodeType, TemplateExpression, TypeIdentifier};
+use uniffi_bindgen::backend::{CodeType, TemplateExpression};
 use uniffi_bindgen::interface::*;
-use uniffi_bindgen::MergeWith;
 
 mod callback_interface;
 mod compounds;
@@ -57,15 +56,6 @@ impl Config {
     }
 }
 
-impl MergeWith for Config {
-    fn merge_with(&self, other: &Self) -> Self {
-        Config {
-            package_name: self.package_name.merge_with(&other.package_name),
-            custom_types: self.custom_types.merge_with(&other.custom_types),
-        }
-    }
-}
-
 #[derive(Template)]
 #[template(syntax = "go", escape = "none", path = "wrapper.go")]
 pub struct GoWrapper<'a> {
@@ -95,7 +85,7 @@ impl<'a> GoWrapper<'a> {
     pub fn initialization_fns(&self) -> Vec<String> {
         self.ci
             .iter_types()
-            .filter_map(|t| t.initialization_fn(&GoCodeOracle))
+            .filter_map(|t| t.initialization_fn())
             .collect()
     }
 
@@ -127,7 +117,7 @@ impl GoCodeOracle {
     //
     //   - When adding additional types here, make sure to also add a match arm to the `Types.swift` template.
     //   - To keep things managable, let's try to limit ourselves to these 2 mega-matches
-    fn create_code_type(&self, type_: TypeIdentifier) -> Box<dyn CodeType> {
+    fn create_code_type(&self, type_: Type) -> Box<dyn CodeType> {
         match type_ {
             Type::UInt8 => Box::new(primitives::UInt8CodeType),
             Type::Int8 => Box::new(primitives::Int8CodeType),
@@ -160,10 +150,8 @@ impl GoCodeOracle {
             _ => panic!("{:?} unsupported", type_),
         }
     }
-}
 
-impl CodeOracle for GoCodeOracle {
-    fn find(&self, type_: &TypeIdentifier) -> Box<dyn CodeType> {
+    fn find(&self, type_: &Type) -> Box<dyn CodeType> {
         self.create_code_type(type_.clone())
     }
 
@@ -243,10 +231,15 @@ impl CodeOracle for GoCodeOracle {
             FfiType::Float32 => "float".into(),
             FfiType::Float64 => "double".into(),
             FfiType::RustArcPtr(_) => "void*".into(),
-            FfiType::RustArcPtrUnsafe(_) => "void*".into(),
             FfiType::RustBuffer(_) => "RustBuffer".into(),
             FfiType::ForeignBytes => "ForeignBytes".into(),
             FfiType::ForeignCallback => "ForeignCallback".to_string(),
+            FfiType::ForeignBytes => todo!(),
+            FfiType::ForeignCallback => todo!(),
+            FfiType::ForeignExecutorHandle => todo!(),
+            FfiType::ForeignExecutorCallback => todo!(),
+            FfiType::FutureCallback { .. } => todo!(),
+            FfiType::FutureCallbackData => todo!(),
         }
     }
 }
@@ -258,47 +251,47 @@ pub mod filters {
         &GoCodeOracle
     }
 
-    pub fn ffi_converter_name(codetype: &impl CodeType) -> Result<String, askama::Error> {
-        Ok(codetype.ffi_converter_name(oracle()))
+    pub fn ffi_converter_name(type_: &Type) -> Result<String, askama::Error> {
+        Ok(oracle().find(type_).ffi_converter_name())
     }
 
-    pub fn ffi_destroyer_name(codetype: &impl CodeType) -> Result<String, askama::Error> {
+    pub fn ffi_destroyer_name(type_: &Type) -> Result<String, askama::Error> {
         Ok(oracle().class_name(&format!(
             "ffiDestroyer{}",
-            codetype.canonical_name(oracle())
+            oracle().find(type_).canonical_name()
         )))
     }
 
-    pub fn read_fn(codetype: &impl CodeType) -> Result<String, askama::Error> {
+    pub fn read_fn(type_: &Type) -> Result<String, askama::Error> {
         Ok(format!(
             "{}INSTANCE.read",
-            codetype.ffi_converter_name(oracle())
+            oracle().find(type_).ffi_converter_name()
         ))
     }
 
-    pub fn lift_fn(codetype: &impl CodeType) -> Result<String, askama::Error> {
+    pub fn lift_fn(type_: &Type) -> Result<String, askama::Error> {
         Ok(format!(
             "{}INSTANCE.lift",
-            codetype.ffi_converter_name(oracle())
+            oracle().find(type_).ffi_converter_name()
         ))
     }
 
-    pub fn write_fn(codetype: &impl CodeType) -> Result<String, askama::Error> {
+    pub fn write_fn(type_: &Type) -> Result<String, askama::Error> {
         Ok(format!(
             "{}INSTANCE.write",
-            codetype.ffi_converter_name(oracle())
+            oracle().find(type_).ffi_converter_name()
         ))
     }
 
-    pub fn lower_fn(codetype: &impl CodeType) -> Result<String, askama::Error> {
+    pub fn lower_fn(type_: &Type) -> Result<String, askama::Error> {
         Ok(format!(
             "{}INSTANCE.lower",
-            codetype.ffi_converter_name(oracle())
+            oracle().find(type_).ffi_converter_name()
         ))
     }
 
-    pub fn destroy_fn(codetype: &impl CodeType) -> Result<String, askama::Error> {
-        Ok(format!("{}{{}}.destroy", ffi_destroyer_name(codetype)?))
+    pub fn destroy_fn(type_: &Type) -> Result<String, askama::Error> {
+        Ok(format!("{}{{}}.destroy", ffi_destroyer_name(type_)?))
     }
 
     pub fn var_name(nm: &str) -> Result<String, askama::Error> {
@@ -310,13 +303,12 @@ pub mod filters {
         Ok(nm.to_string().to_upper_camel_case())
     }
 
-    pub fn type_name(codetype: &impl CodeType) -> Result<String, askama::Error> {
-        let oracle = oracle();
-        Ok(codetype.type_label(oracle))
+    pub fn type_name(type_: &Type) -> Result<String, askama::Error> {
+        Ok(oracle().find(type_).type_label())
     }
 
-    pub fn canonical_name(codetype: &impl CodeType) -> Result<String, askama::Error> {
-        Ok(codetype.canonical_name(oracle()))
+    pub fn canonical_name(type_: &Type) -> Result<String, askama::Error> {
+        Ok(oracle().find(type_).canonical_name())
     }
 
     pub fn class_name(nm: &str) -> Result<String, askama::Error> {
@@ -332,7 +324,6 @@ pub mod filters {
     pub fn ffi_type_name(type_: &FfiType) -> Result<String, askama::Error> {
         let result = match type_ {
             FfiType::RustArcPtr(_) => "unsafe.Pointer".into(),
-            FfiType::RustArcPtrUnsafe(_) => "unsafe.Pointer".into(),
             _ => format!("C.{}", oracle().ffi_type_label(type_)),
         };
         Ok(result)

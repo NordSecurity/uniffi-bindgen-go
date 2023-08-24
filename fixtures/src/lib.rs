@@ -14,7 +14,7 @@ mod uniffi_fixtures {
     uniffi_fixture_callbacks::uniffi_reexport_scaffolding!();
     uniffi_chronological::uniffi_reexport_scaffolding!();
     uniffi_coverall::uniffi_reexport_scaffolding!();
-    uniffi_external_types_lib::uniffi_reexport_scaffolding!();
+    uniffi_type_limits::uniffi_reexport_scaffolding!();
 
     uniffi_go_errors::uniffi_reexport_scaffolding!();
     uniffi_go_destroy::uniffi_reexport_scaffolding!();
