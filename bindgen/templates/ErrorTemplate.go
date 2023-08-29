@@ -58,7 +58,7 @@ func (err {{ variant_class_name }}) Error() string {
 {%- else %}
 func (err {{ variant_class_name }}) Error() string {
 	return fmt.Sprint("{{ variant.name()|class_name }}",
-		{% if !variant.fields().is_empty() %}": "{% endif %},
+		{% if !variant.fields().is_empty() %}": ",{% endif %}
 		{%- for field in variant.fields() %}
 		{% if !loop.first %}", ",{% endif %}
 		"{{ field.name()|field_name }}=",

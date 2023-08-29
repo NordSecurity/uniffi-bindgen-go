@@ -20,6 +20,8 @@ pub enum ValidationError {
     InvalidMessage { message: String },
     #[error("Invalid user {user_id} and message {message}")]
     InvalidUserAndMessage { user_id: i32, message: String },
+    #[error("Unknown error")]
+    UnknownError,
 }
 
 #[derive(Debug, thiserror::Error)]
