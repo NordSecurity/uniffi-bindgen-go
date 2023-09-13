@@ -30,19 +30,10 @@ struct Cli {
 
     /// Path to the UDL file.
     udl_file: Utf8PathBuf,
-}
 
-impl uniffi_bindgen::BindingsConfig for Config {
-    const TOML_KEY: &'static str = "go";
-
-    fn update_from_ci(&mut self, ci: &ComponentInterface) {}
-    fn update_from_cdylib_name(&mut self, cdylib_name: &str) {}
-
-    fn update_from_dependency_configs(
-        &mut self,
-        config_map: std::collections::HashMap<&str, &Self>,
-    ) {
-    }
+    /// Library file to pass
+    #[clap(long, short)]
+    library: Option<Utf8PathBuf>,
 }
 
 struct BindingGeneratorGo {
@@ -110,7 +101,7 @@ pub fn main() {
         &cli.udl_file,
         cli.config,
         cli.out_dir,
-        None::<&str>,
+        cli.library,
     )
     .unwrap();
 }

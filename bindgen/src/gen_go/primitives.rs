@@ -78,6 +78,7 @@ macro_rules! impl_code_type_for_primitive {
 
 impl_code_type_for_primitive!(BooleanCodeType, "bool");
 impl_code_type_for_primitive!(StringCodeType, "string");
+impl_code_type_for_primitive!(BytesCodeType, "[]byte");
 impl_code_type_for_primitive!(Int8CodeType, "int8");
 impl_code_type_for_primitive!(Int16CodeType, "int16");
 impl_code_type_for_primitive!(Int32CodeType, "int32");

@@ -56,8 +56,8 @@
 {%- when Type::String %}
 {%- include "StringHelper.go" %}
 
-{# %- when Type::Error(name) % #}
-{# % include "ErrorTemplate.go" % #}
+{%- when Type::Bytes %}
+{%- include "BytesHelper.go" %}
 
 {%- when Type::Timestamp %}
 {% include "TimestampHelper.go" %}
@@ -66,7 +66,12 @@
 {% include "DurationHelper.go" %}
 
 {%- when Type::Enum { name, module_path } %}
-{% include "EnumTemplate.go" %}
+{%- let e = ci.get_enum_definition(name).unwrap() %}
+{%- if ci.is_name_used_as_error(name) %}
+{%- include "ErrorTemplate.go" %}
+{%- else %}
+{%- include "EnumTemplate.go" %}
+{% endif %}
 
 {%- when Type::Optional { inner_type } %}
 {% include "OptionalTemplate.go" %}
@@ -88,6 +93,9 @@
 
 {%- when Type::Custom { name, builtin, module_path } %}
 {% include "CustomTypeTemplate.go" %}
+
+{%- when Type::ForeignExecutor %}
+{%- include "ForeignExecutorTemplate.go" %}
 
 {%- else %}
 {%- endmatch %}

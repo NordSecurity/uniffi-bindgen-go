@@ -7,12 +7,11 @@ use uniffi_bindgen::backend::{CodeType, Literal};
 #[derive(Debug)]
 pub struct EnumCodeType {
     name: String,
-    module_path: String,
 }
 
 impl EnumCodeType {
-    pub fn new(name: String, module_path: String) -> Self {
-        Self { name, module_path }
+    pub fn new(name: String) -> Self {
+        Self { name }
     }
 }
 

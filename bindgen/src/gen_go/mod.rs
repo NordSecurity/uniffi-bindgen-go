@@ -17,6 +17,8 @@ mod compounds;
 mod custom;
 mod enum_;
 mod error;
+mod executor;
+mod external;
 mod miscellany;
 mod object;
 mod primitives;
@@ -24,9 +26,34 @@ mod record;
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct Config {
+    cdylib_name: Option<String>,
+    module_name: Option<String>,
+    ffi_module_name: Option<String>,
+    ffi_module_filename: Option<String>,
     package_name: Option<String>,
     #[serde(default)]
     custom_types: HashMap<String, CustomTypeConfig>,
+}
+
+impl uniffi_bindgen::BindingsConfig for Config {
+    const TOML_KEY: &'static str = "go";
+
+    fn update_from_ci(&mut self, ci: &ComponentInterface) {
+        self.module_name
+            .get_or_insert_with(|| ci.namespace().into());
+        self.cdylib_name
+            .get_or_insert_with(|| format!("uniffi_{}", ci.namespace()));
+    }
+    fn update_from_cdylib_name(&mut self, cdylib_name: &str) {
+        self.cdylib_name
+            .get_or_insert_with(|| cdylib_name.to_string());
+    }
+
+    fn update_from_dependency_configs(
+        &mut self,
+        config_map: std::collections::HashMap<&str, &Self>,
+    ) {
+    }
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
@@ -37,19 +64,35 @@ pub struct CustomTypeConfig {
     from_custom: TemplateExpression,
 }
 
-impl From<&ComponentInterface> for Config {
-    fn from(ci: &ComponentInterface) -> Self {
-        Config {
-            package_name: Some(format!("{}", ci.namespace())),
-            custom_types: HashMap::new(),
+impl Config {
+    /// The name of the go package containing the high-level foreign-language bindings.
+    pub fn package_name(&self) -> String {
+        match self.module_name.as_ref() {
+            Some(name) => name.clone(),
+            None => "uniffi".into(),
         }
     }
-}
 
-impl Config {
-    pub fn package_name(&self) -> String {
-        if let Some(package_name) = &self.package_name {
-            package_name.clone()
+    /// The name of the lower-level C module containing the FFI declarations.
+    pub fn ffi_package_name(&self) -> String {
+        match self.ffi_module_name.as_ref() {
+            Some(name) => name.clone(),
+            None => format!("{}FFI", self.package_name()),
+        }
+    }
+
+    /// The filename stem for the lower-level C module containing the FFI declarations.
+    pub fn ffi_package_filename(&self) -> String {
+        match self.ffi_module_filename.as_ref() {
+            Some(name) => name.clone(),
+            None => self.ffi_package_name(),
+        }
+    }
+
+    /// The name of the compiled Rust library containing the FFI implementation.
+    pub fn cdylib_name(&self) -> String {
+        if let Some(cdylib_name) = &self.cdylib_name {
+            cdylib_name.clone()
         } else {
             "uniffi".into()
         }
@@ -132,37 +175,29 @@ impl GoCodeOracle {
             Type::Float64 => Box::new(primitives::Float64CodeType),
             Type::Boolean => Box::new(primitives::BooleanCodeType),
             Type::String => Box::new(primitives::StringCodeType),
-
+            Type::Bytes => Box::new(primitives::BytesCodeType),
             Type::Duration => Box::new(miscellany::DurationCodeType),
             Type::Map {
                 key_type,
                 value_type,
             } => Box::new(compounds::MapCodeType::new(*key_type, *value_type)),
-            Type::Object {
-                module_path,
-                name,
-                imp: _,
-            } => Box::new(object::ObjectCodeType::new(name, module_path)),
+            Type::Object { name, .. } => Box::new(object::ObjectCodeType::new(name)),
             Type::Optional { inner_type } => {
                 Box::new(compounds::OptionalCodeType::new(*inner_type))
             }
-            Type::Record { module_path, name } => {
-                Box::new(record::RecordCodeType::new(name, module_path))
-            }
+            Type::Record { name, .. } => Box::new(record::RecordCodeType::new(name)),
             Type::Sequence { inner_type } => {
                 Box::new(compounds::SequenceCodeType::new(*inner_type))
             }
             Type::Timestamp => Box::new(miscellany::TimestampCodeType),
             Type::Custom { name, .. } => Box::new(custom::CustomCodeType::new(name)),
 
-            Type::Enum { module_path, name } => {
-                Box::new(enum_::EnumCodeType::new(name, module_path))
+            Type::Enum { name, .. } => Box::new(enum_::EnumCodeType::new(name)),
+            Type::CallbackInterface { name, .. } => {
+                Box::new(callback_interface::CallbackInterfaceCodeType::new(name))
             }
-            Type::CallbackInterface { module_path, name } => Box::new(
-                callback_interface::CallbackInterfaceCodeType::new(name, module_path),
-            ),
-
-            _ => panic!("{:?} unsupported", type_),
+            Type::ForeignExecutor => Box::new(executor::ForeignExecutorCodeType),
+            Type::External { name, .. } => Box::new(external::ExternalCodeType::new(name)),
         }
     }
 
@@ -249,12 +284,12 @@ impl GoCodeOracle {
             FfiType::RustBuffer(_) => "RustBuffer".into(),
             FfiType::ForeignBytes => "ForeignBytes".into(),
             FfiType::ForeignCallback => "ForeignCallback".to_string(),
-            FfiType::ForeignBytes => todo!(),
-            FfiType::ForeignCallback => todo!(),
-            FfiType::ForeignExecutorHandle => todo!(),
-            FfiType::ForeignExecutorCallback => todo!(),
-            FfiType::FutureCallback { .. } => todo!(),
-            FfiType::FutureCallbackData => todo!(),
+            FfiType::ForeignExecutorHandle => "int".into(),
+            FfiType::ForeignExecutorCallback => "ForeignExecutorCallback".into(),
+            FfiType::FutureCallback { return_type } => {
+                format!("UniFfiFutureCallback{}", self.ffi_type_label(return_type))
+            }
+            FfiType::FutureCallbackData => "unsafe.Pointer".into(),
         }
     }
 }
@@ -348,12 +383,12 @@ pub mod filters {
         Ok(result)
     }
 
-    /// Get the idiomatic Kotlin rendering of a function name.
+    /// Get the idiomatic Go rendering of a function name.
     pub fn fn_name(nm: &str) -> Result<String, askama::Error> {
         Ok(oracle().fn_name(nm))
     }
 
-    /// Get the idiomatic Kotlin rendering of a function name.
+    /// Get the idiomatic Go rendering of a function name.
     pub fn enum_variant_name(nm: &str) -> Result<String, askama::Error> {
         Ok(oracle().enum_variant_name(nm))
     }
