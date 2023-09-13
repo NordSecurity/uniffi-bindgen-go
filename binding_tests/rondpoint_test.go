@@ -8,7 +8,7 @@ import (
 	"math"
 	"testing"
 
-	"github.com/NordSecurity/uniffi-bindgen-go/binding_tests/generated/uniffi/rondpoint"
+	"github.com/NordSecurity/uniffi-bindgen-go/binding_tests/generated/rondpoint/rondpoint"
 	"github.com/stretchr/testify/assert"
 )
 

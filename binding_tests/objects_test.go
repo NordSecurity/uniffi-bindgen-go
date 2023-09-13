@@ -5,7 +5,7 @@
 package binding_tests
 
 import (
-	"github.com/NordSecurity/uniffi-bindgen-go/binding_tests/generated/uniffi/objects"
+	"github.com/NordSecurity/uniffi-bindgen-go/binding_tests/generated/objects/objects"
 	"github.com/stretchr/testify/assert"
 	"runtime"
 	"testing"

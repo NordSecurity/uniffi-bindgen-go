@@ -8,7 +8,7 @@ import (
     "testing"
     "net/url"
 
-    "github.com/NordSecurity/uniffi-bindgen-go/binding_tests/generated/uniffi/custom_types"
+    "github.com/NordSecurity/uniffi-bindgen-go/binding_tests/generated/custom_types/custom_types"
     "github.com/stretchr/testify/assert"
 )
 

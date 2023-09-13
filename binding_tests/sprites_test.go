@@ -5,7 +5,7 @@
 package binding_tests
 
 import (
-	"github.com/NordSecurity/uniffi-bindgen-go/binding_tests/generated/uniffi/sprites"
+	"github.com/NordSecurity/uniffi-bindgen-go/binding_tests/generated/sprites/sprites"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )

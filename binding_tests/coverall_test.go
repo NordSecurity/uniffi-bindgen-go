@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/NordSecurity/uniffi-bindgen-go/binding_tests/generated/uniffi/coverall"
+	"github.com/NordSecurity/uniffi-bindgen-go/binding_tests/generated/coverall/coverall"
 	"github.com/stretchr/testify/assert"
 )
 

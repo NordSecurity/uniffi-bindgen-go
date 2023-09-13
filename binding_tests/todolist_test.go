@@ -7,7 +7,7 @@ package binding_tests
 import (
 	"testing"
 
-	"github.com/NordSecurity/uniffi-bindgen-go/binding_tests/generated/uniffi/todolist"
+	"github.com/NordSecurity/uniffi-bindgen-go/binding_tests/generated/todolist/todolist"
 	"github.com/stretchr/testify/assert"
 )
 

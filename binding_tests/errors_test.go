@@ -5,7 +5,7 @@
 package binding_tests
 
 import (
-	"github.com/NordSecurity/uniffi-bindgen-go/binding_tests/generated/uniffi/errors"
+	"github.com/NordSecurity/uniffi-bindgen-go/binding_tests/generated/errors/errors"
 	goerrors "errors"
 	"fmt"
 	"github.com/stretchr/testify/assert"
