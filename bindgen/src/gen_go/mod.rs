@@ -156,10 +156,10 @@ pub struct GoCodeOracle;
 impl GoCodeOracle {
     // Map `Type` instances to a `Box<dyn CodeType>` for that type.
     //
-    // There is a companion match in `templates/Types.swift` which performs a similar function for the
+    // There is a companion match in `templates/Types.go` which performs a similar function for the
     // template code.
     //
-    //   - When adding additional types here, make sure to also add a match arm to the `Types.swift` template.
+    //   - When adding additional types here, make sure to also add a match arm to the `Types.go` template.
     //   - To keep things managable, let's try to limit ourselves to these 2 mega-matches
     fn create_code_type(&self, type_: Type) -> Box<dyn CodeType> {
         match type_ {

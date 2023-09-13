@@ -78,7 +78,6 @@ macro_rules! impl_code_type_for_primitive {
 
 impl_code_type_for_primitive!(BooleanCodeType, "bool");
 impl_code_type_for_primitive!(StringCodeType, "string");
-impl_code_type_for_primitive!(BytesCodeType, "[]byte");
 impl_code_type_for_primitive!(Int8CodeType, "int8");
 impl_code_type_for_primitive!(Int16CodeType, "int16");
 impl_code_type_for_primitive!(Int32CodeType, "int32");
@@ -89,3 +88,19 @@ impl_code_type_for_primitive!(UInt32CodeType, "uint32");
 impl_code_type_for_primitive!(UInt64CodeType, "uint64");
 impl_code_type_for_primitive!(Float32CodeType, "float32");
 impl_code_type_for_primitive!(Float64CodeType, "float64");
+
+#[derive(Debug)]
+pub struct BytesCodeType;
+impl CodeType for BytesCodeType {
+    fn type_label(&self) -> String {
+        "[]byte".into()
+    }
+
+    fn canonical_name(&self) -> String {
+        "Bytes".into()
+    }
+
+    fn literal(&self, literal: &Literal) -> String {
+        render_literal(&literal)
+    }
+}
