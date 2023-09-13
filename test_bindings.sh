@@ -22,6 +22,14 @@ bindings 3rd-party/uniffi-rs/examples/sprites/src/sprites.udl
 bindings 3rd-party/uniffi-rs/examples/todolist/src/todolist.udl
 bindings 3rd-party/uniffi-rs/fixtures/callbacks/src/callbacks.udl
 bindings 3rd-party/uniffi-rs/fixtures/coverall/src/coverall.udl
+bindings 3rd-party/uniffi-rs/fixtures/foreign-executor/src/foreign_executor.udl
+bindings 3rd-party/uniffi-rs/fixtures/futures/src/futures.udl
+bindings 3rd-party/uniffi-rs/fixtures/futures/src/uniffi_futures.udl 
+bindings 3rd-party/uniffi-rs/fixtures/large-enum/src/large_enum.udl 
+bindings 3rd-party/uniffi-rs/fixtures/proc-macro/src/proc-macro.udl 
+bindings 3rd-party/uniffi-rs/fixtures/simple-fns/src/simple-fns.udl 
+bindings 3rd-party/uniffi-rs/fixtures/trait-methods/src/trait_methods.udl
+bindings 3rd-party/uniffi-rs/fixtures/type-limits/src/type-limits.udl
 bindings 3rd-party/uniffi-rs/fixtures/uniffi-fixture-time/src/chronological.udl
 bindings fixtures/destroy/src/destroy.udl
 bindings fixtures/errors/src/errors.udl
