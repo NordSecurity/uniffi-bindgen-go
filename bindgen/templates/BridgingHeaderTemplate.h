@@ -13,15 +13,15 @@
 // We ensure they are declared exactly once, with a header guard, UNIFFI_SHARED_H.
 #ifdef UNIFFI_SHARED_H
 	// We also try to prevent mixing versions of shared uniffi header structs.
-	// If you add anything to the #else block, you must increment the version suffix in UNIFFI_SHARED_HEADER_V4
-	#ifndef UNIFFI_SHARED_HEADER_V4
+	// If you add anything to the #else block, you must increment the version suffix in UNIFFI_SHARED_HEADER_V5
+	#ifndef UNIFFI_SHARED_HEADER_V5
 		#error Combining helper code from multiple versions of uniffi is not supported
-	#endif // ndef UNIFFI_SHARED_HEADER_V4
+	#endif // ndef UNIFFI_SHARED_HEADER_V5
 #else
 #define UNIFFI_SHARED_H
-#define UNIFFI_SHARED_HEADER_V4
+#define UNIFFI_SHARED_HEADER_V5
 // ⚠️ Attention: If you change this #else block (ending in `#endif // def UNIFFI_SHARED_H`) you *must* ⚠️
-// ⚠️ increment the version suffix in all instances of UNIFFI_SHARED_HEADER_V4 in this file.           ⚠️
+// ⚠️ increment the version suffix in all instances of UNIFFI_SHARED_HEADER_V5 in this file.           ⚠️
 
 typedef struct RustBuffer {
 	int32_t capacity;
@@ -30,6 +30,19 @@ typedef struct RustBuffer {
 } RustBuffer;
 
 typedef int32_t (*ForeignCallback)(uint64_t, int32_t, RustBuffer, RustBuffer *);
+
+// Task defined in Rust that Swift executes
+typedef void (*RustTaskCallback)(const void *, int8_t);
+
+// Callback to execute Rust tasks using a Go routine
+//
+// Args:
+//   executor: ForeignExecutor lowered into a uint64_t value
+//   delay: Delay in MS
+//   task: RustTaskCallback to call
+//   task_data: data to pass the task callback
+typedef int8_t (*ForeignExecutorCallback)(uint64_t, uint32_t, RustTaskCallback, const void *);
+
 
 typedef struct ForeignBytes {
 	int32_t len;
@@ -43,7 +56,7 @@ typedef struct RustCallStatus {
 } RustCallStatus;
 
 // ⚠️ Attention: If you change this #else block (ending in `#endif // def UNIFFI_SHARED_H`) you *must* ⚠️
-// ⚠️ increment the version suffix in all instances of UNIFFI_SHARED_HEADER_V4 in this file.           ⚠️
+// ⚠️ increment the version suffix in all instances of UNIFFI_SHARED_HEADER_V5 in this file.           ⚠️
 #endif // def UNIFFI_SHARED_H
 
 {% for func in ci.iter_ffi_function_definitions() -%}
