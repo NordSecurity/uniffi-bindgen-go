@@ -11,6 +11,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestArithmetic(t *testing.T) {
+func TestLargeEnum(t *testing.T) {
 	// TODO: create enum
 }
