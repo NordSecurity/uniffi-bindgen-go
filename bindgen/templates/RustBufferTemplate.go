@@ -50,3 +50,16 @@ func (rb rustBuffer) free() {
 		return false
 	})
 }
+
+func goBytesToCRustBuffer(b []byte) C.RustBuffer {
+	cs := C.CBytes(b)
+	return C.RustBuffer{
+		capacity: C.int(len(b)),
+		len: C.int(len(b)),
+		data: (*C.uchar)(unsafe.Pointer(cs)),
+	}
+}
+
+func cRustBufferToGoBytes(b C.RustBuffer) []byte {
+	return C.GoBytes(unsafe.Pointer(b.data), C.int(b.len))
+}
