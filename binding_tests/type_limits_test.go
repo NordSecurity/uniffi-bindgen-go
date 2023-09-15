@@ -4,12 +4,12 @@
 
 package binding_tests
 
-import (
-	"testing"
+// import (
+// 	"testing"
 
-	"github.com/NordSecurity/uniffi-bindgen-go/binding_tests/generated/uniffi_type_limits/uniffi_type_limits"
-	"github.com/stretchr/testify/assert"
-)
+// 	"github.com/NordSecurity/uniffi-bindgen-go/binding_tests/generated/uniffi_type_limits/uniffi_type_limits"
+// 	"github.com/stretchr/testify/assert"
+// )
 
 // TODO: port these python tests (and adjust for go where needed)
 

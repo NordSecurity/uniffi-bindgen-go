@@ -7,8 +7,8 @@ package binding_tests
 import (
 	"testing"
 
-	"github.com/NordSecurity/uniffi-bindgen-go/binding_tests/generated/large_enum/large_enum"
-	"github.com/stretchr/testify/assert"
+	// "github.com/NordSecurity/uniffi-bindgen-go/binding_tests/generated/large_enum/large_enum"
+	// "github.com/stretchr/testify/assert"
 )
 
 func TestLargeEnum(t *testing.T) {

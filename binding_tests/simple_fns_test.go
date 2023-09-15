@@ -4,12 +4,12 @@
 
 package binding_tests
 
-import (
-	"testing"
+// import (
+// 	"testing"
 
-	"github.com/NordSecurity/uniffi-bindgen-go/binding_tests/generated/uniffi_simple_fns/uniffi_simple_fns"
-	"github.com/stretchr/testify/assert"
-)
+// 	"github.com/NordSecurity/uniffi-bindgen-go/binding_tests/generated/uniffi_simple_fns/uniffi_simple_fns"
+// 	"github.com/stretchr/testify/assert"
+// )
 
 // TODO: port these swift tests
 

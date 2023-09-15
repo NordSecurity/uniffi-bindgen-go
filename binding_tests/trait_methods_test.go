@@ -4,12 +4,12 @@
 
 package binding_tests
 
-import (
-	"testing"
+// import (
+// 	"testing"
 
-	"github.com/NordSecurity/uniffi-bindgen-go/binding_tests/generated/trait_methods/trait_methods"
-	"github.com/stretchr/testify/assert"
-)
+// 	"github.com/NordSecurity/uniffi-bindgen-go/binding_tests/generated/trait_methods/trait_methods"
+// 	"github.com/stretchr/testify/assert"
+// )
 
 // TODO: port these python tests
 
