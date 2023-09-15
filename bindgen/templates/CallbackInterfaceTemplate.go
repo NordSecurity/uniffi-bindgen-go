@@ -17,7 +17,7 @@ type {{ foreign_callback }} struct {}
 
 {% let cgo_callback_fn = self.cgo_callback_fn(type_name) -%}
 //export {{ cgo_callback_fn }}
-func {{ cgo_callback_fn }}(handle C.uint64_t, method C.int32_t, args C.RustBuffer, outBuf *C.RustBuffer) C.int32_t {
+func {{ cgo_callback_fn }}(handle C.uint64_t, method C.int32_t, argsPtr *C.uint8_t, argsLen C.int32_t, outBuf *C.RustBuffer) C.int32_t {
 	cb := {{ type_|lift_fn }}(uint64(handle));
 	switch method {
 	case 0:
@@ -33,7 +33,8 @@ func {{ cgo_callback_fn }}(handle C.uint64_t, method C.int32_t, args C.RustBuffe
 	{% let method_name = format!("Invoke{}", method_name) -%}
 	case {{ loop.index }}:
 		var result uniffiCallbackResult
-		result, *outBuf = {{ foreign_callback}}{}.{{ method_name }}(cb, fromCRustBuffer(args));
+		args := unsafe.Slice((*byte)(argsPtr), argsLen)
+		result, *outBuf = {{ foreign_callback}}{}.{{ method_name }}(cb, args);
 		// Value written to out buffer.
 		// See docs of ForeignCallback in `uniffi/src/ffi/foreigncallbacks.rs`
 		return C.int32_t(result)
@@ -49,10 +50,11 @@ func {{ cgo_callback_fn }}(handle C.uint64_t, method C.int32_t, args C.RustBuffe
 {% for meth in cbi.methods() -%}
 {% let method_name = meth.name()|fn_name -%}
 {% let method_name = format!("Invoke{}", method_name) -%}
-func ({{ foreign_callback }}) {{ method_name }} (callback {{ type_name }}, args rustBuffer) (uniffiCallbackResult, C.RustBuffer) {
-	defer args.free()
+func ({{ foreign_callback }}) {{ method_name }} (callback {{ type_name }}, args []byte) (uniffiCallbackResult, C.RustBuffer) {
+	fmt.Printf("arguments: %d, %v", {{ meth.arguments().len() }}, args)
+
 	{% if meth.arguments().len() != 0 -%}
-	reader := args.asReader();
+	reader := bytes.NewReader(args)
 	{% endif -%}
 	{%- match meth.return_type() -%}
 	{%- when Some with (return_type) -%}

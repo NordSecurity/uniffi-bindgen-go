@@ -29,7 +29,7 @@ typedef struct RustBuffer {
 	uint8_t *data;
 } RustBuffer;
 
-typedef int32_t (*ForeignCallback)(uint64_t, int32_t, RustBuffer, RustBuffer *);
+typedef int32_t (*ForeignCallback)(uint64_t, int32_t, uint8_t *, int32_t, RustBuffer *);
 
 // Task defined in Rust that Swift executes
 typedef void (*RustTaskCallback)(const void *, int8_t);
@@ -67,6 +67,6 @@ typedef struct RustCallStatus {
 {% endfor -%}
 
 {%- for func in self.cgo_callback_fns() %}
-int32_t {{ func }}(uint64_t, int32_t, RustBuffer, RustBuffer *);
+int32_t {{ func }}(uint64_t, int32_t, uint8_t *, int32_t, RustBuffer *);
 {%- endfor %}
 
