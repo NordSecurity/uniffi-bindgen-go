@@ -3,17 +3,18 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */#}
 
 type rustBuffer struct {
-	capacity int
-	length   int
-	data     unsafe.Pointer
 	self     C.RustBuffer
 }
 
 func fromCRustBuffer(crbuf C.RustBuffer) rustBuffer {
+	capacity := int(crbuf.capacity)
+	length := int(crbuf.len)
+	data := unsafe.Pointer(crbuf.data)
+	
+	if data == nil && (capacity > 0 || length > 0) {
+		panic(fmt.Sprintf("null in valid C.RustBuffer, capacity non null on null data: %d, %d, %s", capacity, length, data))
+	}
 	return rustBuffer{
-		capacity: int(crbuf.capacity),
-		length:   int(crbuf.len),
-		data:     unsafe.Pointer(crbuf.data),
 		self:     crbuf,
 	}
 }
@@ -22,26 +23,16 @@ func fromCRustBuffer(crbuf C.RustBuffer) rustBuffer {
 // it quite inefficient
 // TODO: Return an implementation which reads only when needed
 func (rb rustBuffer) asReader() *bytes.Reader {
-	b := C.GoBytes(rb.data, C.int(rb.length))
+	b := C.GoBytes(unsafe.Pointer(rb.self.data), C.int(rb.self.len))
 	return bytes.NewReader(b)
 }
 
 func (rb rustBuffer) asCRustBuffer() C.RustBuffer {
-	return C.RustBuffer{
-		capacity: C.int(rb.capacity),
-		len: C.int(rb.length),
-		data: (*C.uchar)(unsafe.Pointer(rb.data)),
-	}
+	return rb.self
 }
 
 func stringToCRustBuffer(str string) C.RustBuffer {
-	b := []byte(str)
-	cs := C.CString(str)
-	return C.RustBuffer{
-		capacity: C.int(len(b)),
-		len: C.int(len(b)),
-		data: (*C.uchar)(unsafe.Pointer(cs)),
-	}
+	return goBytesToCRustBuffer([]byte(str))
 }
 
 func (rb rustBuffer) free() {
@@ -52,12 +43,16 @@ func (rb rustBuffer) free() {
 }
 
 func goBytesToCRustBuffer(b []byte) C.RustBuffer {
-	cs := C.CBytes(b)
-	return C.RustBuffer{
-		capacity: C.int(len(b)),
+	// We can pass the pointer along here, as it is pinned
+	// for the duration of this call
+	foreign := C.ForeignBytes {
 		len: C.int(len(b)),
-		data: (*C.uchar)(unsafe.Pointer(cs)),
+		data: (*C.uchar)(unsafe.Pointer(&b)),
 	}
+	
+	return rustCall(func( status *C.RustCallStatus) C.RustBuffer {
+		return C.{{ ci.ffi_rustbuffer_from_bytes().name() }}(foreign, status)
+	})
 }
 
 func cRustBufferToGoBytes(b C.RustBuffer) []byte {
