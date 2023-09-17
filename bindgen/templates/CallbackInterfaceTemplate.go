@@ -24,9 +24,8 @@ func {{ cgo_callback_fn }}(handle C.uint64_t, method C.int32_t, argsPtr *C.uint8
 		// 0 means Rust is done with the callback, and the callback
 		// can be dropped by the foreign language.
 		*outBuf = {{ ffi_converter_name }}INSTANCE.drop(uint64(handle)).asCRustBuffer()
-		// No return value.
 		// See docs of ForeignCallback in `uniffi/src/ffi/foreigncallbacks.rs`
-		return C.int32_t(idxCallbackFree)
+		return C.int32_t(uniffiCallbackResultSuccess)
 
 	{% for meth in cbi.methods() -%}
 	{% let method_name = meth.name()|fn_name -%}
@@ -34,9 +33,7 @@ func {{ cgo_callback_fn }}(handle C.uint64_t, method C.int32_t, argsPtr *C.uint8
 	case {{ loop.index }}:
 		var result uniffiCallbackResult
 		args := unsafe.Slice((*byte)(argsPtr), argsLen)
-		result, *outBuf = {{ foreign_callback}}{}.{{ method_name }}(cb, args);
-		// Value written to out buffer.
-		// See docs of ForeignCallback in `uniffi/src/ffi/foreigncallbacks.rs`
+		result = {{ foreign_callback}}{}.{{ method_name }}(cb, args, outBuf);
 		return C.int32_t(result)
 	{% endfor %}
 	default:
@@ -50,7 +47,7 @@ func {{ cgo_callback_fn }}(handle C.uint64_t, method C.int32_t, argsPtr *C.uint8
 {% for meth in cbi.methods() -%}
 {% let method_name = meth.name()|fn_name -%}
 {% let method_name = format!("Invoke{}", method_name) -%}
-func ({{ foreign_callback }}) {{ method_name }} (callback {{ type_name }}, args []byte) (uniffiCallbackResult, C.RustBuffer) {
+func ({{ foreign_callback }}) {{ method_name }} (callback {{ type_name }}, args []byte, outBuf *C.RustBuffer) uniffiCallbackResult {
 	fmt.Printf("arguments: %d, %v", {{ meth.arguments().len() }}, args)
 
 	{% if meth.arguments().len() != 0 -%}
@@ -84,17 +81,19 @@ func ({{ foreign_callback }}) {{ method_name }} (callback {{ type_name }}, args 
 		// The only way to bypass an unexpected error is to bypass pointer to an empty
 		// instance of the error
 		if err.err == nil {
-			return uniffiCallbackUnexpectedResultError, rustBuffer{}.asCRustBuffer()
+			return uniffiCallbackUnexpectedResultError
 		}
-		return uniffiCallbackResultError, lowerIntoRustBuffer[*{{ error_type|type_name }}]( {{ error_type|ffi_converter_name }}INSTANCE, err)
+		*outBuf = lowerIntoRustBuffer[*{{ error_type|type_name }}]({{ error_type|ffi_converter_name }}INSTANCE, err)
+		return uniffiCallbackResultError
 	}
         {%- when None -%}
         {%- endmatch %}
 	{% match meth.return_type() -%}
 	{%- when Some with (return_type) -%}
-	return uniffiCallbackResultSuccess, lowerIntoRustBuffer[{{ return_type|type_name }}]({{ return_type|ffi_converter_name }}INSTANCE, result)
+	*outBuf = lowerIntoRustBuffer[{{ return_type|type_name }}]({{ return_type|ffi_converter_name }}INSTANCE, result)
+	return uniffiCallbackResultSuccess 
 	{%- else -%}
-	return uniffiCallbackResultSuccess, rustBuffer{}.asCRustBuffer()
+	return uniffiCallbackResultSuccess
 	{%- endmatch %}
 }
 {% endfor %}

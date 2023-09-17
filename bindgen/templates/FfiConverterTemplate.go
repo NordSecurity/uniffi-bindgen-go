@@ -38,8 +38,8 @@ func lowerIntoRustBuffer[GoType any](bufWriter bufWriter[GoType], value GoType) 
 	if err != nil {
 		panic(fmt.Errorf("reading written data: %w", err))
 	}
-
-	return stringToCRustBuffer(string(bytes))
+	fmt.Printf("lowered: %v from %v\n", bytes, value)
+	return goBytesToCRustBuffer(bytes)
 }
 
 func liftFromRustBuffer[GoType any](bufReader bufReader[GoType], rbuf rustBuffer) GoType {

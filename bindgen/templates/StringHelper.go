@@ -40,6 +40,7 @@ func ({{ ffi_converter_name }}) write(writer io.Writer, value string) {
 	}
 
 	writeInt32(writer, int32(len(value)))
+	fmt.Printf("writing string of length %d\n", len(value))
 	write_length, err := io.WriteString(writer, value)
 	if err != nil {
 		panic(err)
