@@ -47,7 +47,7 @@ func goBytesToCRustBuffer(b []byte) C.RustBuffer {
 	// for the duration of this call
 	foreign := C.ForeignBytes {
 		len: C.int(len(b)),
-		data: (*C.uchar)(unsafe.Pointer(&b)),
+		data: (*C.uchar)(unsafe.Pointer(&b[0])),
 	}
 	
 	return rustCall(func( status *C.RustCallStatus) C.RustBuffer {
