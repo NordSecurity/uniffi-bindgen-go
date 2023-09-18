@@ -48,8 +48,6 @@ func {{ cgo_callback_fn }}(handle C.uint64_t, method C.int32_t, argsPtr *C.uint8
 {% let method_name = meth.name()|fn_name -%}
 {% let method_name = format!("Invoke{}", method_name) -%}
 func ({{ foreign_callback }}) {{ method_name }} (callback {{ type_name }}, args []byte, outBuf *C.RustBuffer) uniffiCallbackResult {
-	fmt.Printf("arguments: %d, %v", {{ meth.arguments().len() }}, args)
-
 	{% if meth.arguments().len() != 0 -%}
 	reader := bytes.NewReader(args)
 	{% endif -%}
