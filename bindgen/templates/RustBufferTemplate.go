@@ -43,6 +43,9 @@ func (rb rustBuffer) free() {
 }
 
 func goBytesToCRustBuffer(b []byte) C.RustBuffer {
+	if len(b) == 0 {
+		return C.RustBuffer{}
+	}
 	// We can pass the pointer along here, as it is pinned
 	// for the duration of this call
 	foreign := C.ForeignBytes {

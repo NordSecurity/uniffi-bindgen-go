@@ -141,8 +141,14 @@ func TestCoverallComplexErrors(t *testing.T) {
 		}
 	}
 
+	{
+		_, err := coveralls.MaybeThrowComplex(3)
+		var unErr *coverall.ComplexErrorUnknownError
+		assert.ErrorAs(t, err, &unErr)
+	}
+
 	assert.PanicsWithError(t, "Invalid input", func() {
-		coveralls.MaybeThrowComplex(3)
+		coveralls.MaybeThrowComplex(4)
 	})
 }
 
