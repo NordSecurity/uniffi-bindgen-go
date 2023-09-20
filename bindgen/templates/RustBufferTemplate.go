@@ -33,13 +33,8 @@ func (cb RustBuffer) Data() unsafe.Pointer {
 	return unsafe.Pointer(cb.data)
 }
 
-
-// AsReader reads the full rust buffer and then converts read bytes to a new reader which makes
-// it quite inefficient
-// TODO: Return an implementation which reads only when needed
 func (cb RustBuffer) AsReader() *bytes.Reader {
-	// TODO: can just use `unsafe.Slice`?
-	b := C.GoBytes(unsafe.Pointer(cb.data), C.int(cb.len))
+	b := unsafe.Slice((*byte)(cb.data), C.int(cb.len))
 	return bytes.NewReader(b)
 }
 

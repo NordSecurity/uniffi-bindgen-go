@@ -28,6 +28,7 @@ func (c FfiConverterBytes) Write(writer io.Writer, value []byte) {
 }
 
 func (c FfiConverterBytes) Lift(value RustBufferI) []byte {
+	defer value.Free()
 	reader := value.AsReader()
 	b, err := io.ReadAll(reader)
 	if err != nil {

@@ -9,6 +9,7 @@ type {{ ffi_converter_name }} struct{}
 var {{ ffi_converter_name }}INSTANCE = {{ ffi_converter_name }}{}
 
 func ({{ ffi_converter_name }}) Lift(rb RustBufferI) string {
+	defer rb.Free()
 	reader := rb.AsReader()
 	b, err := io.ReadAll(reader)
 	if err != nil {
