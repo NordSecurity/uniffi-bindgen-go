@@ -6,9 +6,9 @@ pub mod gen_go;
 
 use camino::{Utf8Path, Utf8PathBuf};
 use clap::Parser;
-use fs_err::{self as fs, File};
+use fs_err::{self as fs};
 use gen_go::{generate_go_bindings, Config};
-use std::{io::Write, process::Command};
+use std::process::Command;
 use uniffi_bindgen::interface::ComponentInterface;
 
 #[derive(Parser)]
@@ -49,12 +49,14 @@ impl uniffi_bindgen::BindingGenerator for BindingGeneratorGo {
         config: Self::Config,
         out_dir: &Utf8Path,
     ) -> anyhow::Result<()> {
-        let mut go_file = full_bindings_path(&config, &ci, out_dir);
-        fs::create_dir_all(&go_file)?;
-        go_file.push(format!("{}.go", ci.namespace()));
-        let mut f = File::create(&go_file)?;
-        write!(f, "{}", generate_go_bindings(&config, &ci)?)?;
-        drop(f);
+        let bindings_path = full_bindings_path(&config, &ci, out_dir);
+        fs::create_dir_all(&bindings_path)?;
+        let go_file = bindings_path.join(format!("{}.go", ci.namespace()));
+        let (header, wrapper) = generate_go_bindings(&config, &ci)?;
+        fs::write(&go_file, wrapper)?;
+
+        let header_file = bindings_path.join(config.header_filename());
+        fs::write(header_file, header)?;
 
         if self.try_format_code {
             match Command::new("go").arg("fmt").arg(&go_file).output() {

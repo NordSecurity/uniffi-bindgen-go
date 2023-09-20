@@ -13,21 +13,21 @@ func uniffiInitForeignExecutor() {
 	// TODO?
 }
 
-func (c UniFfiForeignExecutor) lower(value UniFfiForeignExecutor) C.int {
+func (c UniFfiForeignExecutor) Lower(value UniFfiForeignExecutor) C.int {
 	// TODO: pointer cast & pin memory
 	return 0
 }
 
-func (c UniFfiForeignExecutor) write(writer io.Writer, value UniFfiForeignExecutor) {
+func (c UniFfiForeignExecutor) Write(writer io.Writer, value UniFfiForeignExecutor) {
 	// TODO: unclear how to do this
 }
 
-func (c UniFfiForeignExecutor) lift(value C.int) UniFfiForeignExecutor {
+func (c UniFfiForeignExecutor) Lift(value C.int) UniFfiForeignExecutor {
 	// TODO: cast pointer back
 	return UniFfiForeignExecutor {}
 }
 
-func (c UniFfiForeignExecutor) read(reader io.Reader) UniFfiForeignExecutor {
+func (c UniFfiForeignExecutor) Read(reader io.Reader) UniFfiForeignExecutor {
 	// TODO: unclear how to to this
 	return UniFfiForeignExecutor {}
 }
@@ -35,5 +35,5 @@ func (c UniFfiForeignExecutor) read(reader io.Reader) UniFfiForeignExecutor {
 
 type {{ type_|ffi_destroyer_name }} struct {}
 
-func ({{ type_|ffi_destroyer_name }}) destroy(_ {{ type_name }}) {}
+func ({{ type_|ffi_destroyer_name }}) Destroy(_ {{ type_name }}) {}
 

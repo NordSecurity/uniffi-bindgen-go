@@ -96,7 +96,7 @@
 		{{ prefix }},
 	{%- endif %}
 	{%- for arg in func.arguments() %}
-		{{- arg|lower_fn }}({{ arg.name()|var_name }})
+                {{- arg|lower_fn_call }}
 		{%- if !loop.last %}, {% endif %}
 	{%- endfor %}
 	{%- if func.arguments().len() > 0 %},{% endif %} _uniffiStatus

@@ -38,25 +38,25 @@ type {{ e|ffi_converter_name}} struct {}
 
 var {{ e|ffi_converter_name }}INSTANCE = {{ e|ffi_converter_name }}{}
 
-func (c {{ e|ffi_converter_name }}) lift(cRustBuf C.RustBuffer) {{ type_name }} {
-	return liftFromRustBuffer[{{ type_name }}](c, fromCRustBuffer(cRustBuf))
+func (c {{ e|ffi_converter_name }}) Lift(rb RustBufferI) {{ type_name }} {
+	return LiftFromRustBuffer[{{ type_name }}](c, rb)
 }
 
-func (c {{ e|ffi_converter_name }}) lower(value {{ type_name }}) C.RustBuffer {
-	return lowerIntoRustBuffer[{{ type_name }}](c, value)
+func (c {{ e|ffi_converter_name }}) Lower(value {{ type_name }}) RustBuffer {
+	return LowerIntoRustBuffer[{{ type_name }}](c, value)
 }
 
 {%- if e.is_flat() %}
-func ({{ e|ffi_converter_name }}) read(reader io.Reader) {{ type_name }} {
+func ({{ e|ffi_converter_name }}) Read(reader io.Reader) {{ type_name }} {
 	id := readInt32(reader)
 	return {{ type_name }}(id)
 }
 
-func ({{ e|ffi_converter_name }}) write(writer io.Writer, value {{ type_name }}) {
+func ({{ e|ffi_converter_name }}) Write(writer io.Writer, value {{ type_name }}) {
 	writeInt32(writer, int32(value))
 }
 {%- else %}
-func ({{ e|ffi_converter_name }}) read(reader io.Reader) {{ type_name }} {
+func ({{ e|ffi_converter_name }}) Read(reader io.Reader) {{ type_name }} {
 	id := readInt32(reader)
 	switch (id) {
 		{%- for variant in e.variants() %}
@@ -68,11 +68,11 @@ func ({{ e|ffi_converter_name }}) read(reader io.Reader) {{ type_name }} {
 			};
 		{%- endfor %}
 		default:
-			panic(fmt.Sprintf("invalid enum value %v in {{ e|ffi_converter_name }}.read()", id));
+			panic(fmt.Sprintf("invalid enum value %v in {{ e|ffi_converter_name }}.Read()", id));
 	}
 }
 
-func ({{ e|ffi_converter_name }}) write(writer io.Writer, value {{ type_name }}) {
+func ({{ e|ffi_converter_name }}) Write(writer io.Writer, value {{ type_name }}) {
 	switch variant_value := value.(type) {
 		{%- for variant in e.variants() %}
 		case {{ type_name }}{{ variant.name()|class_name }}:
@@ -83,14 +83,14 @@ func ({{ e|ffi_converter_name }}) write(writer io.Writer, value {{ type_name }})
 		{%- endfor %}
 		default:
 			_ = variant_value
-			panic(fmt.Sprintf("invalid enum value `%v` in {{ e|ffi_converter_name }}.write", value))
+			panic(fmt.Sprintf("invalid enum value `%v` in {{ e|ffi_converter_name }}.Write", value))
 	}
 }
 {%- endif %}
 
 type {{ ffi_destroyer_name }} struct {}
 
-func (_ {{ ffi_destroyer_name }}) destroy(value {{ type_name }}) {
+func (_ {{ ffi_destroyer_name }}) Destroy(value {{ type_name }}) {
 	{%- if e.is_flat() %}
 	{%- else %}
 	value.Destroy()

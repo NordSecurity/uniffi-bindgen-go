@@ -1,2 +1,5 @@
 [[syntax]]
 name = "go"
+
+[[syntax]]
+name = "c"

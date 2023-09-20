@@ -2,35 +2,38 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-use uniffi_bindgen::backend::CodeType;
+use uniffi_bindgen::{backend::CodeType, interface::ExternalKind};
 
 #[derive(Debug)]
 pub struct ExternalCodeType {
     name: String,
+    module_path: String,
+    kind: ExternalKind,
 }
 
 impl ExternalCodeType {
-    pub fn new(name: String) -> Self {
-        ExternalCodeType { name }
+    pub fn new(name: String, module_path: String, kind: ExternalKind) -> Self {
+        ExternalCodeType {
+            name,
+            module_path,
+            kind,
+        }
     }
 }
 
 impl CodeType for ExternalCodeType {
     fn type_label(&self) -> String {
-        self.name.clone()
+        format!("{}.{}", self.module_path, self.name.clone())
     }
 
     fn canonical_name(&self) -> String {
-        format!("Type{}", self.name)
+        match self.kind {
+            ExternalKind::DataClass => format!("Type{}", self.name),
+            ExternalKind::Interface => self.name.clone(),
+        }
     }
 
-    // lower and lift need to call public function which were generated for
-    // the original types.
-    fn lower(&self) -> String {
-        format!("{}_lower", self.ffi_converter_name())
-    }
-
-    fn lift(&self) -> String {
-        format!("{}_lift", self.ffi_converter_name())
+    fn ffi_converter_name(&self) -> String {
+        format!("{}.FfiConverter{}", self.module_path, self.canonical_name())
     }
 }

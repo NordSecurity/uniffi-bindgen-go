@@ -8,11 +8,11 @@ type FfiConverterBytes struct{}
 
 var FfiConverterBytesINSTANCE = FfiConverterBytes{}
 
-func (c FfiConverterBytes) lower(value []byte) C.RustBuffer {
-	return goBytesToCRustBuffer(value)
+func (c FfiConverterBytes) Lower(value []byte) RustBuffer {
+	return bytesToRustBuffer(value)
 }
 
-func (c FfiConverterBytes) write(writer io.Writer, value []byte) {
+func (c FfiConverterBytes) Write(writer io.Writer, value []byte) {
 	if len(value) > math.MaxInt32 {
 		panic("[]byte is too large to fit into Int32")
 	}
@@ -27,8 +27,8 @@ func (c FfiConverterBytes) write(writer io.Writer, value []byte) {
 	}
 }
 
-func (c FfiConverterBytes) lift(value C.RustBuffer) []byte {
-	reader := fromCRustBuffer(value).asReader()
+func (c FfiConverterBytes) Lift(value RustBufferI) []byte {
+	reader := value.AsReader()
 	b, err := io.ReadAll(reader)
 	if err != nil {
 		panic(fmt.Errorf("reading reader: %w", err))
@@ -36,7 +36,7 @@ func (c FfiConverterBytes) lift(value C.RustBuffer) []byte {
 	return b
 }
 
-func (c FfiConverterBytes) read(reader io.Reader) []byte {
+func (c FfiConverterBytes) Read(reader io.Reader) []byte {
 	length := readInt32(reader)
 	buffer := make([]byte, length)
 	read_length, err := reader.Read(buffer)
@@ -51,5 +51,5 @@ func (c FfiConverterBytes) read(reader io.Reader) []byte {
 
 type {{ type_|ffi_destroyer_name }} struct {}
 
-func ({{ type_|ffi_destroyer_name }}) destroy(_ {{ type_name }}) {}
+func ({{ type_|ffi_destroyer_name }}) Destroy(_ {{ type_name }}) {}
 

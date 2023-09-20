@@ -4,7 +4,7 @@
 
 use anyhow::{Context, Result};
 use askama::Template;
-use heck::{ToLowerCamelCase, ToUpperCamelCase};
+use heck::{ToLowerCamelCase, ToSnakeCase, ToUpperCamelCase};
 use serde::{Deserialize, Serialize};
 use std::borrow::Borrow;
 use std::cell::RefCell;
@@ -33,6 +33,8 @@ pub struct Config {
     package_name: Option<String>,
     #[serde(default)]
     custom_types: HashMap<String, CustomTypeConfig>,
+    #[serde(default)]
+    go_mod: Option<String>,
 }
 
 impl uniffi_bindgen::BindingsConfig for Config {
@@ -51,8 +53,9 @@ impl uniffi_bindgen::BindingsConfig for Config {
 
     fn update_from_dependency_configs(
         &mut self,
-        config_map: std::collections::HashMap<&str, &Self>,
+        _config_map: std::collections::HashMap<&str, &Self>,
     ) {
+        // unused
     }
 }
 
@@ -62,6 +65,24 @@ pub struct CustomTypeConfig {
     type_name: Option<String>,
     into_custom: TemplateExpression,
     from_custom: TemplateExpression,
+}
+
+/// A struct to record a go import statement.
+#[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
+pub enum ImportRequirement {
+    /// A simple module import.
+    Module { mod_name: String },
+    /// Import everything from a module.
+    DotModule { mod_name: String },
+}
+
+impl ImportRequirement {
+    fn render(&self) -> String {
+        match &self {
+            ImportRequirement::Module { mod_name } => format!("\"{mod_name}\""),
+            ImportRequirement::DotModule { mod_name } => format!(". \"{mod_name}\""),
+        }
+    }
 }
 
 impl Config {
@@ -89,6 +110,11 @@ impl Config {
         }
     }
 
+    /// The name of the `.h` file for the lower-level C module with FFI declarations.
+    pub fn header_filename(&self) -> String {
+        format!("{}.h", self.ffi_package_filename())
+    }
+
     /// The name of the compiled Rust library containing the FFI implementation.
     pub fn cdylib_name(&self) -> String {
         if let Some(cdylib_name) = &self.cdylib_name {
@@ -105,7 +131,7 @@ pub struct GoWrapper<'a> {
     config: Config,
     ci: &'a ComponentInterface,
     type_helper_code: String,
-    type_imports: BTreeSet<String>,
+    type_imports: BTreeSet<ImportRequirement>,
 }
 
 impl<'a> GoWrapper<'a> {
@@ -121,7 +147,7 @@ impl<'a> GoWrapper<'a> {
         }
     }
 
-    pub fn imports(&self) -> Vec<String> {
+    pub fn imports(&self) -> Vec<ImportRequirement> {
         self.type_imports.iter().cloned().collect()
     }
 
@@ -132,8 +158,39 @@ impl<'a> GoWrapper<'a> {
             .filter_map(|t| t.initialization_fn())
             .collect()
     }
+}
 
-    // This represents true callback functions used in CGo layer. It is this is needed due to
+pub fn generate_go_bindings(config: &Config, ci: &ComponentInterface) -> Result<(String, String)> {
+    let header = BridgingHeader::new(config, ci)
+        .render()
+        .context("failed to render Go bridging header")?;
+    let wrapper = GoWrapper::new(config.clone(), ci)
+        .render()
+        .context("failed to render go bindings")?;
+    Ok((header, wrapper))
+}
+
+/// Template for generating the `.h` file that defines the low-level C FFI.
+///
+/// This file defines only the low-level structs and functions that are exposed
+/// by the compiled Rust code. It gets wrapped into a higher-level API by the
+/// code from [`GoWrapper`].
+#[derive(Template)]
+#[template(syntax = "c", escape = "none", path = "BridgingHeaderTemplate.h")]
+pub struct BridgingHeader<'config, 'ci> {
+    _config: &'config Config,
+    ci: &'ci ComponentInterface,
+}
+
+impl<'config, 'ci> BridgingHeader<'config, 'ci> {
+    pub fn new(config: &'config Config, ci: &'ci ComponentInterface) -> Self {
+        Self {
+            _config: config,
+            ci,
+        }
+    }
+
+    // This represents true callback functions used in CGo layer. Thi is needed due to
     // https://github.com/golang/go/issues/19837
     pub fn cgo_callback_fns(&self) -> Vec<String> {
         self.ci
@@ -142,12 +199,6 @@ impl<'a> GoWrapper<'a> {
             .map(|d| format!("{}_cgo_{}", self.ci.ffi_namespace(), d.name()))
             .collect()
     }
-}
-
-pub fn generate_go_bindings(config: &Config, ci: &ComponentInterface) -> Result<String> {
-    GoWrapper::new(config.clone(), ci)
-        .render()
-        .context("failed to render go bindings")
 }
 
 #[derive(Clone)]
@@ -197,7 +248,11 @@ impl GoCodeOracle {
                 Box::new(callback_interface::CallbackInterfaceCodeType::new(name))
             }
             Type::ForeignExecutor => Box::new(executor::ForeignExecutorCodeType),
-            Type::External { name, .. } => Box::new(external::ExternalCodeType::new(name)),
+            Type::External {
+                name,
+                module_path,
+                kind,
+            } => Box::new(external::ExternalCodeType::new(name, module_path, kind)),
         }
     }
 
@@ -205,17 +260,17 @@ impl GoCodeOracle {
         self.create_code_type(type_.as_type())
     }
 
-    /// Get the idiomatic Swift rendering of a class name (for enums, records, errors, etc).
+    /// Get the idiomatic Go rendering of a class name (for enums, records, errors, etc).
     fn class_name(&self, nm: &str) -> String {
         nm.to_string().to_upper_camel_case()
     }
 
-    /// Get the idiomatic Swift rendering of a function name.
+    /// Get the idiomatic Go rendering of a function name.
     fn fn_name(&self, nm: &str) -> String {
         nm.to_string().to_upper_camel_case()
     }
 
-    /// Get the idiomatic Swift rendering of a variable name.
+    /// Get the idiomatic Go rendering of a variable name.
     fn var_name(&self, nm: &str) -> String {
         // source: https://go.dev/ref/spec#Keywords
         if [
@@ -258,14 +313,19 @@ impl GoCodeOracle {
         .to_lower_camel_case()
     }
 
-    /// Get the idiomatic Swift rendering of an individual enum variant.
+    /// Get the idiomatic Go rendering of an individual enum variant.
     fn enum_variant_name(&self, nm: &str) -> String {
         nm.to_string().to_upper_camel_case()
     }
 
-    /// Get the idiomatic Swift rendering of an exception name.
+    /// Get the idiomatic Go rendering of an exception name.
     fn error_name(&self, nm: &str) -> String {
         self.class_name(nm)
+    }
+
+    /// Get the import path for a external type
+    fn import_name(&self, nm: &str) -> String {
+        nm.to_snake_case()
     }
 
     fn ffi_type_label(&self, ffi_type: &FfiType) -> String {
@@ -306,46 +366,72 @@ pub mod filters {
     }
 
     pub fn ffi_destroyer_name(type_: &impl AsType) -> Result<String, askama::Error> {
-        Ok(oracle().class_name(&format!(
-            "ffiDestroyer{}",
+        let class_name = oracle().class_name(&format!(
+            "FfiDestroyer{}",
             oracle().find(type_).canonical_name()
-        )))
+        ));
+        match type_.as_type() {
+            Type::External { module_path, .. } => Ok(format!("{}.{}", module_path, class_name)),
+            _ => Ok(class_name),
+        }
     }
 
     pub fn read_fn(type_: &impl AsType) -> Result<String, askama::Error> {
         Ok(format!(
-            "{}INSTANCE.read",
+            "{}INSTANCE.Read",
             oracle().find(type_).ffi_converter_name()
         ))
     }
 
     pub fn lift_fn(type_: &impl AsType) -> Result<String, askama::Error> {
         Ok(format!(
-            "{}INSTANCE.lift",
+            "{}INSTANCE.Lift",
             oracle().find(type_).ffi_converter_name()
         ))
     }
 
     pub fn write_fn(type_: &impl AsType) -> Result<String, askama::Error> {
         Ok(format!(
-            "{}INSTANCE.write",
+            "{}INSTANCE.Write",
             oracle().find(type_).ffi_converter_name()
         ))
     }
 
+    pub fn lower_fn_call(arg: &Argument) -> Result<String, askama::Error> {
+        let res = match arg.as_type() {
+            Type::External {
+                kind: ExternalKind::DataClass,
+                ..
+            } => {
+                format!(
+                    "RustBufferFromForeign({}({}))",
+                    lower_fn(arg)?,
+                    var_name(arg.name())?
+                )
+            }
+            _ => format!("{}({})", lower_fn(arg)?, var_name(arg.name())?),
+        };
+
+        Ok(res)
+    }
+
     pub fn lower_fn(type_: &impl AsType) -> Result<String, askama::Error> {
         Ok(format!(
-            "{}INSTANCE.lower",
+            "{}INSTANCE.Lower",
             oracle().find(type_).ffi_converter_name()
         ))
     }
 
     pub fn destroy_fn(type_: &impl AsType) -> Result<String, askama::Error> {
-        Ok(format!("{}{{}}.destroy", ffi_destroyer_name(type_)?))
+        Ok(format!("{}{{}}.Destroy", ffi_destroyer_name(type_)?))
     }
 
     pub fn var_name(nm: &str) -> Result<String, askama::Error> {
         Ok(oracle().var_name(nm))
+    }
+
+    pub fn import_name(nm: &str) -> Result<String, askama::Error> {
+        Ok(oracle().import_name(nm))
     }
 
     /// Get the idiomatic Go rendering of a struct field name.
@@ -374,10 +460,36 @@ pub mod filters {
         Ok(type_.into())
     }
 
+    pub fn ffi_type_cast(arg: &Argument) -> Result<String, askama::Error> {
+        let ty = arg.as_type();
+        let res = match ty {
+            Type::External {
+                module_path,
+                name,
+                kind: ExternalKind::DataClass,
+            } => {
+                // Need to import the external library for this.
+                format!(".({module_path}.RustBuffer)")
+            }
+            _ => "".into(),
+        };
+        Ok(res)
+    }
+
     /// FFI type name to be used to reference cgo types
     pub fn ffi_type_name(type_: &FfiType) -> Result<String, askama::Error> {
         let result = match type_ {
             FfiType::RustArcPtr(_) => "unsafe.Pointer".into(),
+            FfiType::RustBuffer(name) => match name {
+                Some(_name) => {
+                    // External buffer
+                    format!("RustBufferI")
+                }
+                None => {
+                    // Our "own"
+                    "RustBufferI".into()
+                }
+            },
             _ => format!("C.{}", oracle().ffi_type_label(type_)),
         };
         Ok(result)
@@ -409,7 +521,7 @@ pub struct TypeRenderer<'a> {
     include_once_names: RefCell<HashSet<String>>,
 
     // Track imports added with the `add_import()` macro
-    imports: RefCell<BTreeSet<String>>,
+    imports: RefCell<BTreeSet<ImportRequirement>>,
 }
 
 impl<'a> TypeRenderer<'a> {
@@ -439,7 +551,23 @@ impl<'a> TypeRenderer<'a> {
     //
     // Returns an empty string so that it can be used inside an askama `{{ }}` block.
     fn add_import(&self, name: &str) -> &str {
-        self.imports.borrow_mut().insert(name.to_owned());
+        self.imports.borrow_mut().insert(ImportRequirement::Module {
+            mod_name: name.to_owned(),
+        });
+        ""
+    }
+
+    fn add_local_import(&self, mod_name: &str) -> &str {
+        let mod_name = if let Some(ref go_mod) = self.config.go_mod {
+            let go_mod = go_mod.trim_end_matches("/");
+            format!("{go_mod}/{mod_name}/{mod_name}")
+        } else {
+            format!("{mod_name}/{mod_name}")
+        };
+
+        self.imports
+            .borrow_mut()
+            .insert(ImportRequirement::Module { mod_name });
         ""
     }
 

@@ -94,6 +94,9 @@
 {%- when Type::Custom { name, builtin, module_path } %}
 {% include "CustomTypeTemplate.go" %}
 
+{%- when Type::External { name, module_path, kind } %}
+{%- include "ExternalTemplate.go" %}
+
 {%- when Type::ForeignExecutor %}
 {%- include "ForeignExecutorTemplate.go" %}
 

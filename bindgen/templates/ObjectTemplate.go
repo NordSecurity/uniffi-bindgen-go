@@ -43,7 +43,7 @@ type {{ obj|ffi_converter_name }} struct {}
 
 var {{ obj|ffi_converter_name }}INSTANCE = {{ obj|ffi_converter_name }}{}
 
-func (c {{ obj|ffi_converter_name }}) lift(pointer unsafe.Pointer) {{ type_name }} {
+func (c {{ obj|ffi_converter_name }}) Lift(pointer unsafe.Pointer) {{ type_name }} {
 	result := &{{ canonical_name }} {
 		newFfiObject(
 			pointer,
@@ -55,11 +55,11 @@ func (c {{ obj|ffi_converter_name }}) lift(pointer unsafe.Pointer) {{ type_name 
 	return result
 }
 
-func (c {{ obj|ffi_converter_name }}) read(reader io.Reader) {{ type_name }} {
-	return c.lift(unsafe.Pointer(uintptr(readUint64(reader))))
+func (c {{ obj|ffi_converter_name }}) Read(reader io.Reader) {{ type_name }} {
+	return c.Lift(unsafe.Pointer(uintptr(readUint64(reader))))
 }
 
-func (c {{ obj|ffi_converter_name }}) lower(value {{ type_name }}) unsafe.Pointer {
+func (c {{ obj|ffi_converter_name }}) Lower(value {{ type_name }}) unsafe.Pointer {
 	// TODO: this is bad - all synchronization from ObjectRuntime.go is discarded here,
 	// because the pointer will be decremented immediately after this function returns,
 	// and someone will be left holding onto a non-locked pointer.
@@ -68,12 +68,12 @@ func (c {{ obj|ffi_converter_name }}) lower(value {{ type_name }}) unsafe.Pointe
 	return pointer
 }
 
-func (c {{ obj|ffi_converter_name }}) write(writer io.Writer, value {{ type_name }}) {
-	writeUint64(writer, uint64(uintptr(c.lower(value))))
+func (c {{ obj|ffi_converter_name }}) Write(writer io.Writer, value {{ type_name }}) {
+	writeUint64(writer, uint64(uintptr(c.Lower(value))))
 }
 
 type {{ obj|ffi_destroyer_name }} struct {}
 
-func (_ {{ obj|ffi_destroyer_name }}) destroy(value {{ type_name }}) {
+func (_ {{ obj|ffi_destroyer_name }}) Destroy(value {{ type_name }}) {
 	value.Destroy()
 }

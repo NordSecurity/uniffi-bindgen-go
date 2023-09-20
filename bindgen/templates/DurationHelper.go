@@ -9,22 +9,21 @@ type FfiConverterDuration struct{}
 
 var FfiConverterDurationINSTANCE = FfiConverterDuration{}
 
-func (c FfiConverterDuration) lift(cRustBuf C.RustBuffer) time.Duration {
-	rustBuffer := fromCRustBuffer(cRustBuf)
-	return liftFromRustBuffer[time.Duration](c, rustBuffer)
+func (c FfiConverterDuration) Lift(rb RustBufferI) time.Duration {
+	return LiftFromRustBuffer[time.Duration](c, rb)
 }
 
-func (c FfiConverterDuration) read(reader io.Reader) time.Duration {
+func (c FfiConverterDuration) Read(reader io.Reader) time.Duration {
 	sec := readUint64(reader)
 	nsec := readUint32(reader)
 	return time.Duration(sec*1_000_000_000 + uint64(nsec))
 }
 
-func (c FfiConverterDuration) lower(value time.Duration) C.RustBuffer {
-	return lowerIntoRustBuffer[time.Duration](c, value)
+func (c FfiConverterDuration) Lower(value time.Duration) RustBuffer {
+	return LowerIntoRustBuffer[time.Duration](c, value)
 }
 
-func (c FfiConverterDuration) write(writer io.Writer, value time.Duration) {
+func (c FfiConverterDuration) Write(writer io.Writer, value time.Duration) {
 	if value.Nanoseconds() < 0 {
 		// Rust does not support negative durations:
 		// https://www.reddit.com/r/rust/comments/ljl55u/why_rusts_duration_not_supporting_negative_values/
@@ -41,4 +40,4 @@ func (c FfiConverterDuration) write(writer io.Writer, value time.Duration) {
 
 type {{ type_|ffi_destroyer_name }} struct {}
 
-func ({{ type_|ffi_destroyer_name }}) destroy(_ {{ type_name }}) {}
+func ({{ type_|ffi_destroyer_name }}) Destroy(_ {{ type_name }}) {}

@@ -4,9 +4,7 @@
 
 package {{ ci.namespace() }}
 
-/*
-{% include "BridgingHeaderTemplate.h" %}
-*/
+// #include <{{ config.header_filename() }}>
 import "C"
 
 import (
@@ -16,7 +14,7 @@ import (
 	"unsafe"
 	"encoding/binary"
 	{%- for imported_package in self.imports() %}
-	"{{ imported_package }}"
+	{{ imported_package.render() }}
 	{%- endfor %}
 )
 

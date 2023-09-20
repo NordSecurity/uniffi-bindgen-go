@@ -44,29 +44,29 @@ type {{ ffi_converter_name }} struct{}
 
 var {{ ffi_converter_name }}INSTANCE = {{ ffi_converter_name }}{}
 
-func ({{ ffi_converter_name }}) lower(value {{ name }}) {{ ffi_type_name }} {
+func ({{ ffi_converter_name }}) Lower(value {{ name }}) {{ ffi_type_name }} {
     builtinValue := {{ config.from_custom.render("value") }}
     return {{ builtin|lower_fn }}(builtinValue)
 }
 
-func ({{ ffi_converter_name }}) write(writer io.Writer, value {{ name }}) {
+func ({{ ffi_converter_name }}) Write(writer io.Writer, value {{ name }}) {
     builtinValue := {{ config.from_custom.render("value") }}
     {{ builtin|write_fn }}(writer, builtinValue)
 }
 
-func ({{ ffi_converter_name }}) lift(value {{ ffi_type_name }}) {{ name }} {
+func ({{ ffi_converter_name }}) Lift(value {{ ffi_type_name }}) {{ name }} {
     builtinValue := {{ builtin|lift_fn }}(value)
     {{ config.into_custom.render("builtinValue") }}
 }
 
-func ({{ ffi_converter_name }}) read(reader io.Reader) {{ name }} {
+func ({{ ffi_converter_name }}) Read(reader io.Reader) {{ name }} {
     builtinValue := {{ builtin|read_fn }}(reader)
     {{ config.into_custom.render("builtinValue") }}
 }
 
 type {{ type_|ffi_destroyer_name }} struct {}
 
-func ({{ type_|ffi_destroyer_name }}) destroy(value {{ name }}) {
+func ({{ type_|ffi_destroyer_name }}) Destroy(value {{ name }}) {
 	builtinValue := {{ config.from_custom.render("value") }}
 	{{ builtin|destroy_fn }}(builtinValue)
 }

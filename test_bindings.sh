@@ -13,6 +13,7 @@ function bindings() {
     target/debug/uniffi-bindgen-go $1 --out-dir "$BINDINGS_DIR" --config="uniffi-test-fixtures.toml"
 }
 
+# Examples
 bindings 3rd-party/uniffi-rs/examples/arithmetic/src/arithmetic.udl
 bindings 3rd-party/uniffi-rs/examples/callbacks/src/callbacks.udl
 bindings 3rd-party/uniffi-rs/examples/custom-types/src/custom-types.udl
@@ -20,8 +21,14 @@ bindings 3rd-party/uniffi-rs/examples/geometry/src/geometry.udl
 bindings 3rd-party/uniffi-rs/examples/rondpoint/src/rondpoint.udl
 bindings 3rd-party/uniffi-rs/examples/sprites/src/sprites.udl
 bindings 3rd-party/uniffi-rs/examples/todolist/src/todolist.udl
+
+# Fixtures
 bindings 3rd-party/uniffi-rs/fixtures/callbacks/src/callbacks.udl
 bindings 3rd-party/uniffi-rs/fixtures/coverall/src/coverall.udl
+bindings 3rd-party/uniffi-rs/fixtures/ext-types/lib/src/ext-types-lib.udl
+bindings 3rd-party/uniffi-rs/fixtures/ext-types/uniffi-one/src/uniffi-one.udl 
+bindings 3rd-party/uniffi-rs/fixtures/ext-types/guid/src/guid.udl 
+# bindings 3rd-party/uniffi-rs/fixtures/ext-types/proc-macro-lib/src/ext-types-lib.udl
 bindings 3rd-party/uniffi-rs/fixtures/foreign-executor/src/foreign_executor.udl
 bindings 3rd-party/uniffi-rs/fixtures/futures/src/futures.udl
 bindings 3rd-party/uniffi-rs/fixtures/futures/src/uniffi_futures.udl 
@@ -31,6 +38,8 @@ bindings 3rd-party/uniffi-rs/fixtures/simple-fns/src/simple-fns.udl
 bindings 3rd-party/uniffi-rs/fixtures/trait-methods/src/trait_methods.udl
 bindings 3rd-party/uniffi-rs/fixtures/type-limits/src/type-limits.udl
 bindings 3rd-party/uniffi-rs/fixtures/uniffi-fixture-time/src/chronological.udl
+
+# Go specific
 bindings fixtures/destroy/src/destroy.udl
 bindings fixtures/errors/src/errors.udl
 bindings fixtures/objects/src/objects.udl

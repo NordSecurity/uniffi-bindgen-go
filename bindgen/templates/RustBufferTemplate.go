@@ -2,49 +2,66 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */#}
 
-type rustBuffer struct {
-	self     C.RustBuffer
+type RustBuffer = C.RustBuffer
+
+type RustBufferI interface {
+	AsReader() *bytes.Reader
+	Free()
+	ToGoBytes() []byte
+	Data() unsafe.Pointer
+	Len() int
+	Capacity() int
 }
 
-func fromCRustBuffer(crbuf C.RustBuffer) rustBuffer {
-	capacity := int(crbuf.capacity)
-	length := int(crbuf.len)
-	data := unsafe.Pointer(crbuf.data)
-	
-	if data == nil && (capacity > 0 || length > 0) {
-		panic(fmt.Sprintf("null in valid C.RustBuffer, capacity non null on null data: %d, %d, %s", capacity, length, data))
-	}
-	return rustBuffer{
-		self:     crbuf,
+func RustBufferFromForeign(b RustBufferI) RustBuffer {
+	return RustBuffer {
+		capacity: C.int(b.Capacity()),
+		len: C.int(b.Len()),
+		data: (*C.uchar)(b.Data()),
 	}
 }
 
-// asByteBuffer reads the full rust buffer and then converts read bytes to a new reader which makes
+func (cb RustBuffer) Capacity() int {
+	return int(cb.capacity)
+}
+
+func (cb RustBuffer) Len() int {
+	return int(cb.len)
+}
+
+func (cb RustBuffer) Data() unsafe.Pointer {
+	return unsafe.Pointer(cb.data)
+}
+
+
+// AsReader reads the full rust buffer and then converts read bytes to a new reader which makes
 // it quite inefficient
 // TODO: Return an implementation which reads only when needed
-func (rb rustBuffer) asReader() *bytes.Reader {
-	b := C.GoBytes(unsafe.Pointer(rb.self.data), C.int(rb.self.len))
+func (cb RustBuffer) AsReader() *bytes.Reader {
+	// TODO: can just use `unsafe.Slice`?
+	b := C.GoBytes(unsafe.Pointer(cb.data), C.int(cb.len))
 	return bytes.NewReader(b)
 }
 
-func (rb rustBuffer) asCRustBuffer() C.RustBuffer {
-	return rb.self
-}
-
-func stringToCRustBuffer(str string) C.RustBuffer {
-	return goBytesToCRustBuffer([]byte(str))
-}
-
-func (rb rustBuffer) free() {
+func (cb RustBuffer) Free() {
 	rustCall(func( status *C.RustCallStatus) bool {
-		C.{{ ci.ffi_rustbuffer_free().name() }}(rb.self, status)
+		C.{{ ci.ffi_rustbuffer_free().name() }}(cb, status)
 		return false
 	})
 }
 
-func goBytesToCRustBuffer(b []byte) C.RustBuffer {
+func (cb RustBuffer) ToGoBytes() []byte {
+	return C.GoBytes(unsafe.Pointer(cb.data), C.int(cb.len))
+}
+
+
+func stringToRustBuffer(str string) RustBuffer {
+	return bytesToRustBuffer([]byte(str))
+}
+
+func bytesToRustBuffer(b []byte) RustBuffer {
 	if len(b) == 0 {
-		return C.RustBuffer{}
+		return RustBuffer{}
 	}
 	// We can pass the pointer along here, as it is pinned
 	// for the duration of this call
@@ -53,11 +70,8 @@ func goBytesToCRustBuffer(b []byte) C.RustBuffer {
 		data: (*C.uchar)(unsafe.Pointer(&b[0])),
 	}
 	
-	return rustCall(func( status *C.RustCallStatus) C.RustBuffer {
+	return rustCall(func( status *C.RustCallStatus) RustBuffer {
 		return C.{{ ci.ffi_rustbuffer_from_bytes().name() }}(foreign, status)
 	})
 }
 
-func cRustBufferToGoBytes(b C.RustBuffer) []byte {
-	return C.GoBytes(unsafe.Pointer(b.data), C.int(b.len))
-}

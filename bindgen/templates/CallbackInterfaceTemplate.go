@@ -23,7 +23,7 @@ func {{ cgo_callback_fn }}(handle C.uint64_t, method C.int32_t, argsPtr *C.uint8
 	case 0:
 		// 0 means Rust is done with the callback, and the callback
 		// can be dropped by the foreign language.
-		*outBuf = {{ ffi_converter_name }}INSTANCE.drop(uint64(handle)).asCRustBuffer()
+		*outBuf = {{ ffi_converter_name }}INSTANCE.drop(uint64(handle))
 		// See docs of ForeignCallback in `uniffi/src/ffi/foreigncallbacks.rs`
 		return C.int32_t(idxCallbackFree)
 
@@ -81,14 +81,14 @@ func ({{ foreign_callback }}) {{ method_name }} (callback {{ type_name }}, args 
 		if err.err == nil {
 			return uniffiCallbackUnexpectedResultError
 		}
-		*outBuf = lowerIntoRustBuffer[*{{ error_type|type_name }}]({{ error_type|ffi_converter_name }}INSTANCE, err)
+		*outBuf = LowerIntoRustBuffer[*{{ error_type|type_name }}]({{ error_type|ffi_converter_name }}INSTANCE, err)
 		return uniffiCallbackResultError
 	}
         {%- when None -%}
         {%- endmatch %}
 	{% match meth.return_type() -%}
 	{%- when Some with (return_type) -%}
-	*outBuf = lowerIntoRustBuffer[{{ return_type|type_name }}]({{ return_type|ffi_converter_name }}INSTANCE, result)
+	*outBuf = LowerIntoRustBuffer[{{ return_type|type_name }}]({{ return_type|ffi_converter_name }}INSTANCE, result)
 	return uniffiCallbackResultSuccess 
 	{%- else -%}
 	return uniffiCallbackResultSuccess
@@ -116,6 +116,6 @@ func (c *{{ ffi_converter_name }}) register() {
 
 type {{ cbi|ffi_destroyer_name }} struct {}
 
-func ({{ cbi|ffi_destroyer_name }}) destroy(value {{ type_name }}) {
+func ({{ cbi|ffi_destroyer_name }}) Destroy(value {{ type_name }}) {
 }
 

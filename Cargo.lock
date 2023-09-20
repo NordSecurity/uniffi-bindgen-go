@@ -73,34 +73,12 @@ checksum = "a4668cab20f66d8d020e1fbc0ebe47217433c1b6c8f2040faf858554e394ace6"
 
 [[package]]
 name = "askama"
-version = "0.11.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fb98f10f371286b177db5eeb9a6e5396609555686a35e1d4f7b9a9c6d8af0139"
-dependencies = [
- "askama_derive 0.11.2",
- "askama_escape",
- "askama_shared",
-]
-
-[[package]]
-name = "askama"
 version = "0.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "47cbc3cf73fa8d9833727bbee4835ba5c421a0d65b72daf9a7b5d0e0f9cfb57e"
 dependencies = [
- "askama_derive 0.12.1",
+ "askama_derive",
  "askama_escape",
-]
-
-[[package]]
-name = "askama_derive"
-version = "0.11.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "87bf87e6e8b47264efa9bde63d6225c6276a52e05e91bf37eaa8afd0032d6b71"
-dependencies = [
- "askama_shared",
- "proc-macro2",
- "syn 1.0.109",
 ]
 
 [[package]]
@@ -116,7 +94,7 @@ dependencies = [
  "proc-macro2",
  "quote",
  "serde",
- "syn 2.0.33",
+ "syn 2.0.37",
 ]
 
 [[package]]
@@ -124,23 +102,6 @@ name = "askama_escape"
 version = "0.10.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "619743e34b5ba4e9703bba34deac3427c72507c7159f5fd030aea8cac0cfe341"
-
-[[package]]
-name = "askama_shared"
-version = "0.12.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bf722b94118a07fcbc6640190f247334027685d4e218b794dbfe17c32bf38ed0"
-dependencies = [
- "askama_escape",
- "mime",
- "mime_guess",
- "nom",
- "proc-macro2",
- "quote",
- "serde",
- "syn 1.0.109",
- "toml",
-]
 
 [[package]]
 name = "async-compat"
@@ -266,9 +227,9 @@ checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 
 [[package]]
 name = "chrono"
-version = "0.4.30"
+version = "0.4.31"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "defd4e7873dbddba6c7c91e199c7fcb946abc4a6a4ac3195400bcfb01b5de877"
+checksum = "7f2c685bad3eb3d45a01354cedb7d5faa66194d1d58ba6e267a8de788f79db38"
 dependencies = [
  "num-traits",
 ]
@@ -292,9 +253,9 @@ dependencies = [
 
 [[package]]
 name = "clap"
-version = "4.4.3"
+version = "4.4.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "84ed82781cea27b43c9b106a979fe450a13a31aab0500595fb3fc06616de08e6"
+checksum = "b1d7b8d5ec32af0fadc644bf1fd509a688c2103b185644bb1e29d164e0703136"
 dependencies = [
  "clap_builder",
  "clap_derive 4.4.2",
@@ -302,9 +263,9 @@ dependencies = [
 
 [[package]]
 name = "clap_builder"
-version = "4.4.2"
+version = "4.4.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2bb9faaa7c2ef94b2743a21f5a29e6f0010dff4caa69ac8e9d6cf8b6fa74da08"
+checksum = "5179bb514e4d7c2051749d8fcefa2ed6d06a9f4e6d69faf3805f5d80b8cf8d56"
 dependencies = [
  "anstream",
  "anstyle",
@@ -334,7 +295,7 @@ dependencies = [
  "heck",
  "proc-macro2",
  "quote",
- "syn 2.0.33",
+ "syn 2.0.37",
 ]
 
 [[package]]
@@ -433,7 +394,7 @@ checksum = "311a6d2f1f9d60bff73d2c78a0af97ed27f79672f15c238192a5bbb64db56d00"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.33",
+ "syn 2.0.37",
 ]
 
 [[package]]
@@ -746,7 +707,7 @@ checksum = "1db149f81d46d2deba7cd3c50772474707729550221e69588478ebf9ada425ae"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.33",
+ "syn 2.0.37",
 ]
 
 [[package]]
@@ -775,14 +736,14 @@ checksum = "4eca7ac642d82aa35b60049a6eccb4be6be75e599bd2e9adb5f875a737654af2"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.33",
+ "syn 2.0.37",
 ]
 
 [[package]]
 name = "serde_json"
-version = "1.0.106"
+version = "1.0.107"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2cc66a619ed80bf7a0f6b17dd063a84b88f6dea1813737cf469aef1d081142c2"
+checksum = "6b420ce6e3d8bd882e9b243c6eed35dbc9a6110c9769e74b584e0d68d1f20c65"
 dependencies = [
  "itoa",
  "ryu",
@@ -820,9 +781,9 @@ dependencies = [
 
 [[package]]
 name = "syn"
-version = "2.0.33"
+version = "2.0.37"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9caece70c63bfba29ec2fed841a09851b14a235c60010fa4de58089b6c025668"
+checksum = "7303ef2c05cd654186cb250d29049a24840ca25d2747c25c0381c8d9e2f582e8"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -861,7 +822,7 @@ checksum = "49922ecae66cc8a249b77e68d1d0623c1b2c514f0060c27cdc68bd62a1219d35"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.33",
+ "syn 2.0.37",
 ]
 
 [[package]]
@@ -900,9 +861,9 @@ dependencies = [
 
 [[package]]
 name = "trybuild"
-version = "1.0.84"
+version = "1.0.85"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a5c89fd17b7536f2cf66c97cff6e811e89e728ca0ed13caeed610c779360d8b4"
+checksum = "196a58260a906cedb9bf6d8034b6379d0c11f552416960452f267402ceeddff1"
 dependencies = [
  "basic-toml",
  "glob",
@@ -949,7 +910,7 @@ version = "0.24.1"
 dependencies = [
  "anyhow",
  "camino",
- "clap 4.4.3",
+ "clap 4.4.4",
  "trybuild",
  "uniffi_bindgen",
  "uniffi_build",
@@ -959,10 +920,10 @@ dependencies = [
 
 [[package]]
 name = "uniffi-bindgen-go"
-version = "0.1.2+v.0.23.0"
+version = "0.1.2+v.0.24.0"
 dependencies = [
  "anyhow",
- "askama 0.11.1",
+ "askama",
  "camino",
  "clap 3.2.25",
  "extend",
@@ -989,6 +950,10 @@ dependencies = [
  "uniffi-example-todolist",
  "uniffi-fixture-callbacks",
  "uniffi-fixture-coverall",
+ "uniffi-fixture-ext-types",
+ "uniffi-fixture-ext-types-guid",
+ "uniffi-fixture-ext-types-lib-one",
+ "uniffi-fixture-ext-types-proc-macro",
  "uniffi-fixture-foreign-executor",
  "uniffi-fixture-futures",
  "uniffi-fixture-proc-macro",
@@ -1073,6 +1038,57 @@ dependencies = [
  "once_cell",
  "thiserror",
  "uniffi",
+]
+
+[[package]]
+name = "uniffi-fixture-ext-types"
+version = "0.22.0"
+dependencies = [
+ "anyhow",
+ "bytes",
+ "uniffi",
+ "uniffi-example-custom-types",
+ "uniffi-fixture-ext-types-external-crate",
+ "uniffi-fixture-ext-types-guid",
+ "uniffi-fixture-ext-types-lib-one",
+ "url",
+]
+
+[[package]]
+name = "uniffi-fixture-ext-types-external-crate"
+version = "0.22.0"
+
+[[package]]
+name = "uniffi-fixture-ext-types-guid"
+version = "0.22.0"
+dependencies = [
+ "anyhow",
+ "bytes",
+ "serde_json",
+ "thiserror",
+ "uniffi",
+]
+
+[[package]]
+name = "uniffi-fixture-ext-types-lib-one"
+version = "0.22.0"
+dependencies = [
+ "anyhow",
+ "bytes",
+ "uniffi",
+]
+
+[[package]]
+name = "uniffi-fixture-ext-types-proc-macro"
+version = "0.22.0"
+dependencies = [
+ "anyhow",
+ "bytes",
+ "uniffi",
+ "uniffi-example-custom-types",
+ "uniffi-fixture-ext-types-guid",
+ "uniffi-fixture-ext-types-lib-one",
+ "url",
 ]
 
 [[package]]
@@ -1170,10 +1186,10 @@ name = "uniffi_bindgen"
 version = "0.24.1"
 dependencies = [
  "anyhow",
- "askama 0.12.0",
+ "askama",
  "camino",
  "cargo_metadata",
- "clap 4.4.3",
+ "clap 4.4.4",
  "fs-err",
  "glob",
  "goblin",
@@ -1202,7 +1218,7 @@ name = "uniffi_checksum_derive"
 version = "0.24.1"
 dependencies = [
  "quote",
- "syn 2.0.33",
+ "syn 2.0.37",
 ]
 
 [[package]]
@@ -1231,7 +1247,7 @@ dependencies = [
  "proc-macro2",
  "quote",
  "serde",
- "syn 2.0.33",
+ "syn 2.0.37",
  "toml",
  "uniffi_build",
  "uniffi_meta",

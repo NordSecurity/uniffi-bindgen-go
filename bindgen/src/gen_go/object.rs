@@ -6,22 +6,23 @@ use uniffi_bindgen::backend::{CodeType, Literal};
 
 #[derive(Debug)]
 pub struct ObjectCodeType {
-    name: String,
+    id: String,
 }
 
 impl ObjectCodeType {
-    pub fn new(name: String) -> Self {
-        Self { name }
+    pub fn new(id: String) -> Self {
+        Self { id }
     }
 }
 
 impl CodeType for ObjectCodeType {
     fn type_label(&self) -> String {
-        format!("*{}", super::GoCodeOracle.class_name(&self.name))
+        let name = super::GoCodeOracle.class_name(&self.id);
+        format!("*{}", name)
     }
 
     fn canonical_name(&self) -> String {
-        self.name.clone()
+        self.id.clone()
     }
 
     fn literal(&self, _literal: &Literal) -> String {

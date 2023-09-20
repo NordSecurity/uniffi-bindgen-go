@@ -8,3 +8,7 @@ into_custom = """u, err := url.Parse({})
     return *u
 """
 from_custom = "{}.String()"
+
+
+[bindings.go]
+go_mod = "github.com/NordSecurity/uniffi-bindgen-go/binding_tests/generated"
