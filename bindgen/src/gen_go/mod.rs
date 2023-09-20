@@ -460,22 +460,6 @@ pub mod filters {
         Ok(type_.into())
     }
 
-    pub fn ffi_type_cast(arg: &Argument) -> Result<String, askama::Error> {
-        let ty = arg.as_type();
-        let res = match ty {
-            Type::External {
-                module_path,
-                name,
-                kind: ExternalKind::DataClass,
-            } => {
-                // Need to import the external library for this.
-                format!(".({module_path}.RustBuffer)")
-            }
-            _ => "".into(),
-        };
-        Ok(res)
-    }
-
     /// FFI type name to be used to reference cgo types
     pub fn ffi_type_name(type_: &FfiType) -> Result<String, askama::Error> {
         let result = match type_ {

@@ -23,7 +23,10 @@ impl ExternalCodeType {
 
 impl CodeType for ExternalCodeType {
     fn type_label(&self) -> String {
-        format!("{}.{}", self.module_path, self.name.clone())
+        match self.kind {
+            ExternalKind::DataClass => format!("{}.{}", self.module_path, self.name),
+            ExternalKind::Interface => format!("*{}.{}", self.module_path, self.name),
+        }
     }
 
     fn canonical_name(&self) -> String {
