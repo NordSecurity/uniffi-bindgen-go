@@ -34,6 +34,18 @@ func (_self {{ type_name }}){{ func.name()|fn_name }}({%- call go::arg_list_decl
 }
 {% endfor %}
 
+{%- for tm in obj.uniffi_traits() -%}
+{%- match tm %}
+{%- when UniffiTrait::Display { fmt } %}
+func (_self {{ type_name }})String() string {
+	_pointer := _self.ffiObject.incrementPointer("{{ type_name }}")
+	defer _self.ffiObject.decrementPointer()
+	{% call go::ffi_call_binding(fmt, "_pointer") %}
+}
+{% else %}
+{% endmatch %}
+{% endfor %}
+
 func (object {{ type_name }})Destroy() {
 	runtime.SetFinalizer(object, nil)
 	object.ffiObject.destroy()

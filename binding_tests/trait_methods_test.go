@@ -4,38 +4,16 @@
 
 package binding_tests
 
-// import (
-// 	"testing"
+import (
+	"testing"
 
-// 	"github.com/NordSecurity/uniffi-bindgen-go/binding_tests/generated/trait_methods/trait_methods"
-// 	"github.com/stretchr/testify/assert"
-// )
+	. "github.com/NordSecurity/uniffi-bindgen-go/binding_tests/generated/trait_methods/trait_methods"
+	"github.com/stretchr/testify/assert"
+)
 
-// TODO: port these python tests
+func TestTraitMethods(t *testing.T) {
+	m := NewTraitMethods("yo")
+	assert.Equal(t, m.String(), "TraitMethods(yo)")
 
-// class TestTraitMethods(unittest.TestCase):
-//     def test_str(self):
-//         m = TraitMethods("yo")
-//         self.assertEqual(str(m), "TraitMethods(yo)")
-
-//     def test_repr(self):
-//         m = TraitMethods("yo")
-//         self.assertEqual(repr(m), 'TraitMethods { val: "yo" }')
-
-//     def test_eq(self):
-//         m = TraitMethods("yo")
-//         self.assertEqual(m, TraitMethods("yo"))
-//         self.assertNotEqual(m, TraitMethods("yoyo"))
-
-//     def test_eq(self):
-//         m = TraitMethods("yo")
-//         self.assertNotEqual(m, 17)
-
-//     def test_hash(self):
-//         d = {}
-//         m = TraitMethods("m")
-//         d[m] = "m"
-//         self.assertTrue(m in d)
-
-// if __name__=='__main__':
-//     unittest.main()
+	// Not implemented yet are Debug, Eq, Hash
+}
