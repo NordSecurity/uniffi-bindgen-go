@@ -45,7 +45,7 @@ func TestExtTypesLib(t *testing.T) {
 
 	// Hack around golang not being able to take addresses of a constant
 	one := uo.UniffiOneEnumOne
-	
+
 	assert.Equal(t, itl.GetUniffiOneEnum(uo.UniffiOneEnumOne), uo.UniffiOneEnumOne)
 	assert.Equal(t, itl.GetMaybeUniffiOneEnum(&one), &one)
 	assert.Nil(t, itl.GetMaybeUniffiOneEnum(nil))

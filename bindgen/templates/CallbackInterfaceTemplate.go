@@ -15,7 +15,7 @@ type {{ type_name }} interface {
 // {{ foreign_callback }} cannot be callable be a compiled function at a same time
 type {{ foreign_callback }} struct {}
 
-{% let cgo_callback_fn = self.cgo_callback_fn(type_name) -%}
+{% let cgo_callback_fn = self.cgo_callback_fn(type_name, module_path) -%}
 //export {{ cgo_callback_fn }}
 func {{ cgo_callback_fn }}(handle C.uint64_t, method C.int32_t, argsPtr *C.uint8_t, argsLen C.int32_t, outBuf *C.RustBuffer) C.int32_t {
 	cb := {{ type_|lift_fn }}(uint64(handle));

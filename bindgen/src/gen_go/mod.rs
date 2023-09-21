@@ -196,8 +196,16 @@ impl<'config, 'ci> BridgingHeader<'config, 'ci> {
         self.ci
             .callback_interface_definitions()
             .iter()
-            .map(|d| format!("{}_cgo_{}", self.ci.ffi_namespace(), d.name()))
+            .map(|d| format!("{}_cgo_{}", module_path(d), d.name()))
             .collect()
+    }
+}
+
+fn module_path(cbi: &CallbackInterface) -> String {
+    if let Type::CallbackInterface { module_path, .. } = cbi.as_type() {
+        module_path
+    } else {
+        unreachable!()
     }
 }
 
@@ -555,7 +563,7 @@ impl<'a> TypeRenderer<'a> {
         ""
     }
 
-    pub fn cgo_callback_fn(&self, name: &str) -> String {
-        format!("{}_cgo_{}", self.ci.ffi_namespace(), name)
+    pub fn cgo_callback_fn(&self, name: &str, module_path: &str) -> String {
+        format!("{module_path}_cgo_{name}")
     }
 }
