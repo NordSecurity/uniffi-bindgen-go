@@ -5,6 +5,7 @@
 package binding_tests
 
 import (
+	"strconv"
 	"testing"
 
 	. "github.com/NordSecurity/uniffi-bindgen-go/binding_tests/generated/proc_macro/proc_macro"
@@ -36,61 +37,52 @@ func TestProcMacro(t *testing.T) {
 	assert.Equal(t, EnumIdentity(MaybeBoolTrue), MaybeBoolTrue)
 
 	// just make sure this works / doesn't crash
-	_ = Three{ Obj: obj}
+	_ = Three{Obj: obj}
 
 	assert.Equal(t, MakeZero().Inner, "ZERO")
 	assert.Equal(t, MakeRecordWithBytes().SomeBytes, []byte{
 		0, 1, 2, 3, 4})
 
-	// do {
-	// 	try alwaysFails()
-	// 	fatalError("alwaysFails should have thrown")
-	// } catch BasicError.OsError {
-	// }
+	assert.EqualError(t, AlwaysFails(), "BasicError: OsError")
+	assert.Nil(t, obj.DoStuff(5))
+	assert.EqualError(t, obj.DoStuff(0), "FlatError: InvalidInput: Invalid input")
 
-	// try! obj.doStuff(times: 5)
+	TestCallCallbackInterface(GoTestCallbackInterface{})
+}
 
-	// do {
-	// 	try obj.doStuff(times: 0)
-	// 	fatalError("doStuff should throw if its argument is 0")
-	// } catch FlatError.InvalidInput {
-	// }
+type GoTestCallbackInterface struct{}
 
-	// struct SomeOtherError: Error { }
+func (c GoTestCallbackInterface) DoNothing() {}
 
-	// class SwiftTestCallbackInterface : TestCallbackInterface {
-	// 	func doNothing() { }
+func (c GoTestCallbackInterface) Add(a, b uint32) uint32 {
+	return a + b
+}
 
-	// 	func add(a: UInt32, b: UInt32) -> UInt32 {
-	// 		return a + b;
-	// 	}
+func (c GoTestCallbackInterface) Optional(a *uint32) uint32 {
+	if a == nil {
+		return 0
+	}
+	return *a
+}
 
-	// 	func `optional`(a: Optional<UInt32>) -> UInt32 {
-	// 		return a ?? 0;
-	// 	}
+func (c GoTestCallbackInterface) WithBytes(rwb RecordWithBytes) []byte {
+	return rwb.SomeBytes
+}
 
-	// 	func withBytes(rwb: RecordWithBytes) -> Data {
-	// 		return rwb.someBytes
-	// 	}
+func (c GoTestCallbackInterface) TryParseInt(value string) (uint32, *BasicError) {
+	if value == "force-unexpected-error" {
+		// raise an error that's not expected
+		return 0, NewBasicErrorUnexpectedError("some other error")
+	}
+	parsed, ok := strconv.ParseUint(value, 10, 64)
+	if ok != nil {
+		return 0, NewBasicErrorInvalidInput()
+	}
 
-	// 	func tryParseInt(value: String) throws -> UInt32 {
-	// 		if (value == "force-unexpected-error") {
-	// 			// raise an error that's not expected
-	// 			throw SomeOtherError()
-	// 		}
-	// 		let parsed = UInt32(value)
-	// 		if parsed != nil {
-	// 			return parsed!
-	// 		} else {
-	// 			throw BasicError.InvalidInput
-	// 		}
-	// 	}
+	return uint32(parsed), nil
+}
 
-	// 	func callbackHandler(h: Object) -> UInt32 {
-	// 		var v = h.takeError(e: BasicError.InvalidInput)
-	// 		return v
-	// 	}
-	// }
-
-	// testCallbackInterface(cb: SwiftTestCallbackInterface())
+func (c GoTestCallbackInterface) CallbackHandler(h *Object) uint32 {
+	v := h.TakeError(NewBasicErrorInvalidInput())
+	return v
 }
