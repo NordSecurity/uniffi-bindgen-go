@@ -1180,6 +1180,7 @@ dependencies = [
  "uniffi-fixture-futures",
  "uniffi-fixture-proc-macro",
  "uniffi-fixture-simple-fns",
+ "uniffi-fixture-simple-iface",
  "uniffi-fixture-time",
  "uniffi-fixture-trait-methods",
  "uniffi-fixture-type-limits",
@@ -1341,6 +1342,15 @@ dependencies = [
 name = "uniffi-fixture-simple-fns"
 version = "0.22.0"
 dependencies = [
+ "uniffi",
+]
+
+[[package]]
+name = "uniffi-fixture-simple-iface"
+version = "0.22.0"
+dependencies = [
+ "lazy_static",
+ "thiserror",
  "uniffi",
 ]
 

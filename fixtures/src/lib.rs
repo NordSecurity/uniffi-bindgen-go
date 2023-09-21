@@ -28,6 +28,7 @@ mod uniffi_fixtures {
     uniffi_fixture_large_enum::uniffi_reexport_scaffolding!();
     uniffi_proc_macro::uniffi_reexport_scaffolding!();
     uniffi_simple_fns::uniffi_reexport_scaffolding!();
+    uniffi_simple_iface::uniffi_reexport_scaffolding!();
     uniffi_trait_methods::uniffi_reexport_scaffolding!();
     uniffi_type_limits::uniffi_reexport_scaffolding!();
 
