@@ -4,23 +4,23 @@
 
 package binding_tests
 
-// import (
-// 	"testing"
+import (
+	"testing"
 
-// 	"github.com/NordSecurity/uniffi-bindgen-go/binding_tests/generated/uniffi_simple_fns/uniffi_simple_fns"
-// 	"github.com/stretchr/testify/assert"
-// )
+	usf "github.com/NordSecurity/uniffi-bindgen-go/binding_tests/generated/uniffi_simple_fns/uniffi_simple_fns"
+	"github.com/stretchr/testify/assert"
+)
 
-// TODO: port these swift tests
+func TestSimpleFns(t *testing.T) {
+	assert.Equal(t, usf.GetString(), "String created by Rust")
+	assert.Equal(t, usf.GetInt(), int32(1289))
+	assert.Equal(t, usf.StringIdentity("String created by Kotlin"), "String created by Kotlin")
+	assert.Equal(t, usf.ByteToU32(255), uint32(255))
 
-// assert(getString() == "String created by Rust")
-// assert(getInt() == 1289)
-// assert(stringIdentity(s: "String created by Kotlin") == "String created by Kotlin")
-// assert(byteToU32(byte: 255) == 255)
-
-// let aSet = newSet()
-// addToSet(set: aSet, value: "foo")
-// addToSet(set: aSet, value: "bar")
-// assert(setContains(set: aSet, value: "foo"))
-// assert(setContains(set: aSet, value: "bar"))
-// assert(!setContains(set: aSet, value: "baz"))
+	aSet := usf.NewSet()
+	usf.AddToSet(aSet, "foo")
+	usf.AddToSet(aSet, "bar")
+	assert.True(t, usf.SetContains(aSet, "foo"))
+	assert.True(t, usf.SetContains(aSet, "bar"))
+	assert.False(t, usf.SetContains(aSet, "baz"))
+}

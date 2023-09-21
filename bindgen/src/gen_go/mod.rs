@@ -4,13 +4,15 @@
 
 use anyhow::{Context, Result};
 use askama::Template;
+use camino::Utf8Path;
+use fs_err::{self as fs};
 use heck::{ToLowerCamelCase, ToSnakeCase, ToUpperCamelCase};
 use serde::{Deserialize, Serialize};
 use std::borrow::Borrow;
 use std::cell::RefCell;
 use std::collections::{BTreeSet, HashMap, HashSet};
 use uniffi_bindgen::backend::{CodeType, TemplateExpression};
-use uniffi_bindgen::interface::*;
+use uniffi_bindgen::{interface::*, BindingsConfig};
 
 mod callback_interface;
 mod compounds;
@@ -85,7 +87,60 @@ impl ImportRequirement {
     }
 }
 
+/// Load the config from the TOML value, falling back to an empty map if it doesn't exist.
+fn load_toml_file(source: &Utf8Path) -> Result<toml::value::Table> {
+    let contents = fs::read_to_string(source)
+        .with_context(|| format!("Failed to read config file: {:?}", source))?;
+    let mut cfg: toml::value::Table = toml::de::from_str(&contents)?;
+
+    let res = cfg
+        .remove("bindings")
+        .and_then(|mut cfg| cfg.as_table_mut().map(|tbl| tbl.remove(Config::TOML_KEY)))
+        .flatten()
+        .and_then(|cfg| cfg.try_into().ok())
+        .unwrap_or_else(|| toml::value::Table::default());
+    Ok(res)
+}
+
 impl Config {
+    pub fn load_initial(
+        crate_root: &Utf8Path,
+        config_file_override: Option<&Utf8Path>,
+    ) -> Result<Self> {
+        let default_config = crate_root.join("uniffi.toml").canonicalize_utf8().ok();
+        let toml_config = match (default_config, config_file_override) {
+            (Some(cfg), Some(over)) => {
+                let mut cfg: toml::value::Table = load_toml_file(&cfg)?;
+                let over: toml::value::Table = load_toml_file(over)?;
+
+                fn merge(a: &mut toml::value::Table, b: toml::value::Table) {
+                    for (key, value) in b.into_iter() {
+                        match a.get_mut(&key) {
+                            Some(existing_value) => match (existing_value, value) {
+                                (toml::Value::Table(ref mut t0), toml::Value::Table(t1)) => {
+                                    merge(t0, t1);
+                                }
+                                (v, value) => *v = value,
+                            },
+                            None => {
+                                a.insert(key, value);
+                            }
+                        }
+                    }
+                }
+
+                merge(&mut cfg, over);
+
+                toml::Value::from(cfg)
+            }
+            (Some(cfg), None) => toml::Value::from(load_toml_file(&cfg)?),
+            (None, Some(over)) => toml::Value::from(load_toml_file(&over)?),
+            (None, None) => toml::Value::from(toml::value::Table::default()),
+        };
+
+        Ok(toml_config.try_into()?)
+    }
+
     /// The name of the go package containing the high-level foreign-language bindings.
     pub fn package_name(&self) -> String {
         match self.module_name.as_ref() {
