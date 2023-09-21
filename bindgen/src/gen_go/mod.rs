@@ -192,7 +192,7 @@ pub struct GoWrapper<'a> {
 impl<'a> GoWrapper<'a> {
     pub fn new(config: Config, ci: &'a ComponentInterface) -> Self {
         let type_renderer = TypeRenderer::new(&config, ci);
-        let type_helper_code = type_renderer.render().unwrap();
+        let type_helper_code = type_renderer.render().expect("type rendering");
         let type_imports = type_renderer.imports.into_inner();
         Self {
             config,
@@ -410,9 +410,10 @@ impl GoCodeOracle {
             FfiType::ForeignExecutorHandle => "int".into(),
             FfiType::ForeignExecutorCallback => "ForeignExecutorCallback".into(),
             FfiType::FutureCallback { return_type } => {
-                format!("UniFfiFutureCallback{}", self.ffi_type_label(return_type))
+                let return_type = filters::cgo_ffi_callback_type(return_type).unwrap();
+                format!("UniFfiFutureCallback{}", return_type)
             }
-            FfiType::FutureCallbackData => "unsafe.Pointer".into(),
+            FfiType::FutureCallbackData => "void*".into(),
         }
     }
 }
@@ -514,18 +515,27 @@ pub mod filters {
         Ok(oracle().class_name(nm))
     }
 
-    /// FFI type name to be used to define cgo types inside bridging header
-    pub fn cgo_ffi_type_name(type_: &FfiType) -> Result<String, askama::Error> {
-        Ok(oracle().ffi_type_label(type_))
-    }
-
     pub fn into_ffi_type(type_: &Type) -> Result<FfiType, askama::Error> {
         Ok(type_.into())
     }
 
+    pub fn cgo_ffi_type(type_: &FfiType) -> Result<String, askama::Error> {
+        Ok(oracle().ffi_type_label(&type_))
+    }
+
+    pub fn cgo_ffi_callback_type(type_: &FfiType) -> Result<String, askama::Error> {
+        let res = match type_ {
+            FfiType::FutureCallbackData => "FutureCallbackData".into(),
+            FfiType::RustArcPtr(_) => "RustArcPtr".into(),
+            _ => oracle().ffi_type_label(type_),
+        };
+        Ok(res)
+    }
+
     /// FFI type name to be used to reference cgo types
-    pub fn ffi_type_name(type_: &FfiType) -> Result<String, askama::Error> {
-        let result = match type_ {
+    pub fn ffi_type_name(type_: &Type) -> Result<String, askama::Error> {
+        let ffi_type: FfiType = type_.into();
+        let result = match ffi_type {
             FfiType::RustArcPtr(_) => "unsafe.Pointer".into(),
             FfiType::RustBuffer(name) => match name {
                 Some(_name) => {
@@ -537,7 +547,7 @@ pub mod filters {
                     "RustBufferI".into()
                 }
             },
-            _ => format!("C.{}", oracle().ffi_type_label(type_)),
+            _ => format!("C.{}", oracle().ffi_type_label(&ffi_type)),
         };
         Ok(result)
     }

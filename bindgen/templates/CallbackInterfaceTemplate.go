@@ -1,4 +1,4 @@
-{%- let cbi = ci.get_callback_interface_definition(name).unwrap() %}
+{%- let cbi = ci.get_callback_interface_definition(name).expect("missing cbi") %}
 {%- let type_name = cbi|type_name %}
 {%- let foreign_callback = format!("foreignCallback{}", canonical_type_name) %}
 

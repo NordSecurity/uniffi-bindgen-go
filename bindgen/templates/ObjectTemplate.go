@@ -4,7 +4,7 @@
 
 {{- self.add_import("runtime") }}
 
-{%- let obj = ci.get_object_definition(name).unwrap() %}
+{%- let obj = ci.get_object_definition(name).expect("missing obj") %}
 {%- let canonical_name = type_|canonical_name %}
 {%- if self.include_once_check("ObjectRuntime.go") %}{% include "ObjectRuntime.go" %}{% endif %}
 
@@ -27,11 +27,16 @@ func {{ canonical_name }}{{ cons.name()|fn_name }}({% call go::arg_list_decl(con
 {% endfor %}
 
 {% for func in obj.methods() -%}
+{%- if func.is_async() %}
+// TODO:
+// {{ format!("{:?}", func) }}
+{%- else %}
 func (_self {{ type_name }}){{ func.name()|fn_name }}({%- call go::arg_list_decl(func) -%}) {% call go::return_type_decl(func) %} {
 	_pointer := _self.ffiObject.incrementPointer("{{ type_name }}")
 	defer _self.ffiObject.decrementPointer()
 	{% call go::ffi_call_binding(func, "_pointer") %}
 }
+{%endif %}
 {% endfor %}
 
 {%- for tm in obj.uniffi_traits() -%}

@@ -66,7 +66,7 @@
 {% include "DurationHelper.go" %}
 
 {%- when Type::Enum { name, module_path } %}
-{%- let e = ci.get_enum_definition(name).unwrap() %}
+{%- let e = ci.get_enum_definition(name).expect("missing enum") %}
 {%- if ci.is_name_used_as_error(name) %}
 {%- include "ErrorTemplate.go" %}
 {%- else %}
@@ -103,3 +103,7 @@
 {%- else %}
 {%- endmatch %}
 {%- endfor %}
+
+{%- if ci.has_async_fns() %}
+{%- include "AsyncTypesTemplate.go" %}
+{%- endif %}

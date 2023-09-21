@@ -7,7 +7,7 @@
           {%- let type_ = arg.as_type() %}
           {%- match type_ %}
           {%- when Type::Enum { name, module_path } %}
-              {%- let e = ci.get_enum_definition(name).unwrap() %}
+              {%- let e = ci.get_enum_definition(name).expect("missing cbi") %}
               {%- if ci.is_name_used_as_error(name) %}
                   {{ arg.name()|var_name }} *{{ arg|type_name }}
               {%- else %}
@@ -91,7 +91,7 @@
 	{%- endmatch %}
 	{%- match func.return_type() -%}
 	{%- when Some with (return_type) -%}
-	func(_uniffiStatus *C.RustCallStatus) {{ func.ffi_func().return_type().unwrap()|ffi_type_name }} {
+	func(_uniffiStatus *C.RustCallStatus) {{ return_type|ffi_type_name }} {
 		return C.{{ func.ffi_func().name() }}({% call _arg_list_ffi_call(func, prefix) -%})
 	})
 	{%- else -%}
@@ -118,7 +118,7 @@
 -#}
 {%- macro arg_list_ffi_decl(func) %}
 	{%- for arg in func.arguments() %}
-		{{- arg.type_().borrow()|cgo_ffi_type_name }} {{ arg.name() -}},
+		{{- arg.type_().borrow()|cgo_ffi_type }} {{ arg.name() -}},
 	{% endfor -%}
 	RustCallStatus* out_status
 {%- endmacro -%}
