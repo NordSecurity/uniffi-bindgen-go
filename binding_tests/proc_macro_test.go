@@ -13,33 +13,34 @@ import (
 
 func TestProcMacro(t *testing.T) {
 	one := MakeOne(123)
-	assert.Equal(t, one.Inner, 123)
-	assert.Equal(t, OneInnerByRef(one), 123)
+	assert.Equal(t, one.Inner, int32(123))
+	assert.Equal(t, OneInnerByRef(one), int32(123))
 
-	two := Two("a")
-	assert.Equal(TakeTwo(two), "a")
+	two := Two{A: "a"}
+	assert.Equal(t, TakeTwo(two), "a")
 
 	rwb := RecordWithBytes{SomeBytes: []byte{1, 2, 3}}
 	assert.Equal(t, TakeRecordWithBytes(rwb), []byte{1, 2, 3})
 
-	// var obj = Object()
-	// obj = Object.namedCtor(arg: 1)
-	// assert(obj.isHeavy() == .uncertain)
-	// let obj2 = Object()
-	// assert(obj.isOtherHeavy(other: obj2) == .uncertain)
+	obj := NewObject()
+	obj = ObjectNamedCtor(1)
+	assert.Equal(t, obj.IsHeavy(), MaybeBoolUncertain)
+	obj2 := NewObject()
+	assert.Equal(t, obj.IsOtherHeavy(obj2), MaybeBoolUncertain)
 
-	// let traitImpl = obj.getTrait(inc: nil)
-	// assert(traitImpl.name() == "TraitImpl")
-	// assert(obj.getTrait(inc: traitImpl).name() == "TraitImpl")
-	// assert(getTraitNameByRef(t: traitImpl) == "TraitImpl")
+	traitImpl := obj.GetTrait(nil)
+	assert.Equal(t, traitImpl.Name(), "TraitImpl")
+	assert.Equal(t, obj.GetTrait(&traitImpl).Name(), "TraitImpl")
+	assert.Equal(t, GetTraitNameByRef(traitImpl), "TraitImpl")
 
-	// assert(enumIdentity(value: .true) == .true)
+	assert.Equal(t, EnumIdentity(MaybeBoolTrue), MaybeBoolTrue)
 
-	// // just make sure this works / doesn't crash
-	// let three = Three(obj: obj)
+	// just make sure this works / doesn't crash
+	_ = Three{ Obj: obj}
 
-	// assert(makeZero().inner == "ZERO")
-	// assert(makeRecordWithBytes().someBytes == Data([0, 1, 2, 3, 4]))
+	assert.Equal(t, MakeZero().Inner, "ZERO")
+	assert.Equal(t, MakeRecordWithBytes().SomeBytes, []byte{
+		0, 1, 2, 3, 4})
 
 	// do {
 	// 	try alwaysFails()

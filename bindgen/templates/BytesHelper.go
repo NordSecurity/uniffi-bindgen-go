@@ -9,7 +9,7 @@ type FfiConverterBytes struct{}
 var FfiConverterBytesINSTANCE = FfiConverterBytes{}
 
 func (c FfiConverterBytes) Lower(value []byte) RustBuffer {
-	return bytesToRustBuffer(value)
+	return LowerIntoRustBuffer[[]byte](c, value)
 }
 
 func (c FfiConverterBytes) Write(writer io.Writer, value []byte) {
@@ -27,14 +27,8 @@ func (c FfiConverterBytes) Write(writer io.Writer, value []byte) {
 	}
 }
 
-func (c FfiConverterBytes) Lift(value RustBufferI) []byte {
-	defer value.Free()
-	reader := value.AsReader()
-	b, err := io.ReadAll(reader)
-	if err != nil {
-		panic(fmt.Errorf("reading reader: %w", err))
-	}
-	return b
+func (c FfiConverterBytes) Lift(rb RustBufferI) []byte {
+	return LiftFromRustBuffer[[]byte](c, rb)
 }
 
 func (c FfiConverterBytes) Read(reader io.Reader) []byte {
