@@ -6,22 +6,22 @@ use uniffi_bindgen::backend::{CodeType, Literal};
 
 #[derive(Debug)]
 pub struct CallbackInterfaceCodeType {
-    name: String,
+    id: String,
 }
 
 impl CallbackInterfaceCodeType {
-    pub fn new(name: String) -> Self {
-        Self { name }
+    pub fn new(id: String) -> Self {
+        Self { id }
     }
 }
 
 impl CodeType for CallbackInterfaceCodeType {
     fn type_label(&self) -> String {
-        super::GoCodeOracle.class_name(&self.name)
+        super::GoCodeOracle.class_name(&self.id)
     }
 
     fn canonical_name(&self) -> String {
-        format!("Type{}", self.name)
+        format!("CallbackInterface{}", self.id)
     }
 
     fn literal(&self, _literal: &Literal) -> String {

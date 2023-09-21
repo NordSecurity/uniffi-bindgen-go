@@ -4,7 +4,18 @@
 
 {% macro arg_list_decl(func) %}
 	{%- for arg in func.arguments() -%}
-		{{ arg.name()|var_name }} {{ arg|type_name }}
+          {%- let type_ = arg.as_type() %}
+          {%- match type_ %}
+          {%- when Type::Enum { name, module_path } %}
+              {%- let e = ci.get_enum_definition(name).unwrap() %}
+              {%- if ci.is_name_used_as_error(name) %}
+                  {{ arg.name()|var_name }} *{{ arg|type_name }}
+              {%- else %}
+                  {{ arg.name()|var_name }} {{ arg|type_name }}
+              {%- endif %}
+          {%- else %}
+              {{ arg.name()|var_name }} {{ arg|type_name }}
+          {%- endmatch %}
 		{%- if !loop.last %}, {% endif -%}
 	{%- endfor %}
 {%- endmacro %}

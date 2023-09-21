@@ -4,76 +4,92 @@
 
 package binding_tests
 
-// import (
-// 	"testing"
+import (
+	"testing"
 
-// 	"github.com/NordSecurity/uniffi-bindgen-go/binding_tests/generated/uniffi_proc_macro/uniffi_proc_macro"
-// 	"github.com/stretchr/testify/assert"
-// )
+	. "github.com/NordSecurity/uniffi-bindgen-go/binding_tests/generated/proc_macro/proc_macro"
+	"github.com/stretchr/testify/assert"
+)
 
-// TODO: port these swift tests
+func TestProcMacro(t *testing.T) {
+	one := MakeOne(123)
+	assert.Equal(t, one.Inner, 123)
+	assert.Equal(t, OneInnerByRef(one), 123)
 
-// let one = makeOne(inner: 123)
-// assert(one.inner == 123)
+	two := Two("a")
+	assert.Equal(TakeTwo(two), "a")
 
-// let two = Two(a: "a")
-// assert(takeTwo(two: two) == "a")
+	rwb := RecordWithBytes{SomeBytes: []byte{1, 2, 3}}
+	assert.Equal(t, TakeRecordWithBytes(rwb), []byte{1, 2, 3})
 
-// var obj = Object()
-// obj = Object.namedCtor(arg: 1)
-// assert(obj.isHeavy() == .uncertain)
+	// var obj = Object()
+	// obj = Object.namedCtor(arg: 1)
+	// assert(obj.isHeavy() == .uncertain)
+	// let obj2 = Object()
+	// assert(obj.isOtherHeavy(other: obj2) == .uncertain)
 
-// assert(enumIdentity(value: .true) == .true)
+	// let traitImpl = obj.getTrait(inc: nil)
+	// assert(traitImpl.name() == "TraitImpl")
+	// assert(obj.getTrait(inc: traitImpl).name() == "TraitImpl")
+	// assert(getTraitNameByRef(t: traitImpl) == "TraitImpl")
 
-// // just make sure this works / doesn't crash
-// let three = Three(obj: obj)
+	// assert(enumIdentity(value: .true) == .true)
 
-// assert(makeZero().inner == "ZERO")
+	// // just make sure this works / doesn't crash
+	// let three = Three(obj: obj)
 
-// do {
-//     try alwaysFails()
-//     fatalError("alwaysFails should have thrown")
-// } catch BasicError.OsError {
-// }
+	// assert(makeZero().inner == "ZERO")
+	// assert(makeRecordWithBytes().someBytes == Data([0, 1, 2, 3, 4]))
 
-// try! obj.doStuff(times: 5)
+	// do {
+	// 	try alwaysFails()
+	// 	fatalError("alwaysFails should have thrown")
+	// } catch BasicError.OsError {
+	// }
 
-// do {
-//     try obj.doStuff(times: 0)
-//     fatalError("doStuff should throw if its argument is 0")
-// } catch FlatError.InvalidInput {
-// }
+	// try! obj.doStuff(times: 5)
 
-// struct SomeOtherError: Error { }
+	// do {
+	// 	try obj.doStuff(times: 0)
+	// 	fatalError("doStuff should throw if its argument is 0")
+	// } catch FlatError.InvalidInput {
+	// }
 
-// class SwiftTestCallbackInterface : TestCallbackInterface {
-//     func doNothing() { }
+	// struct SomeOtherError: Error { }
 
-//     func add(a: UInt32, b: UInt32) -> UInt32 {
-//         return a + b;
-//     }
+	// class SwiftTestCallbackInterface : TestCallbackInterface {
+	// 	func doNothing() { }
 
-//     func `optional`(a: Optional<UInt32>) -> UInt32 {
-//         return a ?? 0;
-//     }
+	// 	func add(a: UInt32, b: UInt32) -> UInt32 {
+	// 		return a + b;
+	// 	}
 
-//     func tryParseInt(value: String) throws -> UInt32 {
-//         if (value == "force-unexpected-error") {
-//             // raise an error that's not expected
-//             throw SomeOtherError()
-//         }
-//         let parsed = UInt32(value)
-//         if parsed != nil {
-//             return parsed!
-//         } else {
-//             throw BasicError.InvalidInput
-//         }
-//     }
+	// 	func `optional`(a: Optional<UInt32>) -> UInt32 {
+	// 		return a ?? 0;
+	// 	}
 
-//     func callbackHandler(h: Object) -> UInt32 {
-//         var v = h.takeError(e: BasicError.InvalidInput)
-//         return v
-//     }
-// }
+	// 	func withBytes(rwb: RecordWithBytes) -> Data {
+	// 		return rwb.someBytes
+	// 	}
 
-// testCallbackInterface(cb: SwiftTestCallbackInterface())
+	// 	func tryParseInt(value: String) throws -> UInt32 {
+	// 		if (value == "force-unexpected-error") {
+	// 			// raise an error that's not expected
+	// 			throw SomeOtherError()
+	// 		}
+	// 		let parsed = UInt32(value)
+	// 		if parsed != nil {
+	// 			return parsed!
+	// 		} else {
+	// 			throw BasicError.InvalidInput
+	// 		}
+	// 	}
+
+	// 	func callbackHandler(h: Object) -> UInt32 {
+	// 		var v = h.takeError(e: BasicError.InvalidInput)
+	// 		return v
+	// 	}
+	// }
+
+	// testCallbackInterface(cb: SwiftTestCallbackInterface())
+}
