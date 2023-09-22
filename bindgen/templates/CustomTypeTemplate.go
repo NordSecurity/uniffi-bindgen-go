@@ -17,7 +17,7 @@ var {{ ffi_converter_name }}INSTANCE = {{ builtin|ffi_converter_name }}{}
 
 {%- when Some with (config) %}
 
-{%- let ffi_type_name=builtin|ffi_type_name %}
+{%- let ffi_type_name=builtin.as_ref()|ffi_type_name %}
 
 {# When the config specifies a different type name, create a typealias for it #}
 {%- match config.type_name %}

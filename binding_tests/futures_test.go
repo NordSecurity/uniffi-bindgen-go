@@ -5,9 +5,9 @@
 package binding_tests
 
 import (
+	"sync"
 	"testing"
 	"time"
-	"sync"
 
 	. "github.com/NordSecurity/uniffi-bindgen-go/binding_tests/generated/futures/futures"
 	"github.com/stretchr/testify/assert"
@@ -15,70 +15,79 @@ import (
 
 func TestFutures(t *testing.T) {
 	// Test `alwaysReady`
-	t0 := time.Now()
-	result := AlwaysReady()
-	t1 := time.Now()
+	{
+		t0 := time.Now()
+		result := AlwaysReady()
+		t1 := time.Now()
 
-	assert.True(t, t1.Sub(t0) < 1 * time.Millisecond)
-	assert.True(t, result)
+		assert.True(t, t1.Sub(t0) < 1*time.Millisecond)
+		assert.True(t, result)
+	}
 
 	// Test record.
-	result = NewMyRecord("foo", 42)
-	assert.Equal(t, result.A, "foo")
-	assert.Equal(t, result.B, 42)
+	{
+		result := NewMyRecord("foo", 42)
+		assert.Equal(t, result.A, "foo")
+		assert.Equal(t, result.B, 42)
 
-	// Test `void`
-	t0 = time.Now()
-	Void()
-	t1 = time.Now()
-	assert.True(t, t1.Sub(t0) < 1 * time.Millisecond)
-
+		// Test `void`
+		t0 := time.Now()
+		Void()
+		t1 := time.Now()
+		assert.True(t, t1.Sub(t0) < 1*time.Millisecond)
+	}
 	// Test `Sleep`
-	t0 = time.Now()
-	result = Sleep(2000)
-	t1 = time.Now()
+	{
+		t0 := time.Now()
+		result := Sleep(2000)
+		t1 := time.Now()
 
-	elapsed := t1.Sub(t0)
-	assert.True(t, elapsed < 2010 * time.Millisecond)
-	assert.True(t, elapsed > 2000 * time.Millisecond)
-	assert.True(t, result)
+		elapsed := t1.Sub(t0)
+		assert.True(t, elapsed < 2010*time.Millisecond)
+		assert.True(t, elapsed > 2000*time.Millisecond)
+		assert.True(t, result)
+	}
 
 	// Test sequential futures.
-	t0 = time.Now()
-	resultAlice := SayAfter(1000, "Alice")
-	resultBob := SayAfter(2000, "Bob")
-	t1 = time.Now()
+	{
+		t0 := time.Now()
+		resultAlice := SayAfter(1000, "Alice")
+		resultBob := SayAfter(2000, "Bob")
+		t1 := time.Now()
 
-	elapsed = t1.Sub(t0)
-	assert.True(t, elapsed < 3010 * time.Millisecond)
-	assert.True(t, elapsed > 3000 * time.Millisecond)
-	assert.Equal(t, resultAlice, "Hello, Alice!")
-	assert.Equal(t, resultBob, "Hello, Bob!")
+		elapsed := t1.Sub(t0)
+		assert.True(t, elapsed < 3010*time.Millisecond)
+		assert.True(t, elapsed > 3000*time.Millisecond)
+		assert.Equal(t, resultAlice, "Hello, Alice!")
+		assert.Equal(t, resultBob, "Hello, Bob!")
+	}
 
 	// Test concurrent futures.
-	var wg sync.WaitGroup
+	{
+		var wg sync.WaitGroup
 
-	t0 = time.Now()
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		result := SayAfter(1000, "Alice")
-		assert.Equal(t, result, "Hello, Alice!")
-	}()
+		t0 := time.Now()
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			result := SayAfter(1000, "Alice")
+			assert.Equal(t, result, "Hello, Alice!")
+		}()
 
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		result := SayAfter(2000, "Bob")
-		assert.Equal(t, result, "Hello, Bob!")
-	}()
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			result := SayAfter(2000, "Bob")
+			assert.Equal(t, result, "Hello, Bob!")
+		}()
 
-	wg.Wait()
-	t1 = time.Now()
-	elapsed = t1.Sub(t0)
-	assert.True(t, elapsed < 2010 * time.Millisecond)
-	assert.True(t, elapsed > 2000 * time.Millisecond)
+		wg.Wait()
+		t1 := time.Now()
+		elapsed := t1.Sub(t0)
+		assert.True(t, elapsed < 2010*time.Millisecond)
+		assert.True(t, elapsed > 2000*time.Millisecond)
 
+	}
 	// Test async methods
 	// 	let megaphone = newMegaphone()
 

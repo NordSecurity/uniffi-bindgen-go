@@ -562,8 +562,8 @@ pub mod filters {
     }
 
     /// FFI type name to be used to reference cgo types
-    pub fn ffi_type_name(type_: &Type) -> Result<String, askama::Error> {
-        let ffi_type: FfiType = type_.into();
+    pub fn ffi_type_name<T: Clone + Into<FfiType>>(type_: &T) -> Result<String, askama::Error> {
+        let ffi_type: FfiType = type_.clone().into();
         let result = match ffi_type {
             FfiType::RustArcPtr(_) => "unsafe.Pointer".into(),
             FfiType::RustBuffer(name) => match name {
@@ -581,6 +581,19 @@ pub mod filters {
         Ok(result)
     }
 
+    /// FFI type name to be used to reference cgo types. Such that they exactly match to the cgo bindings and can be used with `//export`.
+    pub fn ffi_type_name_cgo_safe<T: Clone + Into<FfiType>>(
+        type_: &T,
+    ) -> Result<String, askama::Error> {
+        let ffi_type: FfiType = type_.clone().into();
+        let result = match ffi_type {
+            FfiType::RustArcPtr(_) => "unsafe.Pointer".into(),
+            FfiType::RustBuffer(_) => "RustBuffer".into(),
+            _ => format!("C.{}", oracle().ffi_type_label(&ffi_type)),
+        };
+        Ok(result)
+    }
+
     /// Get the idiomatic Go rendering of a function name.
     pub fn fn_name(nm: &str) -> Result<String, askama::Error> {
         Ok(oracle().fn_name(nm))
@@ -589,6 +602,78 @@ pub mod filters {
     /// Get the idiomatic Go rendering of a function name.
     pub fn enum_variant_name(nm: &str) -> Result<String, askama::Error> {
         Ok(oracle().enum_variant_name(nm))
+    }
+
+    pub fn default_type(type_: &Option<Type>) -> Result<String, askama::Error> {
+        let res = match type_ {
+            Some(ty) => match ty {
+                Type::UInt8
+                | Type::Int8
+                | Type::UInt16
+                | Type::Int16
+                | Type::UInt32
+                | Type::Int32
+                | Type::UInt64
+                | Type::Int64
+                | Type::Float32
+                | Type::Float64 => "0".into(),
+                Type::Boolean => "false".into(),
+                Type::String => "\"\"".into(),
+                Type::Bytes => "[]byte{{}}".into(),
+                Type::Duration => "time.Duration{}".into(),
+                Type::Map {
+                    key_type,
+                    value_type,
+                } => format!(
+                    "map[{}]{}{{}}",
+                    type_name(&key_type)?,
+                    type_name(&value_type)?
+                ),
+                Type::Object { .. } => "nil".into(),
+                Type::Optional { .. } => "nil".into(),
+                Type::Record { name, .. } => format!("{}{{}}", name),
+                Type::Sequence { inner_type } => {
+                    format!("[]{}{{}}", type_name(inner_type)?)
+                }
+                Type::Timestamp => "time.Time{}".into(),
+                Type::Custom { name, .. } => format!("{}{{}}", name),
+
+                Type::Enum { .. } => "0".into(), // enums are respresented as uint
+                Type::CallbackInterface { .. } => "nil".into(),
+                Type::ForeignExecutor => "nil".into(),
+                Type::External { name, kind, .. } => match kind {
+                    ExternalKind::Interface => "nil".into(),
+                    ExternalKind::DataClass => format!("{}{{}}", name),
+                },
+            },
+            None => "nil".into(),
+        };
+        Ok(res)
+    }
+
+    /// Name of the callback function to handle an async result
+    pub fn future_callback(result: &ResultType) -> Result<String, askama::Error> {
+        Ok(format!(
+            "uniffiFutureCallbackHandler{}{}",
+            match &result.return_type {
+                Some(t) => oracle().find(t).canonical_name(),
+                None => "Void".into(),
+            },
+            match &result.throws_type {
+                Some(t) => oracle().find(t).canonical_name(),
+                None => "".into(),
+            }
+        ))
+    }
+
+    pub fn future_chan_type(result: &ResultType) -> Result<String, askama::Error> {
+        Ok(format!(
+            "struct {{ {} err error }}",
+            match &result.return_type {
+                Some(return_type) => format!("val {};", type_name(return_type)?),
+                None => "".into(),
+            }
+        ))
     }
 }
 

@@ -43,8 +43,7 @@ typedef void (*RustTaskCallback)(const void *, int8_t);
 //   delay: Delay in MS
 //   task: RustTaskCallback to call
 //   task_data: data to pass the task callback
-typedef int8_t (*ForeignExecutorCallback)(uint64_t, uint32_t, RustTaskCallback, const void *);
-
+typedef int8_t (*ForeignExecutorCallback)(uint64_t, uint32_t, RustTaskCallback, void *);
 
 typedef struct ForeignBytes {
 	int32_t len;
@@ -61,16 +60,16 @@ typedef struct RustCallStatus {
 // ⚠️ increment the version suffix in all instances of UNIFFI_SHARED_HEADER_V5 in this file.           ⚠️
 #endif // def UNIFFI_SHARED_H
 
+// Needed because we can't execute the callback directly from go.
+void cgo_rust_task_callback_bridge_{{ _config.module_name.as_ref().unwrap() }}(RustTaskCallback, const void *, int8_t);
+
+int8_t uniffiForeignExecutorCallback{{ _config.module_name.as_ref().unwrap() }}(uint64_t, uint32_t, RustTaskCallback, void*);
+
 // Callbacks for UniFFI Futures
 {%- for ffi_type in ci.iter_future_callback_params() %}
 typedef void (*UniFfiFutureCallback{{ ffi_type|cgo_ffi_callback_type }})(const void *, {{ ffi_type|cgo_ffi_type }}, RustCallStatus);
 {%- endfor %}
 
-int8_t uniffiForeignExecutorCallback(uint64_t, uint32_t, RustTaskCallback, void*);
-
-
-// Needed because we can't execute the callback directly from go.
-void cgo_rust_task_callback_bridge_{{ _config.module_name.as_ref().unwrap() }}(RustTaskCallback, const void *, int8_t);
 
 {% for func in ci.iter_ffi_function_definitions() -%}
 	{%- match func.return_type() -%}{%- when Some with (type_) %}{{ type_|cgo_ffi_type }}{% when None %}void{% endmatch %} {{ func.name() }}(
@@ -83,3 +82,6 @@ void cgo_rust_task_callback_bridge_{{ _config.module_name.as_ref().unwrap() }}(R
 int32_t {{ func }}(uint64_t, int32_t, uint8_t *, int32_t, RustBuffer *);
 {%- endfor %}
 
+{%- for result_type in ci.iter_async_result_types() %}
+void {{ result_type|future_callback }}(void *, {{ result_type.future_callback_param().borrow()|cgo_ffi_type }}, RustCallStatus);
+{%- endfor %}

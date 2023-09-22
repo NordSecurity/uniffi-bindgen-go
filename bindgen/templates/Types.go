@@ -98,7 +98,7 @@
 {%- include "ExternalTemplate.go" %}
 
 {%- when Type::ForeignExecutor %}
-{%- include "ForeignExecutorTemplate.go" %}
+{% if self.include_once_check("ForeignExecutorTemplate.go") %}{% include "ForeignExecutorTemplate.go" %}{% endif %}
 
 {%- else %}
 {%- endmatch %}

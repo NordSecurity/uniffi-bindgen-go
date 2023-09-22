@@ -44,6 +44,26 @@ func checkCallStatus(converter BufLifter[error], status C.RustCallStatus) error 
 	}
 }
 
+func checkCallStatusUnknown(status C.RustCallStatus) error {
+	switch status.code {
+	case 0:
+		return nil
+	case 1:
+		panic(fmt.Errorf("function not returning an error returned an error"))
+	case 2:
+		// when the rust code sees a panic, it tries to construct a rustbuffer
+		// with the message.  but if that code panics, then it just sends back
+		// an empty buffer.
+		if status.errorBuf.len > 0 {
+			panic(fmt.Errorf("%s", {{ Type::String.borrow()|lift_fn }}(status.errorBuf)))
+		} else {
+			panic(fmt.Errorf("Rust panicked while handling Rust panic"))
+		}
+	default:
+		return fmt.Errorf("unknown status code: %d", status.code)
+	}
+}
+
 func rustCall[U any](callback func(*C.RustCallStatus) U) U {
 	returnValue, err := rustCallWithError(nil, callback)
 	if err != nil {
