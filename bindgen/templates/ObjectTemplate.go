@@ -28,7 +28,7 @@ func {{ canonical_name }}{{ cons.name()|fn_name }}({% call go::arg_list_decl(con
 
 {% for func in obj.methods() -%}
 {%- if func.is_async() %}
-// TODO:
+// TODO: async
 // {{ format!("{:?}", func) }}
 {%- else %}
 func (_self {{ type_name }}){{ func.name()|fn_name }}({%- call go::arg_list_decl(func) -%}) {% call go::return_type_decl(func) %} {

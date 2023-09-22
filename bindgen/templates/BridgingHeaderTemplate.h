@@ -66,6 +66,8 @@ typedef struct RustCallStatus {
 typedef void (*UniFfiFutureCallback{{ ffi_type|cgo_ffi_callback_type }})(const void *, {{ ffi_type|cgo_ffi_type }}, RustCallStatus);
 {%- endfor %}
 
+int8_t uniffiForeignExecutorCallback(uint64_t, uint32_t, RustTaskCallback, void*);
+
 {% for func in ci.iter_ffi_function_definitions() -%}
 	{%- match func.return_type() -%}{%- when Some with (type_) %}{{ type_|cgo_ffi_type }}{% when None %}void{% endmatch %} {{ func.name() }}(
 	{% call go::arg_list_ffi_decl(func) %}

@@ -18,7 +18,6 @@ impl CodeType for ForeignExecutorCodeType {
     }
 
     fn initialization_fn(&self) -> Option<String> {
-        // TODO: correct function
         Some("uniffiInitForeignExecutor".into())
     }
 }
