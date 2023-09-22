@@ -43,28 +43,28 @@ func TestFutures(t *testing.T) {
 	// Test `Sleep`
 	{
 		t0 := time.Now()
-		result := Sleep(2000)
+		result := Sleep(200)
 		t1 := time.Now()
 
 		elapsed := t1.Sub(t0)
 		fmt.Printf("elapsed %s\n", elapsed)
-		assert.True(t, elapsed < 2100*time.Millisecond)
-		assert.True(t, elapsed > 2000*time.Millisecond)
+		assert.True(t, elapsed < 250*time.Millisecond)
+		assert.True(t, elapsed > 200*time.Millisecond)
 		assert.True(t, result)
 	}
 
 	// Test sequential futures.
 	{
 		t0 := time.Now()
-		resultAlice := SayAfter(1000, "Alice")
-		resultBob := SayAfter(2000, "Bob")
+		resultAlice := SayAfter(100, "Alice")
+		resultBob := SayAfter(200, "Bob")
 		t1 := time.Now()
 
 		elapsed := t1.Sub(t0)
 		fmt.Printf("elapsed %s\n", elapsed)
 
-		assert.True(t, elapsed < 3100*time.Millisecond)
-		assert.True(t, elapsed > 3000*time.Millisecond)
+		assert.True(t, elapsed < 350*time.Millisecond)
+		assert.True(t, elapsed > 300*time.Millisecond)
 		assert.Equal(t, resultAlice, "Hello, Alice!")
 		assert.Equal(t, resultBob, "Hello, Bob!")
 	}
@@ -77,14 +77,14 @@ func TestFutures(t *testing.T) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			result := SayAfter(1000, "Alice")
+			result := SayAfter(100, "Alice")
 			assert.Equal(t, result, "Hello, Alice!")
 		}()
 
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			result := SayAfter(2000, "Bob")
+			result := SayAfter(200, "Bob")
 			assert.Equal(t, result, "Hello, Bob!")
 		}()
 
@@ -92,8 +92,8 @@ func TestFutures(t *testing.T) {
 		t1 := time.Now()
 		elapsed := t1.Sub(t0)
 		fmt.Printf("elapsed %s\n", elapsed)
-		assert.True(t, elapsed < 2100*time.Millisecond)
-		assert.True(t, elapsed > 2000*time.Millisecond)
+		assert.True(t, elapsed < 250*time.Millisecond)
+		assert.True(t, elapsed > 200*time.Millisecond)
 
 	}
 	// Test async methods
