@@ -58,7 +58,7 @@ fn render_literal(literal: &Literal) -> String {
 }
 
 macro_rules! impl_code_type_for_primitive {
-    ($T:ty, $class_name:literal) => {
+    ($T:ty, $class_name:literal, $canonical_name:literal) => {
         paste! {
             #[derive(Debug)]
             pub struct $T;
@@ -66,6 +66,11 @@ macro_rules! impl_code_type_for_primitive {
             impl CodeType for $T  {
                 fn type_label(&self) -> String {
                     $class_name.into()
+                }
+
+
+                fn canonical_name(&self) -> String {
+                    $canonical_name.into()
                 }
 
                 fn literal(&self, literal: &Literal) -> String {
@@ -76,31 +81,16 @@ macro_rules! impl_code_type_for_primitive {
     };
 }
 
-impl_code_type_for_primitive!(BooleanCodeType, "bool");
-impl_code_type_for_primitive!(StringCodeType, "string");
-impl_code_type_for_primitive!(Int8CodeType, "int8");
-impl_code_type_for_primitive!(Int16CodeType, "int16");
-impl_code_type_for_primitive!(Int32CodeType, "int32");
-impl_code_type_for_primitive!(Int64CodeType, "int64");
-impl_code_type_for_primitive!(UInt8CodeType, "uint8");
-impl_code_type_for_primitive!(UInt16CodeType, "uint16");
-impl_code_type_for_primitive!(UInt32CodeType, "uint32");
-impl_code_type_for_primitive!(UInt64CodeType, "uint64");
-impl_code_type_for_primitive!(Float32CodeType, "float32");
-impl_code_type_for_primitive!(Float64CodeType, "float64");
-
-#[derive(Debug)]
-pub struct BytesCodeType;
-impl CodeType for BytesCodeType {
-    fn type_label(&self) -> String {
-        "[]byte".into()
-    }
-
-    fn canonical_name(&self) -> String {
-        "Bytes".into()
-    }
-
-    fn literal(&self, literal: &Literal) -> String {
-        render_literal(&literal)
-    }
-}
+impl_code_type_for_primitive!(BooleanCodeType, "bool", "Bool");
+impl_code_type_for_primitive!(StringCodeType, "string", "String");
+impl_code_type_for_primitive!(Int8CodeType, "int8", "Int8");
+impl_code_type_for_primitive!(Int16CodeType, "int16", "Int16");
+impl_code_type_for_primitive!(Int32CodeType, "int32", "Int32");
+impl_code_type_for_primitive!(Int64CodeType, "int64", "Int64");
+impl_code_type_for_primitive!(UInt8CodeType, "uint8", "Uint8");
+impl_code_type_for_primitive!(UInt16CodeType, "uint16", "Uint16");
+impl_code_type_for_primitive!(UInt32CodeType, "uint32", "Uint32");
+impl_code_type_for_primitive!(UInt64CodeType, "uint64", "Uint64");
+impl_code_type_for_primitive!(Float32CodeType, "float32", "Float32");
+impl_code_type_for_primitive!(Float64CodeType, "float64", "Float64");
+impl_code_type_for_primitive!(BytesCodeType, "[]byte", "Bytes");
