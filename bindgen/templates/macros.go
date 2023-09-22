@@ -122,3 +122,46 @@
 	{% endfor -%}
 	RustCallStatus* out_status
 {%- endmacro -%}
+
+{%- macro async_ffi_call_binding(func, prefix) -%}
+	// We create a channel, that this function blocks on, until the callback sends a result on it
+	done := make(chan {{ func.result_type().borrow()|future_chan_type }})
+	chanHandle := cgo.NewHandle(done)
+	defer chanHandle.Delete()
+
+	rustCall(func(_uniffiStatus *C.RustCallStatus) bool {
+		C.{{ func.ffi_func().name() }}(
+			{%- if !prefix.is_empty() %}
+			{{ prefix }},
+			{%- endif %}
+			{%- for arg in func.arguments() %}
+			{{- arg|lower_fn_call }},
+			{%- endfor %}
+			FfiConverterForeignExecutorINSTANCE.Lower(UniFfiForeignExecutor {}),
+			C.UniFfiFutureCallback{{ func.result_type().future_callback_param().borrow()|cgo_ffi_callback_type }}(C.{{ func.result_type().borrow()|future_callback }}),
+			unsafe.Pointer(chanHandle),
+			_uniffiStatus,
+		)
+		return false
+	})
+
+	// wait for things to be done
+        res := <- done
+	
+	{%- match func.return_type() -%}
+	{%- when Some with (return_type) -%}
+		{%- match func.throws_type() -%}
+		{%- when Some with (throws_type) %}
+	 return res.val, res.err
+		{%- when None %}
+	 return res.val
+		{%- endmatch %}
+	{%- when None -%}
+		{%- match func.throws_type() -%}
+		{%- when Some with (throws_type) %}
+	 return res.err
+		{%- when None %}
+         _ = res
+		{%- endmatch %}
+	{%- endmatch %}
+{%- endmacro -%}
