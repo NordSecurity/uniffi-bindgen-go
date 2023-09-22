@@ -33,7 +33,7 @@ typedef struct RustBuffer {
 
 typedef int32_t (*ForeignCallback)(uint64_t, int32_t, uint8_t *, int32_t, RustBuffer *);
 
-// Task defined in Rust that Swift executes
+// Task defined in Rust that Go executes
 typedef void (*RustTaskCallback)(const void *, int8_t);
 
 // Callback to execute Rust tasks using a Go routine
@@ -67,6 +67,10 @@ typedef void (*UniFfiFutureCallback{{ ffi_type|cgo_ffi_callback_type }})(const v
 {%- endfor %}
 
 int8_t uniffiForeignExecutorCallback(uint64_t, uint32_t, RustTaskCallback, void*);
+
+
+// Needed because we can't execute the callback directly from go.
+void cgo_rust_task_callback_bridge_{{ _config.module_name.as_ref().unwrap() }}(RustTaskCallback, const void *, int8_t);
 
 {% for func in ci.iter_ffi_function_definitions() -%}
 	{%- match func.return_type() -%}{%- when Some with (type_) %}{{ type_|cgo_ffi_type }}{% when None %}void{% endmatch %} {{ func.name() }}(

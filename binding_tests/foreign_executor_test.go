@@ -14,26 +14,28 @@ import (
 
 func runTest(tester *ForeignExecutorTester, delay uint32) *TestResult {
 	tester.ScheduleTest(delay)
-	time.Sleep(time.Duration(delay+1) * time.Millisecond)
+	time.Sleep(time.Duration(delay+10) * time.Millisecond)
 	return tester.GetLastResult()
 }
 
 func TestForeignExecutor(t *testing.T) {
 	// Test scheduling with no delay
 	result := runTest(
-		NewForeignExecutorTester(UniFfiForeignExecutor{}),
+		NewForeignExecutorTester(NewUniFfiForeignExecutor()),
 		0,
 	)
+	assert.NotNil(t, result)
 	assert.True(t, result.CallHappenedInDifferentThread)
 	assert.True(t, result.DelayMs <= 1)
 
 	// Test scheduling with delay and an executor created from a list
 	result2 := runTest(
 		ForeignExecutorTesterNewFromSequence(
-			[]UniFfiForeignExecutor{UniFfiForeignExecutor{}},
+			[]UniFfiForeignExecutor{NewUniFfiForeignExecutor()},
 		),
-		1000,
+		100,
 	)
+	assert.NotNil(t, result2)
 	assert.True(t, result2.CallHappenedInDifferentThread)
 	assert.True(t, result2.DelayMs >= 90)
 	assert.True(t, result2.DelayMs <= 110)

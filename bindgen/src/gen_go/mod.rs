@@ -170,6 +170,11 @@ impl Config {
         format!("{}.h", self.ffi_package_filename())
     }
 
+    /// The name of the `.c` file for the lower-level C module with FFI declarations.
+    pub fn c_filename(&self) -> String {
+        format!("{}.c", self.ffi_package_filename())
+    }
+
     /// The name of the compiled Rust library containing the FFI implementation.
     pub fn cdylib_name(&self) -> String {
         if let Some(cdylib_name) = &self.cdylib_name {
@@ -215,14 +220,20 @@ impl<'a> GoWrapper<'a> {
     }
 }
 
-pub fn generate_go_bindings(config: &Config, ci: &ComponentInterface) -> Result<(String, String)> {
+pub fn generate_go_bindings(
+    config: &Config,
+    ci: &ComponentInterface,
+) -> Result<(String, String, String)> {
     let header = BridgingHeader::new(config, ci)
         .render()
         .context("failed to render Go bridging header")?;
+    let c_content = BridgingCFile::new(config, ci)
+        .render()
+        .context("failed to render Go bridging file")?;
     let wrapper = GoWrapper::new(config.clone(), ci)
         .render()
         .context("failed to render go bindings")?;
-    Ok((header, wrapper))
+    Ok((header, c_content, wrapper))
 }
 
 /// Template for generating the `.h` file that defines the low-level C FFI.
@@ -253,6 +264,24 @@ impl<'config, 'ci> BridgingHeader<'config, 'ci> {
             .iter()
             .map(|d| format!("{}_cgo_{}", module_path(d), d.name()))
             .collect()
+    }
+}
+
+/// Template for generating the `.c` file that defines the low-level C FFI.
+///
+/// This file defines only the low-level structs and functions that are exposed
+/// by the compiled Rust code. It gets wrapped into a higher-level API by the
+/// code from [`GoWrapper`].
+#[derive(Template)]
+#[template(syntax = "c", escape = "none", path = "BridgingCTemplate.c")]
+pub struct BridgingCFile<'config, 'ci> {
+    config: &'config Config,
+    _ci: &'ci ComponentInterface,
+}
+
+impl<'config, 'ci> BridgingCFile<'config, 'ci> {
+    pub fn new(config: &'config Config, ci: &'ci ComponentInterface) -> Self {
+        Self { config, _ci: ci }
     }
 }
 
