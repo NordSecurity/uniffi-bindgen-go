@@ -8,7 +8,8 @@ import (
 	"strconv"
 	"testing"
 
-	. "github.com/NordSecurity/uniffi-bindgen-go/binding_tests/generated/proc_macro/proc_macro"
+	. "github.com/NordSecurity/uniffi-bindgen-go/binding_tests/generated/proc_macro"
+
 	"github.com/stretchr/testify/assert"
 )
 

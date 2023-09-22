@@ -39,8 +39,8 @@ func (c FfiConverterForeignExecutor) Read(reader io.Reader) UniFfiForeignExecuto
 }
 
 
-//export uniffiForeignExecutorCallback{{config.module_name.as_ref().unwrap()}}
-func uniffiForeignExecutorCallback{{config.module_name.as_ref().unwrap()}}(executor C.uint64_t, delay C.uint32_t, task C.RustTaskCallback, taskData *C.void) C.int8_t {
+//export uniffiForeignExecutorCallback{{config.package_name.as_ref().unwrap()}}
+func uniffiForeignExecutorCallback{{config.package_name.as_ref().unwrap()}}(executor C.uint64_t, delay C.uint32_t, task C.RustTaskCallback, taskData *C.void) C.int8_t {
 	if task != nil {
 		_ = FfiConverterForeignExecutorINSTANCE.Lift(C.int(executor))
 		go func() {
@@ -50,7 +50,7 @@ func uniffiForeignExecutorCallback{{config.module_name.as_ref().unwrap()}}(execu
 				runtime.Gosched()
 			}
 
-			C.cgo_rust_task_callback_bridge_{{ config.module_name.as_ref().unwrap() }}(
+			C.cgo_rust_task_callback_bridge_{{ config.package_name.as_ref().unwrap() }}(
 				C.RustTaskCallback(unsafe.Pointer(task)),
 				unsafe.Pointer(taskData),
 				C.int8_t(uniffiCallbackResultSuccess),
@@ -69,7 +69,7 @@ func uniffiInitForeignExecutor() {
 	{%- match ci.ffi_foreign_executor_callback_set() %}
 	{%- when Some with (fn) %}
 	rustCall(func(uniffiStatus *C.RustCallStatus) bool {
-		C.{{ fn.name() }}(C.ForeignExecutorCallback(C.uniffiForeignExecutorCallback{{config.module_name.as_ref().unwrap()}}), uniffiStatus)
+		C.{{ fn.name() }}(C.ForeignExecutorCallback(C.uniffiForeignExecutorCallback{{config.package_name.as_ref().unwrap()}}), uniffiStatus)
 		// TODO: handle error
 		return false
 	})

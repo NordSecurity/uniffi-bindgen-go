@@ -7,7 +7,8 @@ package binding_tests
 import (
 	"testing"
 
-	. "github.com/NordSecurity/uniffi-bindgen-go/binding_tests/generated/uniffi_type_limits/uniffi_type_limits"
+	. "github.com/NordSecurity/uniffi-bindgen-go/binding_tests/generated/uniffi_type_limits"
+
 	"github.com/stretchr/testify/assert"
 )
 

@@ -8,7 +8,8 @@ import (
 	"testing"
 	"time"
 
-	. "github.com/NordSecurity/uniffi-bindgen-go/binding_tests/generated/fixture_foreign_executor/fixture_foreign_executor"
+	. "github.com/NordSecurity/uniffi-bindgen-go/binding_tests/generated/fixture_foreign_executor"
+
 	"github.com/stretchr/testify/assert"
 )
 

@@ -61,9 +61,9 @@ typedef struct RustCallStatus {
 #endif // def UNIFFI_SHARED_H
 
 // Needed because we can't execute the callback directly from go.
-void cgo_rust_task_callback_bridge_{{ _config.module_name.as_ref().unwrap() }}(RustTaskCallback, const void *, int8_t);
+void cgo_rust_task_callback_bridge_{{ config.package_name.as_ref().unwrap() }}(RustTaskCallback, const void *, int8_t);
 
-int8_t uniffiForeignExecutorCallback{{ _config.module_name.as_ref().unwrap() }}(uint64_t, uint32_t, RustTaskCallback, void*);
+int8_t uniffiForeignExecutorCallback{{ config.package_name.as_ref().unwrap() }}(uint64_t, uint32_t, RustTaskCallback, void*);
 
 // Callbacks for UniFFI Futures
 {%- for ffi_type in ci.iter_future_callback_params() %}

@@ -7,7 +7,7 @@ package binding_tests
 import (
 	"testing"
 
-	"github.com/NordSecurity/uniffi-bindgen-go/binding_tests/generated/arithmetic/arithmetic"
+	"github.com/NordSecurity/uniffi-bindgen-go/binding_tests/generated/arithmetic"
 	"github.com/stretchr/testify/assert"
 )
 

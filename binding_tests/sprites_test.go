@@ -5,9 +5,11 @@
 package binding_tests
 
 import (
-	"github.com/NordSecurity/uniffi-bindgen-go/binding_tests/generated/sprites/sprites"
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/NordSecurity/uniffi-bindgen-go/binding_tests/generated/sprites"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestSpritesWork(t *testing.T) {

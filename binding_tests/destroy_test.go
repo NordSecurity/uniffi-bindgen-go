@@ -7,7 +7,7 @@ package binding_tests
 import (
 	"testing"
 
-	"github.com/NordSecurity/uniffi-bindgen-go/binding_tests/generated/destroy/destroy"
+	"github.com/NordSecurity/uniffi-bindgen-go/binding_tests/generated/destroy"
 	"github.com/stretchr/testify/assert"
 )
 

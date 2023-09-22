@@ -7,7 +7,8 @@ package binding_tests
 import (
 	"testing"
 
-	usf "github.com/NordSecurity/uniffi-bindgen-go/binding_tests/generated/uniffi_simple_fns/uniffi_simple_fns"
+	usf "github.com/NordSecurity/uniffi-bindgen-go/binding_tests/generated/uniffi_simple_fns"
+
 	"github.com/stretchr/testify/assert"
 )
 

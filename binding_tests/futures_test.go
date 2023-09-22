@@ -10,7 +10,8 @@ import (
 	"testing"
 	"time"
 
-	. "github.com/NordSecurity/uniffi-bindgen-go/binding_tests/generated/futures/futures"
+	. "github.com/NordSecurity/uniffi-bindgen-go/binding_tests/generated/futures"
+
 	"github.com/stretchr/testify/assert"
 )
 

@@ -18,7 +18,6 @@ mod callback_interface;
 mod compounds;
 mod custom;
 mod enum_;
-mod error;
 mod executor;
 mod external;
 mod miscellany;
@@ -29,10 +28,9 @@ mod record;
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct Config {
     cdylib_name: Option<String>,
-    module_name: Option<String>,
-    ffi_module_name: Option<String>,
-    ffi_module_filename: Option<String>,
     package_name: Option<String>,
+    ffi_package_name: Option<String>,
+    ffi_module_filename: Option<String>,
     #[serde(default)]
     custom_types: HashMap<String, CustomTypeConfig>,
     #[serde(default)]
@@ -43,7 +41,7 @@ impl uniffi_bindgen::BindingsConfig for Config {
     const TOML_KEY: &'static str = "go";
 
     fn update_from_ci(&mut self, ci: &ComponentInterface) {
-        self.module_name
+        self.package_name
             .get_or_insert_with(|| ci.namespace().into());
         self.cdylib_name
             .get_or_insert_with(|| format!("uniffi_{}", ci.namespace()));
@@ -74,15 +72,12 @@ pub struct CustomTypeConfig {
 pub enum ImportRequirement {
     /// A simple module import.
     Module { mod_name: String },
-    /// Import everything from a module.
-    DotModule { mod_name: String },
 }
 
 impl ImportRequirement {
     fn render(&self) -> String {
         match &self {
             ImportRequirement::Module { mod_name } => format!("\"{mod_name}\""),
-            ImportRequirement::DotModule { mod_name } => format!(". \"{mod_name}\""),
         }
     }
 }
@@ -143,7 +138,7 @@ impl Config {
 
     /// The name of the go package containing the high-level foreign-language bindings.
     pub fn package_name(&self) -> String {
-        match self.module_name.as_ref() {
+        match self.package_name.as_ref() {
             Some(name) => name.clone(),
             None => "uniffi".into(),
         }
@@ -151,7 +146,7 @@ impl Config {
 
     /// The name of the lower-level C module containing the FFI declarations.
     pub fn ffi_package_name(&self) -> String {
-        match self.ffi_module_name.as_ref() {
+        match self.ffi_package_name.as_ref() {
             Some(name) => name.clone(),
             None => format!("{}FFI", self.package_name()),
         }
@@ -244,16 +239,13 @@ pub fn generate_go_bindings(
 #[derive(Template)]
 #[template(syntax = "c", escape = "none", path = "BridgingHeaderTemplate.h")]
 pub struct BridgingHeader<'config, 'ci> {
-    _config: &'config Config,
+    config: &'config Config,
     ci: &'ci ComponentInterface,
 }
 
 impl<'config, 'ci> BridgingHeader<'config, 'ci> {
     pub fn new(config: &'config Config, ci: &'ci ComponentInterface) -> Self {
-        Self {
-            _config: config,
-            ci,
-        }
+        Self { config, ci }
     }
 
     // This represents true callback functions used in CGo layer. Thi is needed due to
@@ -408,11 +400,6 @@ impl GoCodeOracle {
     /// Get the idiomatic Go rendering of an individual enum variant.
     fn enum_variant_name(&self, nm: &str) -> String {
         nm.to_string().to_upper_camel_case()
-    }
-
-    /// Get the idiomatic Go rendering of an exception name.
-    fn error_name(&self, nm: &str) -> String {
-        self.class_name(nm)
     }
 
     /// Get the import path for a external type
@@ -731,9 +718,9 @@ impl<'a> TypeRenderer<'a> {
     fn add_local_import(&self, mod_name: &str) -> &str {
         let mod_name = if let Some(ref go_mod) = self.config.go_mod {
             let go_mod = go_mod.trim_end_matches("/");
-            format!("{go_mod}/{mod_name}/{mod_name}")
+            format!("{go_mod}/{mod_name}")
         } else {
-            format!("{mod_name}/{mod_name}")
+            format!("{mod_name}")
         };
 
         self.imports

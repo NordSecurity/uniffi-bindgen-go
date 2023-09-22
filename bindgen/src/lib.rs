@@ -109,9 +109,7 @@ impl uniffi_bindgen::BindingGenerator for BindingGeneratorGo {
 
 fn full_bindings_path(config: &Config, ci: &ComponentInterface, out_dir: &Utf8Path) -> Utf8PathBuf {
     let package_path: Utf8PathBuf = config.package_name().split('.').collect();
-    Utf8PathBuf::from(out_dir)
-        .join(package_path)
-        .join(ci.namespace())
+    Utf8PathBuf::from(out_dir).join(package_path)
 }
 
 pub fn main() -> anyhow::Result<()> {

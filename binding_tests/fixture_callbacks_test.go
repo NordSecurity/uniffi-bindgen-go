@@ -3,7 +3,8 @@ package binding_tests
 import (
 	"testing"
 
-	"github.com/NordSecurity/uniffi-bindgen-go/binding_tests/generated/fixture_callbacks/fixture_callbacks"
+	"github.com/NordSecurity/uniffi-bindgen-go/binding_tests/generated/fixture_callbacks"
+
 	"github.com/stretchr/testify/assert"
 )
 

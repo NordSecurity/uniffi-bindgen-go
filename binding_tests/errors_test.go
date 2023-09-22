@@ -5,11 +5,13 @@
 package binding_tests
 
 import (
-	"github.com/NordSecurity/uniffi-bindgen-go/binding_tests/generated/errors/errors"
 	goerrors "errors"
 	"fmt"
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/NordSecurity/uniffi-bindgen-go/binding_tests/generated/errors"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestReturnErrorWithVoid(t *testing.T) {

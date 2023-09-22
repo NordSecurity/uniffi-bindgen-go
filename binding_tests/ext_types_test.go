@@ -8,8 +8,9 @@ import (
 	netUrl "net/url"
 	"testing"
 
-	itl "github.com/NordSecurity/uniffi-bindgen-go/binding_tests/generated/imported_types_lib/imported_types_lib"
-	uo "github.com/NordSecurity/uniffi-bindgen-go/binding_tests/generated/uniffi_one/uniffi_one"
+	itl "github.com/NordSecurity/uniffi-bindgen-go/binding_tests/generated/imported_types_lib"
+	uo "github.com/NordSecurity/uniffi-bindgen-go/binding_tests/generated/uniffi_one"
+
 	"github.com/stretchr/testify/assert"
 )
 

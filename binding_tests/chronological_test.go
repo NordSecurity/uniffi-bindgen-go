@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/NordSecurity/uniffi-bindgen-go/binding_tests/generated/chronological/chronological"
+	"github.com/NordSecurity/uniffi-bindgen-go/binding_tests/generated/chronological"
 	"github.com/stretchr/testify/assert"
 )
 

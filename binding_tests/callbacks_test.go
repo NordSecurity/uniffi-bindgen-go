@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/NordSecurity/uniffi-bindgen-go/binding_tests/generated/callbacks/callbacks"
+	"github.com/NordSecurity/uniffi-bindgen-go/binding_tests/generated/callbacks"
 	"github.com/stretchr/testify/assert"
 )
 
