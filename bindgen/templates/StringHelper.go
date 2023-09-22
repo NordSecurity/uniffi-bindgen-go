@@ -9,7 +9,10 @@ type {{ ffi_converter_name }} struct{}
 var {{ ffi_converter_name }}INSTANCE = {{ ffi_converter_name }}{}
 
 func ({{ ffi_converter_name }}) lift(cRustBuf C.RustBuffer) string {
-	reader := fromCRustBuffer(cRustBuf).asReader()
+	rustBuf := fromCRustBuffer(cRustBuf)
+	defer rustBuf.free()
+
+	reader := rustBuf.asReader()
 	b, err := io.ReadAll(reader)
 	if err != nil {
 		panic(fmt.Errorf("reading reader: %w", err))
