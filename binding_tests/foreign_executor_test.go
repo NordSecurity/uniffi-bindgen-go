@@ -4,44 +4,37 @@
 
 package binding_tests
 
-// import (
-// 	"testing"
+import (
+	"testing"
+	"time"
 
-// 	"github.com/NordSecurity/uniffi-bindgen-go/binding_tests/generated/fixture_foreign_executor/fixture_foreign_executor"
-// 	"github.com/stretchr/testify/assert"
-// )
+	. "github.com/NordSecurity/uniffi-bindgen-go/binding_tests/generated/fixture_foreign_executor/fixture_foreign_executor"
+	"github.com/stretchr/testify/assert"
+)
 
-// TODO: port these swif tests
+func runTest(tester *ForeignExecutorTester, delay uint32) *TestResult {
+	tester.ScheduleTest(delay)
+	time.Sleep(time.Duration(delay+1) * time.Millisecond)
+	return tester.GetLastResult()
+}
 
-// func runTest(tester: ForeignExecutorTester, delay: UInt32) async -> TestResult {
-//     let handle = Task { () -> TestResult in
-//         tester.scheduleTest(delay: delay)
-//         try! await Task.sleep(nanoseconds: numericCast((delay + 10) * 1000000))
-//         return tester.getLastResult()!
-//     }
-//     return await handle.value
-// }
+func TestForeignExecutor(t *testing.T) {
+	// Test scheduling with no delay
+	result := runTest(
+		NewForeignExecutorTester(UniFfiForeignExecutor{}),
+		0,
+	)
+	assert.True(t, result.CallHappenedInDifferentThread)
+	assert.True(t, result.DelayMs <= 1)
 
-// Task {
-//     // Test scheduling with no delay
-//     let result = await runTest(
-//         tester: ForeignExecutorTester(
-//             executor: UniFfiForeignExecutor(priority: TaskPriority.background)
-//         ),
-//         delay: 0
-//     )
-//     assert(result.callHappenedInDifferentThread)
-//     assert(result.delayMs <= 1)
-
-//     // Test scheduling with delay and an executor created from a list
-//     let result2 = await runTest(
-//         tester: ForeignExecutorTester.newFromSequence(
-//             executors: [UniFfiForeignExecutor(priority: TaskPriority.background)]
-//         ),
-//         delay: 1000
-//     )
-//     assert(result2.callHappenedInDifferentThread)
-//     assert(result2.delayMs >= 90)
-//     assert(result2.delayMs <= 110)
-// }
-
+	// Test scheduling with delay and an executor created from a list
+	result2 := runTest(
+		ForeignExecutorTesterNewFromSequence(
+			[]UniFfiForeignExecutor{UniFfiForeignExecutor{}},
+		),
+		1000,
+	)
+	assert.True(t, result2.CallHappenedInDifferentThread)
+	assert.True(t, result2.DelayMs >= 90)
+	assert.True(t, result2.DelayMs <= 110)
+}
