@@ -2,6 +2,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */#}
 
+{{- self.add_import("runtime/cgo") }}
+
 // Callbacks for async functions
 
 // Callback handlers for an async calls. These are invoked by Rust when the future is ready.
@@ -14,7 +16,8 @@ func {{ result_type|future_callback }}(
 	returnValue {{ result_type.future_callback_param().borrow()|ffi_type_name_cgo_safe }},
 	status C.RustCallStatus,
 ) {
-	done := *(*chan {{ result_type|future_chan_type }})(rawChan)
+	doneHandle := cgo.Handle(rawChan)
+	done := doneHandle.Value().((chan {{ result_type|future_chan_type }}))
 
 	{%- match result_type.throws_type %}
 	{%- when Some with (e) %}

@@ -7,6 +7,9 @@ func {{ func.name()|fn_name}}({%- call go::arg_list_decl(func) -%}) {% call go::
 	// We create a channel, that this function blocks on, until the callback sends a result on it
 	
 	done := make(chan {{ func.result_type().borrow()|future_chan_type }})
+	chanHandle := cgo.NewHandle(done)
+	defer chanHandle.Delete()
+
 	rustCall(func(_uniffiStatus *C.RustCallStatus) bool {
 		C.{{ func.ffi_func().name() }}(
 			{%- for arg in func.arguments() %}
@@ -14,7 +17,7 @@ func {{ func.name()|fn_name}}({%- call go::arg_list_decl(func) -%}) {% call go::
 			{%- endfor %}
 			FfiConverterForeignExecutorINSTANCE.Lower(UniFfiForeignExecutor {}),
 			C.UniFfiFutureCallback{{ func.result_type().future_callback_param().borrow()|cgo_ffi_callback_type }}(C.{{ func.result_type().borrow()|future_callback }}),
-			unsafe.Pointer(&done),
+			unsafe.Pointer(chanHandle),
 			_uniffiStatus,
 		)
 		return false
@@ -22,7 +25,7 @@ func {{ func.name()|fn_name}}({%- call go::arg_list_decl(func) -%}) {% call go::
 
 	// wait for things to be done
         res := <- done
-
+	
 	{%- match func.return_type() -%}
 	{%- when Some with (return_type) -%}
 		{%- match func.throws_type() -%}

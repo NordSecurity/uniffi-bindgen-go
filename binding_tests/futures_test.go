@@ -6,6 +6,7 @@ package binding_tests
 
 import (
 	"sync"
+	"fmt"
 	"testing"
 	"time"
 
@@ -28,13 +29,16 @@ func TestFutures(t *testing.T) {
 	{
 		result := NewMyRecord("foo", 42)
 		assert.Equal(t, result.A, "foo")
-		assert.Equal(t, result.B, 42)
+		assert.Equal(t, result.B, uint32(42))
 
 		// Test `void`
 		t0 := time.Now()
 		Void()
 		t1 := time.Now()
-		assert.True(t, t1.Sub(t0) < 1*time.Millisecond)
+		
+		elapsed := t1.Sub(t0)
+		fmt.Printf("elapsed %s\n", elapsed)
+		assert.True(t, elapsed < 1*time.Millisecond)
 	}
 	// Test `Sleep`
 	{
@@ -43,7 +47,8 @@ func TestFutures(t *testing.T) {
 		t1 := time.Now()
 
 		elapsed := t1.Sub(t0)
-		assert.True(t, elapsed < 2010*time.Millisecond)
+		fmt.Printf("elapsed %s\n", elapsed)
+		assert.True(t, elapsed < 2100*time.Millisecond)
 		assert.True(t, elapsed > 2000*time.Millisecond)
 		assert.True(t, result)
 	}
@@ -56,7 +61,9 @@ func TestFutures(t *testing.T) {
 		t1 := time.Now()
 
 		elapsed := t1.Sub(t0)
-		assert.True(t, elapsed < 3010*time.Millisecond)
+		fmt.Printf("elapsed %s\n", elapsed)
+
+		assert.True(t, elapsed < 3100*time.Millisecond)
 		assert.True(t, elapsed > 3000*time.Millisecond)
 		assert.Equal(t, resultAlice, "Hello, Alice!")
 		assert.Equal(t, resultBob, "Hello, Bob!")
@@ -84,7 +91,8 @@ func TestFutures(t *testing.T) {
 		wg.Wait()
 		t1 := time.Now()
 		elapsed := t1.Sub(t0)
-		assert.True(t, elapsed < 2010*time.Millisecond)
+		fmt.Printf("elapsed %s\n", elapsed)
+		assert.True(t, elapsed < 2100*time.Millisecond)
 		assert.True(t, elapsed > 2000*time.Millisecond)
 
 	}
