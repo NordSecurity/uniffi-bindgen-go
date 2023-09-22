@@ -48,7 +48,7 @@ func TestProcMacro(t *testing.T) {
 	assert.Nil(t, obj.DoStuff(5))
 	assert.EqualError(t, obj.DoStuff(0), "FlatError: InvalidInput: Invalid input")
 
-	TestCallCallbackInterface(GoTestCallbackInterface{})
+	CallCallbackInterface(GoTestCallbackInterface{})
 }
 
 type GoTestCallbackInterface struct{}
