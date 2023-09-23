@@ -484,7 +484,7 @@ pub mod filters {
                 ..
             } => {
                 format!(
-                    "RustBufferFromForeign({}({}))",
+                    "RustBufferFromExternal({}({}))",
                     lower_fn(arg)?,
                     var_name(arg.name())?
                 )

@@ -13,7 +13,7 @@ type RustBufferI interface {
 	Capacity() int
 }
 
-func RustBufferFromForeign(b RustBufferI) RustBuffer {
+func RustBufferFromExternal(b RustBufferI) RustBuffer {
 	return RustBuffer {
 		capacity: C.int(b.Capacity()),
 		len: C.int(b.Len()),
