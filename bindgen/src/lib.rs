@@ -66,7 +66,7 @@ impl uniffi_bindgen::BindingGenerator for BindingGeneratorGo {
         config: Self::Config,
         out_dir: &Utf8Path,
     ) -> anyhow::Result<()> {
-        let bindings_path = full_bindings_path(&config, &ci, out_dir);
+        let bindings_path = full_bindings_path(&config, out_dir);
         fs::create_dir_all(&bindings_path)?;
         let go_file = bindings_path.join(format!("{}.go", ci.namespace()));
         let (header, c_file_content, wrapper) = generate_go_bindings(&config, &ci)?;
@@ -107,7 +107,7 @@ impl uniffi_bindgen::BindingGenerator for BindingGeneratorGo {
     }
 }
 
-fn full_bindings_path(config: &Config, ci: &ComponentInterface, out_dir: &Utf8Path) -> Utf8PathBuf {
+fn full_bindings_path(config: &Config, out_dir: &Utf8Path) -> Utf8PathBuf {
     let package_path: Utf8PathBuf = config.package_name().split('.').collect();
     Utf8PathBuf::from(out_dir).join(package_path)
 }

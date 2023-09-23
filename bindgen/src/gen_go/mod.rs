@@ -553,16 +553,7 @@ pub mod filters {
         let ffi_type: FfiType = type_.clone().into();
         let result = match ffi_type {
             FfiType::RustArcPtr(_) => "unsafe.Pointer".into(),
-            FfiType::RustBuffer(name) => match name {
-                Some(_name) => {
-                    // External buffer
-                    format!("RustBufferI")
-                }
-                None => {
-                    // Our "own"
-                    "RustBufferI".into()
-                }
-            },
+            FfiType::RustBuffer(_) => "RustBufferI".into(),
             _ => format!("C.{}", oracle().ffi_type_label(&ffi_type)),
         };
         Ok(result)

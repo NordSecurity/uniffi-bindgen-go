@@ -23,7 +23,7 @@ func (c FfiConverterBytes) Write(writer io.Writer, value []byte) {
 		panic(err)
 	}
 	if write_length != len(value) {
-		panic(fmt.Errorf("bad write length when writing string, expected %d, written %d", len(value), write_length))
+		panic(fmt.Errorf("bad write length when writing []byte, expected %d, written %d", len(value), write_length))
 	}
 }
 
