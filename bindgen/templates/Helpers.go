@@ -10,20 +10,6 @@ func rustCallWithError[U any](converter BufLifter[error], callback func(*C.RustC
 	return returnValue, err
 }
 
-{# /*func rustCallAsync[U any](converter BufLifter[error], callback func(*C.RustCallStatus) U) (U, error) {
-	// TODO: pass and create args to the callback
-	// c function expects
-	// 1. <regular  args>
-	// 2. Uniffi foreign executor
-	// 3. callback (the type alias)
-	// 4. status
-	var status C.RustCallStatus
-	returnValue := callback(&status)
-	err := checkCallStatus(converter, status)
-
-	return returnValue, err
-} */#}
-
 func checkCallStatus(converter BufLifter[error], status C.RustCallStatus) error {
 	switch status.code {
 	case 0:

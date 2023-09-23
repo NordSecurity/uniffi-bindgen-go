@@ -4,7 +4,7 @@
 
 {%- if func.is_async() %}
 func {{ func.name()|fn_name}}({%- call go::arg_list_decl(func) -%}) {% call go::return_type_decl(func) %} {
-  {%- call go::async_ffi_call_binding(func, "") -%}
+	{% call go::async_ffi_call_binding(func, "") %}
 }
 {%- else %}
 func {{ func.name()|fn_name}}({%- call go::arg_list_decl(func) -%}) {% call go::return_type_decl(func) %} {

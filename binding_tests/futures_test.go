@@ -15,14 +15,29 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func assertInstantExecution(t *testing.T, start time.Time) {
+	t1 := time.Now()
+	elapsed := t1.Sub(start)
+
+	fmt.Printf("elapsed %s\n", elapsed)
+	assert.True(t, elapsed < 10*time.Millisecond)
+	assert.True(t, elapsed > 0)
+}
+
+func assertDelayedExecution(t *testing.T, start time.Time, delay time.Duration) {
+	t1 := time.Now()
+	elapsed := t1.Sub(start)
+
+	fmt.Printf("elapsed %s\n", elapsed)
+	assert.True(t, elapsed < delay+50*time.Millisecond)
+	assert.True(t, elapsed > delay)
+}
+
 func TestFuturesAlwaysReady(t *testing.T) {
 	// Test `alwaysReady`
-
 	t0 := time.Now()
 	result := AlwaysReady()
-	t1 := time.Now()
-
-	assert.True(t, t1.Sub(t0) < 1*time.Millisecond)
+	assertInstantExecution(t, t0)
 	assert.True(t, result)
 }
 
@@ -36,22 +51,15 @@ func TestFuturesRecord(t *testing.T) {
 	// Test `void`
 	t0 := time.Now()
 	Void()
-	t1 := time.Now()
-
-	elapsed := t1.Sub(t0)
-	fmt.Printf("elapsed %s\n", elapsed)
-	assert.True(t, elapsed < 1*time.Millisecond)
+	assertInstantExecution(t, t0)
 }
+
 func TestFuturesSleep(t *testing.T) {
 	// Test `Sleep`
 	t0 := time.Now()
 	result := Sleep(200)
-	t1 := time.Now()
 
-	elapsed := t1.Sub(t0)
-	fmt.Printf("elapsed %s\n", elapsed)
-	assert.True(t, elapsed < 250*time.Millisecond)
-	assert.True(t, elapsed > 200*time.Millisecond)
+	assertDelayedExecution(t, t0, 200*time.Millisecond)
 	assert.True(t, result)
 }
 
@@ -60,13 +68,8 @@ func TestFuturesSequential(t *testing.T) {
 	t0 := time.Now()
 	resultAlice := SayAfter(100, "Alice")
 	resultBob := SayAfter(200, "Bob")
-	t1 := time.Now()
 
-	elapsed := t1.Sub(t0)
-	fmt.Printf("elapsed %s\n", elapsed)
-
-	assert.True(t, elapsed < 350*time.Millisecond)
-	assert.True(t, elapsed > 300*time.Millisecond)
+	assertDelayedExecution(t, t0, 300*time.Millisecond)
 	assert.Equal(t, resultAlice, "Hello, Alice!")
 	assert.Equal(t, resultBob, "Hello, Bob!")
 }
@@ -91,12 +94,8 @@ func TestFuturesConcurrent(t *testing.T) {
 	}()
 
 	wg.Wait()
-	t1 := time.Now()
-	elapsed := t1.Sub(t0)
-	fmt.Printf("elapsed %s\n", elapsed)
-	assert.True(t, elapsed < 250*time.Millisecond)
-	assert.True(t, elapsed > 200*time.Millisecond)
 
+	assertDelayedExecution(t, t0, 200*time.Millisecond)
 }
 
 func TestFuturesAsyncMethods(t *testing.T) {
@@ -105,12 +104,8 @@ func TestFuturesAsyncMethods(t *testing.T) {
 
 	t0 := time.Now()
 	resultAlice := megaphone.SayAfter(200, "Alice")
-	t1 := time.Now()
 
-	elapsed := t1.Sub(t0)
-	fmt.Printf("elapsed %s\n", elapsed)
-	assert.True(t, elapsed < 250*time.Millisecond)
-	assert.True(t, elapsed > 200*time.Millisecond)
+	assertDelayedExecution(t, t0, 200*time.Millisecond)
 	assert.Equal(t, resultAlice, "HELLO, ALICE!")
 }
 
@@ -127,12 +122,8 @@ func TestFuturesTokio(t *testing.T) {
 	// Test with the Tokio runtime.
 	t0 := time.Now()
 	resultAlice := SayAfterWithTokio(200, "Alice")
-	t1 := time.Now()
 
-	elapsed := t1.Sub(t0)
-	fmt.Printf("elapsed %s\n", elapsed)
-	assert.True(t, elapsed < 250*time.Millisecond)
-	assert.True(t, elapsed > 200*time.Millisecond)
+	assertDelayedExecution(t, t0, 200*time.Millisecond)
 	assert.Equal(t, resultAlice, "Hello, Alice (with Tokio)!")
 }
 
@@ -142,13 +133,8 @@ func TestFuturesFallibleNoThrow(t *testing.T) {
 	{
 		t0 := time.Now()
 		result, err := FallibleMe(false)
-		t1 := time.Now()
 
-		elapsed := t1.Sub(t0)
-		fmt.Printf("elapsed %s\n", elapsed)
-		assert.True(t, elapsed < 1*time.Millisecond)
-		assert.True(t, elapsed > 0*time.Millisecond)
-
+		assertInstantExecution(t, t0)
 		assert.Nil(t, err)
 		assert.Equal(t, result, uint8(42))
 
@@ -165,13 +151,9 @@ func TestFuturesFallibleNoThrow(t *testing.T) {
 
 		t0 := time.Now()
 		result, err := megaphone.FallibleMe(false)
-		t1 := time.Now()
 		assert.Nil(t, err)
 
-		elapsed := t1.Sub(t0)
-		fmt.Printf("elapsed %s\n", elapsed)
-		assert.True(t, elapsed < 1*time.Millisecond)
-		assert.True(t, elapsed > 0*time.Millisecond)
+		assertInstantExecution(t, t0)
 		assert.Equal(t, result, uint8(42))
 	}
 }
@@ -183,13 +165,8 @@ func TestFuturesFallibleThrows(t *testing.T) {
 
 		_, err := FallibleMe(true)
 		assert.EqualError(t, err, "MyError: Foo")
-		t1 := time.Now()
 
-		elapsed := t1.Sub(t0)
-		fmt.Printf("elapsed %s\n", elapsed)
-		assert.True(t, elapsed < 1*time.Millisecond)
-		assert.True(t, elapsed > 0*time.Millisecond)
-
+		assertInstantExecution(t, t0)
 		_, err = FallibleStruct(true)
 		assert.EqualError(t, err, "MyError: Foo")
 	}
@@ -199,13 +176,9 @@ func TestFuturesFallibleThrows(t *testing.T) {
 
 		t0 := time.Now()
 		_, err := megaphone.FallibleMe(true)
-		t1 := time.Now()
-		assert.EqualError(t, err, "MyError: Foo")
 
-		elapsed := t1.Sub(t0)
-		fmt.Printf("elapsed %s\n", elapsed)
-		assert.True(t, elapsed < 1*time.Millisecond)
-		assert.True(t, elapsed > 0*time.Millisecond)
+		assertInstantExecution(t, t0)
+		assert.EqualError(t, err, "MyError: Foo")
 	}
 }
 

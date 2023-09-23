@@ -22,7 +22,7 @@ func runTest(tester *ForeignExecutorTester, delay uint32) *TestResult {
 func TestForeignExecutor(t *testing.T) {
 	// Test scheduling with no delay
 	result := runTest(
-		NewForeignExecutorTester(NewUniFfiForeignExecutor()),
+		NewForeignExecutorTester(UniFfiForeignExecutor{}),
 		0,
 	)
 	assert.NotNil(t, result)
@@ -32,7 +32,7 @@ func TestForeignExecutor(t *testing.T) {
 	// Test scheduling with delay and an executor created from a list
 	result2 := runTest(
 		ForeignExecutorTesterNewFromSequence(
-			[]UniFfiForeignExecutor{NewUniFfiForeignExecutor()},
+			[]UniFfiForeignExecutor{UniFfiForeignExecutor{}},
 		),
 		100,
 	)

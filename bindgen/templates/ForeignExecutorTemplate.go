@@ -4,17 +4,12 @@ const uniffiForeignExecutorCallbackSuccess byte = 0
 const uniffiForeignExecutorCallbackCanceled byte = 1
 const uniffiForeignExecutorCallbackError byte = 2
 
-{% if self.include_once_check("CallbackInterfaceRuntime.go") %}{% include "CallbackInterfaceRuntime.go" %}{% endif %}
-{{- self.add_import("sync") }}
+{% if self.include_once_check("CallbackHelpers.go") %}{% include "CallbackHelpers.go" %}{% endif %}
 {{- self.add_import("runtime") }}
 {{- self.add_import("time") }}
 
-// Encapsulates an executor that can run Rust tasks
+// UniFfiForeignExecutor encapsulates an executor that can run Rust tasks.
 type UniFfiForeignExecutor struct {}
-
-func NewUniFfiForeignExecutor() UniFfiForeignExecutor {
-	return UniFfiForeignExecutor{}
-}
 
 type FfiConverterForeignExecutor struct {}
 var FfiConverterForeignExecutorINSTANCE = FfiConverterForeignExecutor{}
@@ -29,7 +24,7 @@ func (c FfiConverterForeignExecutor) Write(writer io.Writer, value UniFfiForeign
 
 func (c FfiConverterForeignExecutor) Lift(value C.int) UniFfiForeignExecutor {
 	if value != 0 {
-		panic(fmt.Errorf("invalid executor pointer: %d", value))
+		panic(fmt.Errorf("Invalid executor pointer: %d", value))
 	}
 	return UniFfiForeignExecutor{}
 }
@@ -70,7 +65,12 @@ func uniffiInitForeignExecutor() {
 	{%- when Some with (fn) %}
 	rustCall(func(uniffiStatus *C.RustCallStatus) bool {
 		C.{{ fn.name() }}(C.ForeignExecutorCallback(C.uniffiForeignExecutorCallback{{config.package_name.as_ref().unwrap()}}), uniffiStatus)
-		// TODO: handle error
+		if uniffiStatus != nil {
+			err := checkCallStatusUnknown(*uniffiStatus)
+			if err != nil {
+				panic(fmt.Errorf("Failed to register ForeignExecutor %v", err))
+			}
+		}
 		return false
 	})
 	{%- when None %}

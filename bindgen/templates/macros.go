@@ -4,20 +4,20 @@
 
 {% macro arg_list_decl(func) %}
 	{%- for arg in func.arguments() -%}
-          {%- let type_ = arg.as_type() %}
-          {%- match type_ %}
-          {%- when Type::Enum { name, module_path } %}
-              {%- let e = ci.get_enum_definition(name).expect("missing cbi") %}
-              {%- if ci.is_name_used_as_error(name) %}
+          {%- let type_ = arg.as_type() -%}
+          {%- match type_ -%}
+          {%- when Type::Enum { name, module_path } -%}
+              {%- let e = ci.get_enum_definition(name).expect("missing cbi") -%}
+              {%- if ci.is_name_used_as_error(name) -%}
                   {{ arg.name()|var_name }} *{{ arg|type_name }}
-              {%- else %}
+              {%- else -%}
                   {{ arg.name()|var_name }} {{ arg|type_name }}
-              {%- endif %}
-          {%- else %}
+              {%- endif -%}
+          {%- else -%}
               {{ arg.name()|var_name }} {{ arg|type_name }}
-          {%- endmatch %}
+          {%- endmatch -%}
 		{%- if !loop.last %}, {% endif -%}
-	{%- endfor %}
+	{%- endfor -%}
 {%- endmacro %}
 
 {% macro return_type_decl(func) %}
@@ -58,9 +58,9 @@
 
 {% macro ffi_call_binding(func, prefix) %}
 	{%- match func.return_type() -%}
-	{%- when Some with (return_type) %}
+	{%- when Some with (return_type) -%}
 		{%- match func.throws_type() -%}
-		{%- when Some with (throws_type) %}
+		{%- when Some with (throws_type) -%}
 		_uniffiRV, _uniffiErr := {% call to_ffi_call(func, prefix) %}
 		if _uniffiErr != nil {
 			var _uniffiDefaultValue {{ return_type|type_name }}
@@ -68,18 +68,18 @@
 		} else {
 			return {{ return_type|lift_fn }}(_uniffiRV), _uniffiErr
 		}
-		{%- when None %}
+		{%- when None -%}
 		return {{ return_type|lift_fn }}({% call to_ffi_call(func, prefix) %})
-		{%- endmatch %}
-	{%- when None %}
+		{%- endmatch -%}
+	{%- when None -%}
 		{%- match func.throws_type() -%}
-		{%- when Some with (throws_type) %}
+		{%- when Some with (throws_type) -%}
 		_, _uniffiErr := {% call to_ffi_call(func, prefix) %}
 		return _uniffiErr
-		{%- when None %}
+		{%- when None -%}
 		{% call to_ffi_call(func, prefix) %}
-		{%- endmatch %}
-	{%- endmatch %}
+		{%- endmatch -%}
+	{%- endmatch -%}
 {% endmacro %}
 
 {%- macro to_ffi_call(func, prefix) -%}
