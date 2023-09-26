@@ -24,6 +24,7 @@ interface ValidationError {
   InvalidUser(i32 user_id);
   InvalidMessage(string message);
   InvalidUserAndMessage(i32 user_id, string message);
+  UnknownError();
 };
 
 [Error]
