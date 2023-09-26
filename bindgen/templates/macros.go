@@ -139,7 +139,7 @@
 			{%- endfor %}
 			FfiConverterForeignExecutorINSTANCE.Lower(UniFfiForeignExecutor {}),
 			C.UniFfiFutureCallback{{ func.result_type().future_callback_param().borrow()|cgo_ffi_callback_type }}(C.{{ func.result_type().borrow()|future_callback }}),
-			unsafe.Pointer(chanHandle),
+			unsafe.Pointer(&chanHandle),
 			_uniffiStatus,
 		)
 		return false

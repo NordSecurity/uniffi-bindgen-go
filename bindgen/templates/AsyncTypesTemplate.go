@@ -16,7 +16,7 @@ func {{ result_type|future_callback }}(
 	returnValue {{ result_type.future_callback_param().borrow()|ffi_type_name_cgo_safe }},
 	status C.RustCallStatus,
 ) {
-	doneHandle := cgo.Handle(rawChan)
+	doneHandle := *(*cgo.Handle)(rawChan)
 	done := doneHandle.Value().((chan {{ result_type|future_chan_type }}))
 
 	{%- match result_type.throws_type %}
