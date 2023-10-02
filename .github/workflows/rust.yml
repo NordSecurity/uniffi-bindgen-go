@@ -20,11 +20,12 @@ jobs:
         submodules: 'true'
     - name: Build
       run: ./build.sh
+    - name: Build Bindings
+      run: ./build_bindings.sh
     - uses: actions/upload-artifact@v3
       with:
         path: |
           target/debug/libuniffi_fixtures.so
-          target/debug/uniffi-bindgen-go
 
   test-bindings:
     runs-on: ubuntu-latest
@@ -41,5 +42,4 @@ jobs:
         path: target/debug
     - name: Test
       run: |
-        chmod +x target/debug/uniffi-bindgen-go
         ./test_bindings.sh
