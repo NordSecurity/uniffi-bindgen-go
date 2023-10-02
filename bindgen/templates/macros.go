@@ -107,7 +107,7 @@
 		{{ prefix }},
 	{%- endif %}
 	{%- for arg in func.arguments() %}
-                {{- arg|lower_fn_call }}
+                {%- call lower_fn_call(arg) -%}
 		{%- if !loop.last %}, {% endif %}
 	{%- endfor %}
 	{%- if func.arguments().len() > 0 %},{% endif %} _uniffiStatus
@@ -135,7 +135,7 @@
 			{{ prefix }},
 			{%- endif %}
 			{%- for arg in func.arguments() %}
-			{{- arg|lower_fn_call }},
+                        {%- call lower_fn_call(arg) -%},
 			{%- endfor %}
 			FfiConverterForeignExecutorINSTANCE.Lower(UniFfiForeignExecutor {}),
 			C.UniFfiFutureCallback{{ func.result_type().future_callback_param().borrow()|cgo_ffi_callback_type }}(C.{{ func.result_type().borrow()|future_callback }}),
@@ -165,3 +165,20 @@
 		{%- endmatch %}
 	{%- endmatch %}
 {%- endmacro -%}
+
+
+{%- macro lower_fn_call(arg) -%}
+{%- match arg.as_type() -%}
+{%- when Type::External with { kind, module_path, name } -%}
+{%- match kind -%}
+{%- when ExternalKind::DataClass -%}
+RustBufferFromExternal({{ arg|lower_fn }}({{ arg.name()|var_name }}))
+{%- else -%}
+{{ arg|lower_fn }}({{ arg.name()|var_name }})
+{%- endmatch -%}
+{%- else -%}
+{{ arg|lower_fn }}({{ arg.name()|var_name }})
+{%- endmatch -%}
+{%- endmacro -%}
+
+

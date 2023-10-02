@@ -468,24 +468,6 @@ pub mod filters {
         ))
     }
 
-    pub fn lower_fn_call(arg: &Argument) -> Result<String, askama::Error> {
-        let res = match arg.as_type() {
-            Type::External {
-                kind: ExternalKind::DataClass,
-                ..
-            } => {
-                format!(
-                    "RustBufferFromExternal({}({}))",
-                    lower_fn(arg)?,
-                    var_name(arg.name())?
-                )
-            }
-            _ => format!("{}({})", lower_fn(arg)?, var_name(arg.name())?),
-        };
-
-        Ok(res)
-    }
-
     pub fn lower_fn(type_: &impl AsType) -> Result<String, askama::Error> {
         Ok(format!(
             "{}INSTANCE.Lower",
