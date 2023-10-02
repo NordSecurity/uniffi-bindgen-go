@@ -24,9 +24,12 @@ jobs:
       run: ./build_bindings.sh
     - uses: actions/upload-artifact@v3
       with:
-        path: |
-          target/debug/libuniffi_fixtures.so
-          binding_tests/generated
+        name: lib
+        path: target/debug/libuniffi_fixtures.so
+    - uses: actions/upload-artifact@v3
+      with:
+        name: bindings
+        path: binding_tests/generated/
 
   test-bindings:
     runs-on: ubuntu-latest
@@ -39,8 +42,12 @@ jobs:
         submodules: 'true'
     - uses: actions/download-artifact@v3
       with:
-        name: artifact
+        name: lib
         path: target/debug
+    - uses: actions/download-artifact@v3
+      with:
+        name: bindings
+        path: binding_tests/generated
     - name: Test
       run: |
         ./test_bindings.sh
