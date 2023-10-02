@@ -74,8 +74,7 @@ uniffi-bindgen-go path/to/definitions.udl --config path/to/uniffi.toml
 
 - `go_mod` (optional) - Specify the go module for the final package, used as imports source for external types.
 
-- `c_module_filename`(optional) - override the name of th `C` module (`.h` and `.c`)
-    ```
+- `c_module_filename`(optional) - override the name of the `C` module (`.h` and `.c`)
 
 # Contributing
 
