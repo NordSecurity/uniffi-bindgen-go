@@ -13,4 +13,9 @@ mkdir $BINDINGS_DIR
 # FIXME: It would be better to generate and build fixtures one by one, instead of combining
 # them all into the same library
 
-target/debug/uniffi-bindgen-go "$BINARIES_DIR/libuniffi_fixtures.dylib" --out-dir "$BINDINGS_DIR" --library --config "$ROOT_DIR/fixtures/uniffi.toml"
+if [[ "$OSTYPE" == "darwin"* ]]; then
+LIB_FILE="$BINARIES_DIR/libuniffi_fixtures.dylib"
+else 
+LIB_FILE="$BINARIES_DIR/libuniffi_fixtures.so"
+fi
+target/debug/uniffi-bindgen-go $LIB_FILE --out-dir "$BINDINGS_DIR" --library --config "$ROOT_DIR/fixtures/uniffi.toml"
