@@ -29,8 +29,7 @@ mod record;
 pub struct Config {
     cdylib_name: Option<String>,
     package_name: Option<String>,
-    ffi_package_name: Option<String>,
-    ffi_module_filename: Option<String>,
+    c_module_filename: Option<String>,
     #[serde(default)]
     custom_types: HashMap<String, CustomTypeConfig>,
     #[serde(default)]
@@ -144,30 +143,22 @@ impl Config {
         }
     }
 
-    /// The name of the lower-level C module containing the FFI declarations.
-    pub fn ffi_package_name(&self) -> String {
-        match self.ffi_package_name.as_ref() {
-            Some(name) => name.clone(),
-            None => format!("{}FFI", self.package_name()),
-        }
-    }
-
     /// The filename stem for the lower-level C module containing the FFI declarations.
-    pub fn ffi_package_filename(&self) -> String {
-        match self.ffi_module_filename.as_ref() {
+    pub fn c_module_filename(&self) -> String {
+        match self.c_module_filename.as_ref() {
             Some(name) => name.clone(),
-            None => self.ffi_package_name(),
+            None => self.package_name(),
         }
     }
 
     /// The name of the `.h` file for the lower-level C module with FFI declarations.
     pub fn header_filename(&self) -> String {
-        format!("{}.h", self.ffi_package_filename())
+        format!("{}.h", self.c_module_filename())
     }
 
     /// The name of the `.c` file for the lower-level C module with FFI declarations.
     pub fn c_filename(&self) -> String {
-        format!("{}.c", self.ffi_package_filename())
+        format!("{}.c", self.c_module_filename())
     }
 
     /// The name of the compiled Rust library containing the FFI implementation.
