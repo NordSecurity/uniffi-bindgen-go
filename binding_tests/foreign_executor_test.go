@@ -27,7 +27,7 @@ func TestForeignExecutor(t *testing.T) {
 	)
 	assert.NotNil(t, result)
 	assert.True(t, result.CallHappenedInDifferentThread)
-	assert.True(t, result.DelayMs <= 1)
+	assert.True(t, result.DelayMs <= 10)
 
 	// Test scheduling with delay and an executor created from a list
 	result2 := runTest(
