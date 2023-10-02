@@ -26,6 +26,7 @@ jobs:
       with:
         path: |
           target/debug/libuniffi_fixtures.so
+          binding_tests/generated
 
   test-bindings:
     runs-on: ubuntu-latest
