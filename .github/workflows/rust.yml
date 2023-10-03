@@ -2,7 +2,7 @@ name: Rust
 
 on:
   push:
-    branches: [ "main", "upgarde-uniffi-24"]
+    branches: [ "main"]
   pull_request:
     branches: [ "main" ]
 

@@ -16,7 +16,8 @@ func uniffiCheckChecksums() {
 		return C.{{ ci.ffi_uniffi_contract_version().name() }}(uniffiStatus)
 	})
 	if bindingsContractVersion != int(scaffoldingContractVersion) {
-		panic("UniFFI contract version mismatch: try cleaning and rebuilding your project")
+		// If this happens try cleaning and rebuilding your project
+		panic("UniFFI contract version mismatch")
 	}
 	
 	{%- for (name, expected_checksum) in ci.iter_checksums() %}
@@ -25,7 +26,8 @@ func uniffiCheckChecksums() {
 		return C.{{ name }}(uniffiStatus)
 	})
 	if checksum != {{ expected_checksum }} {
-		panic("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+		// If this happens try cleaning and rebuilding your project
+		panic("UniFFI API checksum mismatch")
 	}
 	}
 	{%- endfor %}

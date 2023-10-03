@@ -37,14 +37,6 @@ uniffi-bindgen-go path/to/definitions.udl --config path/to/uniffi.toml
 
 - `package_name` - override the go package name.
 
-- `cdylib_name` - override the dynamic library name linked by generated bindings, excluding `lib`
-    prefix and `.dll` file extension.
-    ```toml
-    # For library `libgreeter.dll`
-    [bindings.go]
-    cdylib_name = "greeter"
-    ```
-
 - `custom_types` - properties for custom type defined in UDL with `[Custom] typedef string Url;`.
     ```toml
     # Represent URL as a native Go `url.Url`. The underlying type of URL is a string.
