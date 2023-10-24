@@ -1,0 +1,24 @@
+[package]
+name = "uniffi-go-fixture-name-case"
+version = "0.22.0"
+authors = ["Firefox Sync Team <sync-team@mozilla.com>"]
+edition = "2021"
+license = "MPL-2.0"
+publish = false
+
+[lib]
+name = "uniffi_go_name_case"
+crate-type = ["lib", "cdylib"]
+
+[dependencies]
+thiserror = "1.0"
+uniffi = { path = "../../3rd-party/uniffi-rs/uniffi" }
+
+[build-dependencies]
+uniffi = {path = "../../3rd-party/uniffi-rs/uniffi", features = ["build"] }
+
+[dev-dependencies]
+glob = "0.3"
+uniffi = {path = "../../3rd-party/uniffi-rs/uniffi", features = ["bindgen-tests"] }
+uniffi_bindgen = { path = "../../3rd-party/uniffi-rs/uniffi_bindgen" }
+uniffi_testing = { path = "../../3rd-party/uniffi-rs/uniffi_testing" }

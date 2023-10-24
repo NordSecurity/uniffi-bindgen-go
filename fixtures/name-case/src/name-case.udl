@@ -1,0 +1,35 @@
+namespace name_case {
+    void test();
+};
+
+enum ENUMTest { "VARIANTOne" };
+
+[Enum]
+interface AssociatedENUMTest {
+    VARIANTTest(i16 code);
+};
+
+[Error]
+enum ERRORTest { "VARIANTOne" };
+
+[Error]
+interface AssociatedERRORTest {
+    VARIANTTest(i16 code);
+};
+
+interface OBJECTTest {
+    constructor();
+
+    [Name="new_alternate"]
+    constructor();
+
+    void test();
+};
+
+dictionary RECORDTest {
+    i32 test;
+};
+
+callback interface CALLBACKTest {
+    void test();
+};
