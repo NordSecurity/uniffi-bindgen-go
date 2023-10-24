@@ -1217,6 +1217,7 @@ dependencies = [
  "uniffi-fixture-type-limits",
  "uniffi-go-fixture-destroy",
  "uniffi-go-fixture-errors",
+ "uniffi-go-fixture-name-case",
  "uniffi-go-fixture-objects",
 ]
 
@@ -1429,6 +1430,17 @@ dependencies = [
  "uniffi",
  "uniffi_build",
  "uniffi_macros",
+]
+
+[[package]]
+name = "uniffi-go-fixture-name-case"
+version = "0.22.0"
+dependencies = [
+ "glob",
+ "thiserror",
+ "uniffi",
+ "uniffi_bindgen",
+ "uniffi_testing",
 ]
 
 [[package]]

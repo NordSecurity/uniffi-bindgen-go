@@ -5,8 +5,8 @@
 package binding_tests
 
 import (
-    "testing"
-    "net/url"
+	"net/url"
+	"testing"
 
     "github.com/NordSecurity/uniffi-bindgen-go/binding_tests/generated/custom_types"
 
@@ -31,6 +31,6 @@ func TestCustomTypes(t *testing.T) {
 
 	// Change some data and ensure that the round-trip works
 	demo.Url = *unwrap(url.Parse("http://new.example.com/"))
-	demo.Handle = 456;
+	demo.Handle = 456
 	assert.Equal(t, demo, custom_types.GetCustomTypesDemo(&demo))
 }

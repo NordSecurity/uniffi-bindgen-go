@@ -54,7 +54,7 @@ pub struct SmallJournal {
 
 #[derive(Debug, Clone)]
 pub enum EnumJournal {
-    Journal { journal: SmallJournal }
+    Journal { journal: SmallJournal },
 }
 
 fn create_journal() -> ResourceJournal {

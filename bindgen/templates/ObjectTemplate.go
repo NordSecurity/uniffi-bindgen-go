@@ -5,23 +5,23 @@
 {{- self.add_import("runtime") }}
 
 {%- let obj = ci.get_object_definition(name).expect("missing obj") %}
-{%- let canonical_name = type_|canonical_name %}
+{%- let obj_name = obj.name()|class_name %}
 {%- if self.include_once_check("ObjectRuntime.go") %}{% include "ObjectRuntime.go" %}{% endif %}
 
-type {{ canonical_name }} struct {
+type {{ obj_name }} struct {
 	ffiObject FfiObject
 }
 
 {%- match obj.primary_constructor() %}
 {%- when Some with (cons) %}
-func New{{ canonical_name }}({% call go::arg_list_decl(cons) -%}) {% call go::return_type_decl(cons) %} {
+func New{{ obj_name }}({% call go::arg_list_decl(cons) -%}) {% call go::return_type_decl(cons) %} {
 	{% call go::ffi_call_binding(func, "") %}
 }
 {%- when None %}
 {%- endmatch %}
 
 {% for cons in obj.alternate_constructors() -%}
-func {{ canonical_name }}{{ cons.name()|fn_name }}({% call go::arg_list_decl(cons) %}) {% call go::return_type_decl(cons) %} {
+func {{ obj_name }}{{ cons.name()|fn_name }}({% call go::arg_list_decl(cons) %}) {% call go::return_type_decl(cons) %} {
 	{% call go::ffi_call_binding(func, "") %}
 }
 {% endfor %}
@@ -61,7 +61,7 @@ type {{ obj|ffi_converter_name }} struct {}
 var {{ obj|ffi_converter_name }}INSTANCE = {{ obj|ffi_converter_name }}{}
 
 func (c {{ obj|ffi_converter_name }}) Lift(pointer unsafe.Pointer) {{ type_name }} {
-	result := &{{ canonical_name }} {
+	result := &{{ obj_name }} {
 		newFfiObject(
 			pointer,
 			func(pointer unsafe.Pointer, status *C.RustCallStatus) {
