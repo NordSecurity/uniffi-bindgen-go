@@ -555,53 +555,6 @@ pub mod filters {
         Ok(oracle().enum_variant_name(nm))
     }
 
-    pub fn default_type(type_: &Option<Type>) -> Result<String, askama::Error> {
-        let res = match type_ {
-            Some(ty) => match ty {
-                Type::UInt8
-                | Type::Int8
-                | Type::UInt16
-                | Type::Int16
-                | Type::UInt32
-                | Type::Int32
-                | Type::UInt64
-                | Type::Int64
-                | Type::Float32
-                | Type::Float64 => "0".into(),
-                Type::Boolean => "false".into(),
-                Type::String => "\"\"".into(),
-                Type::Bytes => "[]byte{{}}".into(),
-                Type::Duration => "time.Duration{}".into(),
-                Type::Map {
-                    key_type,
-                    value_type,
-                } => format!(
-                    "map[{}]{}{{}}",
-                    type_name(&key_type)?,
-                    type_name(&value_type)?
-                ),
-                Type::Object { .. } => "nil".into(),
-                Type::Optional { .. } => "nil".into(),
-                Type::Record { name, .. } => format!("{}{{}}", name),
-                Type::Sequence { inner_type } => {
-                    format!("[]{}{{}}", type_name(inner_type)?)
-                }
-                Type::Timestamp => "time.Time{}".into(),
-                Type::Custom { name, .. } => format!("{}{{}}", name),
-
-                Type::Enum { .. } => "0".into(), // enums are respresented as uint
-                Type::CallbackInterface { .. } => "nil".into(),
-                Type::ForeignExecutor => "nil".into(),
-                Type::External { name, kind, .. } => match kind {
-                    ExternalKind::Interface => "nil".into(),
-                    ExternalKind::DataClass => format!("{}{{}}", name),
-                },
-            },
-            None => "nil".into(),
-        };
-        Ok(res)
-    }
-
     /// Name of the callback function to handle an async result
     pub fn future_callback(result: &ResultType) -> Result<String, askama::Error> {
         Ok(format!(

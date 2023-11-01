@@ -28,9 +28,9 @@ func {{ result_type|future_callback }}(
 	if err != nil {
 		{%- match result_type.return_type -%}
 		{%- when Some with (return_type) -%}
-		// {{ format!("{:?}", result_type.return_type) }}
+		var _val {{ return_type|type_name }}
 		done <- {{ result_type|future_chan_type }} {
-			val: {{ result_type.return_type|default_type }},
+			val: _val,
 			err: err,
 		}
 		{%- else %}
