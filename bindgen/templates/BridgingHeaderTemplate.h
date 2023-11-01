@@ -15,15 +15,15 @@
 // We ensure they are declared exactly once, with a header guard, UNIFFI_SHARED_H.
 #ifdef UNIFFI_SHARED_H
 	// We also try to prevent mixing versions of shared uniffi header structs.
-	// If you add anything to the #else block, you must increment the version suffix in UNIFFI_SHARED_HEADER_V5
-	#ifndef UNIFFI_SHARED_HEADER_V5
+	// If you add anything to the #else block, you must increment the version suffix in UNIFFI_SHARED_HEADER_V6
+	#ifndef UNIFFI_SHARED_HEADER_V6
 		#error Combining helper code from multiple versions of uniffi is not supported
-	#endif // ndef UNIFFI_SHARED_HEADER_V5
+	#endif // ndef UNIFFI_SHARED_HEADER_V6
 #else
 #define UNIFFI_SHARED_H
-#define UNIFFI_SHARED_HEADER_V5
+#define UNIFFI_SHARED_HEADER_V6
 // ⚠️ Attention: If you change this #else block (ending in `#endif // def UNIFFI_SHARED_H`) you *must* ⚠️
-// ⚠️ increment the version suffix in all instances of UNIFFI_SHARED_HEADER_V5 in this file.           ⚠️
+// ⚠️ increment the version suffix in all instances of UNIFFI_SHARED_HEADER_V6 in this file.           ⚠️
 
 typedef struct RustBuffer {
 	int32_t capacity;
@@ -56,8 +56,11 @@ typedef struct RustCallStatus {
 	RustBuffer errorBuf;
 } RustCallStatus;
 
+// Continuation callback for UniFFI Futures
+typedef void (*RustFutureContinuation)(void * , int8_t);
+
 // ⚠️ Attention: If you change this #else block (ending in `#endif // def UNIFFI_SHARED_H`) you *must* ⚠️
-// ⚠️ increment the version suffix in all instances of UNIFFI_SHARED_HEADER_V5 in this file.           ⚠️
+// ⚠️ increment the version suffix in all instances of UNIFFI_SHARED_HEADER_V6 in this file.           ⚠️
 #endif // def UNIFFI_SHARED_H
 
 // Needed because we can't execute the callback directly from go.
@@ -65,11 +68,7 @@ void cgo_rust_task_callback_bridge_{{ config.package_name.as_ref().unwrap() }}(R
 
 int8_t uniffiForeignExecutorCallback{{ config.package_name.as_ref().unwrap() }}(uint64_t, uint32_t, RustTaskCallback, void*);
 
-// Callbacks for UniFFI Futures
-{%- for ffi_type in ci.iter_future_callback_params() %}
-typedef void (*UniFfiFutureCallback{{ ffi_type|cgo_ffi_callback_type }})(const void *, {{ ffi_type|cgo_ffi_type }}, RustCallStatus);
-{%- endfor %}
-
+void uniffiFutureContinuationCallback{{ config.package_name.as_ref().unwrap() }}(void*, int8_t);
 
 {% for func in ci.iter_ffi_function_definitions() -%}
 	{%- match func.return_type() -%}{%- when Some with (type_) %}{{ type_|cgo_ffi_type }}{% when None %}void{% endmatch %} {{ func.name() }}(
@@ -82,6 +81,4 @@ typedef void (*UniFfiFutureCallback{{ ffi_type|cgo_ffi_callback_type }})(const v
 int32_t {{ func }}(uint64_t, int32_t, uint8_t *, int32_t, RustBuffer *);
 {%- endfor %}
 
-{%- for result_type in ci.iter_async_result_types() %}
-void {{ result_type|future_callback }}(void *, {{ result_type.future_callback_param().borrow()|cgo_ffi_type }}, RustCallStatus);
-{%- endfor %}
+

@@ -5,5 +5,6 @@ const (
 	uniffiCallbackResultSuccess         uniffiCallbackResult = 0
 	uniffiCallbackResultError           uniffiCallbackResult = 1
 	uniffiCallbackUnexpectedResultError uniffiCallbackResult = 2
+	uniffiCallbackCancelled             uniffiCallbackResult = 3
 )
 

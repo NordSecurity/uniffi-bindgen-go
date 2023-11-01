@@ -7,16 +7,28 @@ use uniffi_bindgen::{backend::CodeType, interface::ExternalKind};
 #[derive(Debug)]
 pub struct ExternalCodeType {
     name: String,
+    #[allow(dead_code)]
     module_path: String,
     kind: ExternalKind,
+    namespace: String,
+    #[allow(dead_code)]
+    tagged: bool,
 }
 
 impl ExternalCodeType {
-    pub fn new(name: String, module_path: String, kind: ExternalKind) -> Self {
+    pub fn new(
+        name: String,
+        module_path: String,
+        kind: ExternalKind,
+        namespace: String,
+        tagged: bool,
+    ) -> Self {
         ExternalCodeType {
             name,
             module_path,
             kind,
+            namespace,
+            tagged,
         }
     }
 }
@@ -24,8 +36,8 @@ impl ExternalCodeType {
 impl CodeType for ExternalCodeType {
     fn type_label(&self) -> String {
         match self.kind {
-            ExternalKind::DataClass => format!("{}.{}", self.module_path, self.name),
-            ExternalKind::Interface => format!("*{}.{}", self.module_path, self.name),
+            ExternalKind::DataClass => format!("{}.{}", self.namespace, self.name),
+            ExternalKind::Interface => format!("*{}.{}", self.namespace, self.name),
         }
     }
 
@@ -37,6 +49,6 @@ impl CodeType for ExternalCodeType {
     }
 
     fn ffi_converter_name(&self) -> String {
-        format!("{}.FfiConverter{}", self.module_path, self.canonical_name())
+        format!("{}.FfiConverter{}", self.namespace, self.canonical_name())
     }
 }

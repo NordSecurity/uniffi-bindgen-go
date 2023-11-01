@@ -56,6 +56,15 @@
 	{%- endmatch %}
 {%- endmacro %}
 
+
+{% macro return_type_decl_async(func) %}
+	{%- match func.return_type() -%}
+	{%- when Some with (return_type) -%}
+		{{ return_type|type_name }}
+	{%- when None -%}
+	{%- endmatch %}
+{%- endmacro %}
+
 {% macro ffi_call_binding(func, prefix) %}
 	{%- match func.return_type() -%}
 	{%- when Some with (return_type) -%}
@@ -124,52 +133,60 @@
 {%- endmacro -%}
 
 {%- macro async_ffi_call_binding(func, prefix) -%}
-	// We create a channel, that this function blocks on, until the callback sends a result on it
-	done := make(chan {{ func.result_type().borrow()|future_chan_type }})
-	chanHandle := cgo.NewHandle(done)
-	defer chanHandle.Delete()
-
-	rustCall(func(_uniffiStatus *C.RustCallStatus) bool {
-		C.{{ func.ffi_func().name() }}(
-			{%- if !prefix.is_empty() %}
-			{{ prefix }},
-			{%- endif %}
-			{%- for arg in func.arguments() %}
-                        {%- call lower_fn_call(arg) -%},
-			{%- endfor %}
-			FfiConverterForeignExecutorINSTANCE.Lower(UniFfiForeignExecutor {}),
-			C.UniFfiFutureCallback{{ func.result_type().future_callback_param().borrow()|cgo_ffi_callback_type }}(C.{{ func.result_type().borrow()|future_callback }}),
-			unsafe.Pointer(&chanHandle),
-			_uniffiStatus,
-		)
-		return false
-	})
-
-	// wait for things to be done
-        res := <- done
-	
-	{%- match func.return_type() -%}
-	{%- when Some with (return_type) -%}
-		{%- match func.throws_type() -%}
-		{%- when Some with (throws_type) %}
-	 return res.val, res.err
-		{%- when None %}
-	 return res.val
-		{%- endmatch %}
-	{%- when None -%}
-		{%- match func.throws_type() -%}
-		{%- when Some with (throws_type) %}
-	 return res.err
-		{%- when None %}
-         _ = res
-		{%- endmatch %}
-	{%- endmatch %}
+        {% match func.throws_type() %}
+        {%- when Some with (e) -%}
+	  {%- match func.return_type() -%}
+  	  {%- when Some with (return_type) -%}
+        return uniffiRustCallAsyncWithErrorAndResult(
+	    {{ e|ffi_converter_name }}{},
+	  {%- else -%}
+        return uniffiRustCallAsyncWithError(
+	    {{ e|ffi_converter_name }}{},
+	  {%- endmatch -%}
+ 	{%- else -%}
+	  {%- match func.return_type() -%}
+	  {%- when Some with (return_type) -%}
+        return uniffiRustCallAsyncWithResult(
+ 	  {%- else -%}
+        uniffiRustCallAsync(
+	  {%- endmatch -%}
+        {%- endmatch -%}
+	        func(status *C.RustCallStatus) *C.void {
+			// rustFutureFunc
+			return (*C.void)(C.{{ func.ffi_func().name() }}(
+				{%- if !prefix.is_empty() %}
+				{{ prefix }},
+				{%- endif %}
+				{%- for arg in func.arguments() %}
+				{%- call lower_fn_call(arg) -%},
+				{%- endfor %}
+				status,
+			))
+		},
+	        func(handle *C.void, ptr unsafe.Pointer, status *C.RustCallStatus) {
+			// pollFunc
+			C.{{ func.ffi_rust_future_poll(ci) }}(unsafe.Pointer(handle), ptr, status)
+		},
+	        func(handle *C.void, status *C.RustCallStatus) {% call return_type_decl_async(func) %} {
+			// completeFunc
+			{% match func.return_type() %}
+			{%- when Some with (return_type) -%}
+			res := C.{{ func.ffi_rust_future_complete(ci) }}(unsafe.Pointer(handle), status)
+			return {{ return_type|lift_fn }}(res)
+			{%- else -%}
+			C.{{ func.ffi_rust_future_complete(ci) }}(unsafe.Pointer(handle), status)
+			{%- endmatch -%}
+		},
+	        func(rustFuture *C.void, status *C.RustCallStatus) {
+			// freeFunc
+			C.{{ func.ffi_rust_future_free(ci) }}(unsafe.Pointer(rustFuture), status)
+		})
 {%- endmacro -%}
 
 
 {%- macro lower_fn_call(arg) -%}
 {%- match arg.as_type() -%}
-{%- when Type::External with { kind, module_path, name } -%}
+{%- when Type::External with { kind, module_path, name, namespace, tagged } -%}
 {%- match kind -%}
 {%- when ExternalKind::DataClass -%}
 RustBufferFromExternal({{ arg|lower_fn }}({{ arg.name()|var_name }}))

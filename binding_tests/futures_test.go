@@ -109,6 +109,15 @@ func TestFuturesAsyncMethods(t *testing.T) {
 	assert.Equal(t, resultAlice, "HELLO, ALICE!")
 }
 
+func TestFuturesAsyncObjectParam(t *testing.T) {
+	megaphone := NewMegaphone()
+	t0 := time.Now()
+	resultAlice := SayAfterWithMegaphone(megaphone, 200, "Alice")
+
+	assertDelayedExecution(t, t0, 200*time.Millisecond)
+	assert.Equal(t, resultAlice, "HELLO, ALICE!")
+}
+
 func TestFuturesAsyncFunctionRetObject(t *testing.T) {
 	// Test async function returning an object
 	megaphone := AsyncNewMegaphone()

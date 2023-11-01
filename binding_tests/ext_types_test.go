@@ -9,7 +9,7 @@ import (
 	"testing"
 
 	itl "github.com/NordSecurity/uniffi-bindgen-go/binding_tests/generated/imported_types_lib"
-	uo "github.com/NordSecurity/uniffi-bindgen-go/binding_tests/generated/uniffi_one"
+	uo "github.com/NordSecurity/uniffi-bindgen-go/binding_tests/generated/uniffi_one_ns"
 
 	"github.com/stretchr/testify/assert"
 )

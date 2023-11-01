@@ -94,7 +94,7 @@
 {%- when Type::Custom { name, builtin, module_path } %}
 {% include "CustomTypeTemplate.go" %}
 
-{%- when Type::External { name, module_path, kind } %}
+{%- when Type::External { name, module_path, kind, namespace, tagged } %}
 {%- include "ExternalTemplate.go" %}
 
 {%- when Type::ForeignExecutor %}
@@ -103,7 +103,3 @@
 {%- else %}
 {%- endmatch %}
 {%- endfor %}
-
-{%- if ci.has_async_fns() %}
-{%- include "AsyncTypesTemplate.go" %}
-{%- endif %}
