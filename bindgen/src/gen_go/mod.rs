@@ -103,15 +103,6 @@ impl Config {
     pub fn c_filename(&self) -> String {
         format!("{}.c", self.c_module_filename())
     }
-
-    /// The name of the compiled Rust library containing the FFI implementation.
-    pub fn cdylib_name(&self) -> String {
-        if let Some(cdylib_name) = &self.cdylib_name {
-            cdylib_name.clone()
-        } else {
-            "uniffi".into()
-        }
-    }
 }
 
 #[derive(Template)]
@@ -466,14 +457,6 @@ pub mod filters {
         Ok(oracle().ffi_type_label(&type_))
     }
 
-    pub fn cgo_ffi_callback_type(type_: &FfiType) -> Result<String, askama::Error> {
-        let res = match type_ {
-            FfiType::RustArcPtr(_) => "RustArcPtr".into(),
-            _ => oracle().ffi_type_label(type_),
-        };
-        Ok(res)
-    }
-
     /// FFI type name to be used to reference cgo types
     pub fn ffi_type_name<T: Clone + Into<FfiType>>(type_: &T) -> Result<String, askama::Error> {
         let ffi_type: FfiType = type_.clone().into();
@@ -506,16 +489,6 @@ pub mod filters {
     /// Get the idiomatic Go rendering of a function name.
     pub fn enum_variant_name(nm: &str) -> Result<String, askama::Error> {
         Ok(oracle().enum_variant_name(nm))
-    }
-
-    pub fn future_chan_type(result: &ResultType) -> Result<String, askama::Error> {
-        Ok(format!(
-            "struct {{ {} err error }}",
-            match &result.return_type {
-                Some(return_type) => format!("val {};", type_name(return_type)?),
-                None => "".into(),
-            }
-        ))
     }
 }
 

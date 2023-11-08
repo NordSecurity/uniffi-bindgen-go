@@ -17,21 +17,15 @@ func uniffiRustCallAsync(
 	if err != nil {
 		panic(err)
 	}
-	defer func() {
-		var status C.RustCallStatus
-		freeFunc(rustFuture, &status)
-		err := checkCallStatus(nil, status)
-		if err != nil {
-			panic(fmt.Sprintf("unexpected freeFunc error %v", err))
-		}
-	}()
+	defer rustCall(func(status *C.RustCallStatus) int {
+		freeFunc(rustFuture, status)
+		return 0
+	})
 
-	var status C.RustCallStatus
-	completeFunc(rustFuture, &status)
-	err = checkCallStatus(nil, status)
-	if err != nil {
-		panic(err)
-	}
+	rustCall(func(status *C.RustCallStatus) int {
+		completeFunc(rustFuture, status)
+		return 0
+	})
 }
 
 func uniffiRustCallAsyncWithResult[T any](
@@ -45,22 +39,14 @@ func uniffiRustCallAsyncWithResult[T any](
 		panic(err)
 	}
 
-	defer func() {
-		var status C.RustCallStatus
-		freeFunc(rustFuture, &status)
-		err := checkCallStatus(nil, status)
-		if err != nil {
-			panic(fmt.Sprintf("unexpected freeFunc error %v", err))
-		}
-	}()
+	defer rustCall(func(status *C.RustCallStatus) int {
+		freeFunc(rustFuture, status)
+		return 0
+	})
 
-	var status C.RustCallStatus
-	returnValue := completeFunc(rustFuture, &status)
-	err = checkCallStatus(nil, status)
-	if err != nil {
-		panic(err)
-	}
-	return returnValue
+	return rustCall(func(status *C.RustCallStatus) T {
+		return completeFunc(rustFuture, status)
+	})
 }
 
 func uniffiRustCallAsyncWithError(
@@ -75,18 +61,15 @@ func uniffiRustCallAsyncWithError(
 		return err
 	}
 
-	defer func() {
-		var status C.RustCallStatus
-		freeFunc(rustFuture, &status)
-		err := checkCallStatus(converter, status)
-		if err != nil {
-			panic(fmt.Sprintf("unexpected freeFunc error %v", err))
-		}
-	}()
+	defer rustCall(func(status *C.RustCallStatus) int {
+		freeFunc(rustFuture, status)
+		return 0
+	})
 
-	var status C.RustCallStatus
-	completeFunc(rustFuture, &status)
-	err = checkCallStatus(converter, status)
+	_, err = rustCallWithError(converter, func(status *C.RustCallStatus) int {
+		completeFunc(rustFuture, status)	
+		return 0
+	})
 	return err
 }
 
@@ -103,19 +86,14 @@ func uniffiRustCallAsyncWithErrorAndResult[T any](
 		return returnValue, err
 	}
 
-	defer func() {
-		var status C.RustCallStatus
-		freeFunc(rustFuture, &status)
-		err := checkCallStatus(converter, status)
-		if err != nil {
-			panic(fmt.Sprintf("unexpected freeFunc error %v", err))
-		}
-	}()
+	defer rustCall(func(status *C.RustCallStatus) int {
+		freeFunc(rustFuture, status)
+		return 0
+	})
 
-	var status C.RustCallStatus
-	returnValue = completeFunc(rustFuture, &status)
-	err = checkCallStatus(converter, status)
-	return returnValue, err
+	return rustCallWithError(converter, func(status *C.RustCallStatus) T {
+		return completeFunc(rustFuture, status)	
+	})
 }
 
 func uniffiRustCallAsyncInner(
@@ -127,10 +105,10 @@ func uniffiRustCallAsyncInner(
 	pollResult := C.int8_t(-1)
 	waiter := make(chan C.int8_t, 1)
 	chanHandle := cgo.NewHandle(waiter)
-	var status C.RustCallStatus
 
-	rustFuture := rustFutureFunc(&status)
-	err := checkCallStatus(converter, status)
+	rustFuture, err := rustCallWithError(converter, func(status *C.RustCallStatus) *C.void {
+		return rustFutureFunc(status)
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -139,8 +117,10 @@ func uniffiRustCallAsyncInner(
 
 	for pollResult != uniffiRustFuturePollReady {
 		ptr := unsafe.Pointer(&chanHandle)
-		pollFunc(rustFuture, ptr, &status)
-		err = checkCallStatus(converter, status)
+		_, err = rustCallWithError(converter, func(status *C.RustCallStatus) int {
+			pollFunc(rustFuture, ptr, status)
+			return 0
+		})
 		if err != nil {
 			return nil, err
 		}

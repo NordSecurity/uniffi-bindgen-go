@@ -55,7 +55,7 @@ func uniffiForeignExecutorCallback{{config.package_name.as_ref().unwrap()}}(exec
 	} else {
 		// Drop the executor
 		// nothing to do at the moment
-		return C.int8_t(idxCallbackFree)
+		return C.int8_t(uniffiIdxCallbackFree)
 	}
 }
 
@@ -63,14 +63,8 @@ func uniffiInitForeignExecutor() {
 	// Register the callback
 	{%- match ci.ffi_foreign_executor_callback_set() %}
 	{%- when Some with (fn) %}
-	rustCall(func(uniffiStatus *C.RustCallStatus) bool {
-		C.{{ fn.name() }}(C.ForeignExecutorCallback(C.uniffiForeignExecutorCallback{{config.package_name.as_ref().unwrap()}}), uniffiStatus)
-		if uniffiStatus != nil {
-			err := checkCallStatusUnknown(*uniffiStatus)
-			if err != nil {
-				panic(fmt.Errorf("Failed to register ForeignExecutor %v", err))
-			}
-		}
+	rustCall(func(status *C.RustCallStatus) bool {
+		C.{{ fn.name() }}(C.ForeignExecutorCallback(C.uniffiForeignExecutorCallback{{config.package_name.as_ref().unwrap()}}), status)
 		return false
 	})
 	{%- when None %}

@@ -25,7 +25,7 @@ func {{ cgo_callback_fn }}(handle C.uint64_t, method C.int32_t, argsPtr *C.uint8
 		// can be dropped by the foreign language.
 		*outBuf = {{ ffi_converter_name }}INSTANCE.drop(uint64(handle))
 		// See docs of ForeignCallback in `uniffi/src/ffi/foreigncallbacks.rs`
-		return C.int32_t(idxCallbackFree)
+		return C.int32_t(uniffiIdxCallbackFree)
 
 	{% for meth in cbi.methods() -%}
 	{% let method_name = meth.name()|fn_name -%}
