@@ -80,10 +80,7 @@ impl ImportRequirement {
 impl Config {
     /// The name of the go package containing the high-level foreign-language bindings.
     pub fn package_name(&self) -> String {
-        match self.package_name.as_ref() {
-            Some(name) => name.clone(),
-            None => "uniffi".into(),
-        }
+        self.package_name.clone().expect("missing package name")
     }
 
     /// The filename stem for the lower-level C module containing the FFI declarations.
