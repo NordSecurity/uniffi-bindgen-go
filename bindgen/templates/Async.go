@@ -156,12 +156,6 @@ func uniffiInitContinuationCallback() {
 			C.RustFutureContinuation(C.uniffiFutureContinuationCallback{{config.package_name.as_ref().unwrap()}}),
 			uniffiStatus,
 		)
-		if uniffiStatus != nil {
-			err := checkCallStatusUnknown(*uniffiStatus)
-			if err != nil {
-				panic(fmt.Errorf("Failed to initalize RustFutureContinuation %v", err))
-			}
-		}
 		return false
 	})
 }
