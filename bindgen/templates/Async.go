@@ -11,6 +11,7 @@ func uniffiRustCallAsync(
 	rustFutureFunc func(*C.RustCallStatus) *C.void,
 	pollFunc func(*C.void, unsafe.Pointer, *C.RustCallStatus),
 	completeFunc func(*C.void, *C.RustCallStatus),
+	_liftFunc func(bool),
 	freeFunc func(*C.void, *C.RustCallStatus),
 ) {
 	rustFuture, err := uniffiRustCallAsyncInner(nil, rustFutureFunc, pollFunc, freeFunc)
@@ -28,12 +29,13 @@ func uniffiRustCallAsync(
 	})
 }
 
-func uniffiRustCallAsyncWithResult[T any](
+func uniffiRustCallAsyncWithResult[T any, U any](
 	rustFutureFunc func(*C.RustCallStatus) *C.void,
 	pollFunc func(*C.void, unsafe.Pointer, *C.RustCallStatus),
 	completeFunc func(*C.void, *C.RustCallStatus) T,
+	liftFunc func(T) U,
 	freeFunc func(*C.void, *C.RustCallStatus),
-) T {
+) U {
 	rustFuture, err := uniffiRustCallAsyncInner(nil, rustFutureFunc, pollFunc, freeFunc)
 	if err != nil {
 		panic(err)
@@ -44,9 +46,10 @@ func uniffiRustCallAsyncWithResult[T any](
 		return 0
 	})
 
-	return rustCall(func(status *C.RustCallStatus) T {
+	res := rustCall(func(status *C.RustCallStatus) T {
 		return completeFunc(rustFuture, status)
 	})
+	return liftFunc(res)
 }
 
 func uniffiRustCallAsyncWithError(
@@ -54,6 +57,7 @@ func uniffiRustCallAsyncWithError(
 	rustFutureFunc func(*C.RustCallStatus) *C.void,
 	pollFunc func(*C.void, unsafe.Pointer, *C.RustCallStatus),
 	completeFunc func(*C.void, *C.RustCallStatus),
+	_liftFunc func(bool),
 	freeFunc func(*C.void, *C.RustCallStatus),
 ) error {
 	rustFuture, err := uniffiRustCallAsyncInner(converter, rustFutureFunc, pollFunc, freeFunc)
@@ -73,14 +77,15 @@ func uniffiRustCallAsyncWithError(
 	return err
 }
 
-func uniffiRustCallAsyncWithErrorAndResult[T any](
+func uniffiRustCallAsyncWithErrorAndResult[T any, U any](
 	converter BufLifter[error],
 	rustFutureFunc func(*C.RustCallStatus) *C.void,
 	pollFunc func(*C.void, unsafe.Pointer, *C.RustCallStatus),
 	completeFunc func(*C.void, *C.RustCallStatus) T,
+	liftFunc func(T) U,
 	freeFunc func(*C.void, *C.RustCallStatus),
-) (T, error) {
-	var returnValue T
+) (U, error) {
+	var returnValue U
 	rustFuture, err := uniffiRustCallAsyncInner(converter, rustFutureFunc, pollFunc, freeFunc)
 	if err != nil {
 		return returnValue, err
@@ -91,9 +96,13 @@ func uniffiRustCallAsyncWithErrorAndResult[T any](
 		return 0
 	})
 
-	return rustCallWithError(converter, func(status *C.RustCallStatus) T {
+	res, err := rustCallWithError(converter, func(status *C.RustCallStatus) T {
 		return completeFunc(rustFuture, status)	
 	})
+	if err != nil {
+		return returnValue, err
+	}
+	return liftFunc(res), nil
 }
 
 func uniffiRustCallAsyncInner(

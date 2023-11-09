@@ -60,8 +60,8 @@
 {% macro return_type_decl_async(func) %}
 	{%- match func.return_type() -%}
 	{%- when Some with (return_type) -%}
-		{{ return_type|type_name }}
-	{%- when None -%}
+		{{ return_type|ffi_type_name }}
+        {%- when None -%}
 	{%- endmatch %}
 {%- endmacro %}
 
@@ -171,12 +171,18 @@
 			// completeFunc
 			{% match func.return_type() %}
 			{%- when Some with (return_type) -%}
-			res := C.{{ func.ffi_rust_future_complete(ci) }}(unsafe.Pointer(handle), status)
-			return {{ return_type|lift_fn }}(res)
+			return C.{{ func.ffi_rust_future_complete(ci) }}(unsafe.Pointer(handle), status)
 			{%- else -%}
 			C.{{ func.ffi_rust_future_complete(ci) }}(unsafe.Pointer(handle), status)
 			{%- endmatch -%}
+			
 		},
+		{% match func.return_type() %}
+		{%- when Some with (return_type) -%}
+		{{ return_type|lift_fn }},
+		{%- else -%}
+		func(bool) {},
+		{%- endmatch -%}
 	        func(rustFuture *C.void, status *C.RustCallStatus) {
 			// freeFunc
 			C.{{ func.ffi_rust_future_free(ci) }}(unsafe.Pointer(rustFuture), status)

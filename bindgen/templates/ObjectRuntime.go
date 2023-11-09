@@ -46,11 +46,6 @@ func (ffiObject *FfiObject)decrementPointer() {
 }
 
 func (ffiObject *FfiObject)destroy() {
-	if ffiObject.pointer == nil {
-		// Likely happens when resources are already freed, but finalizer is run considerably later
-		return
-	}
-	
 	if ffiObject.destroyed.CompareAndSwap(false, true) {
 		if ffiObject.callCounter.Add(-1) == -1 {
 			ffiObject.freeRustArcPtr()
