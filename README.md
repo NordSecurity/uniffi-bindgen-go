@@ -3,15 +3,15 @@
 Generate [UniFFI](https://github.com/mozilla/uniffi-rs) bindings for Go. `uniffi-bindgen-go` lives
 as a separate project from `uniffi-go`, as per
 [uniffi-rs #1355](https://github.com/mozilla/uniffi-rs/issues/1355). Currently, `uniffi-bindgen-go`
-uses `uniffi-rs` version `0.23.0`.
+uses `uniffi-rs` version `0.25.0`.
 
 # How to install
 
-Minimum Rust version required to install `uniffi-bindgen-go` is `1.64`.
+Minimum Rust version required to install `uniffi-bindgen-go` is `1.70`.
 Newer Rust versions should also work fine.
 
 ```
-cargo install uniffi-bindgen-go --git https://github.com/NordSecurity/uniffi-bindgen-go
+cargo install uniffi-bindgen-go --git https://github.com/NordSecurity/uniffi-bindgen-go --tag v0.2.0+v0.25.0
 ```
 
 # How to generate bindings
@@ -29,48 +29,11 @@ Generated bindings require Go 1.19 or later to compile.
 
 # Configuration options
 
-It's possible to configure some settings by passing `--config` argument to the generator. All
-configuration keys are defined in `bindings.go` section.
+It's possible to [configure some settings](docs/CONFIGURATION.md) by passing `--config` argument to
+the generator
 ```bash
 uniffi-bindgen-go path/to/definitions.udl --config path/to/uniffi.toml
 ```
-
-- `package_name` - override the go package name.
-
-- `custom_types` - properties for custom type defined in UDL with `[Custom] typedef string Url;`.
-    ```toml
-    # Represent URL as a native Go `url.Url`. The underlying type of URL is a string.
-    imports = ["net/url"]
-    type_name = "url.URL"
-    into_custom = """u, err := url.Parse({})
-        if err != nil {
-             panic(err)
-        }
-        return *u
-    """
-    from_custom = "{}.String()"
-    ```
-
-    - `imports` (optional) - any imports required to satisfy this type.
-
-    - `type_name` (optional) - the name to represent the type in generated bindings. Default is the
-        type alias name from UDL, e.g. `Url`.
-
-    - `into_custom` (required) - an expression to convert from the underlying type into custom type. `{}` will
-        will be expanded into variable containing the underlying value. The expression is used in a
-        return statement, i.e. `return <expression(value)>;`.
-
-    - `from_custom` (required) - an expression to convert from the custom type into underlying type. `{}` will
-        will be expanded into variable containing the custom value. The expression is used in a
-        return statement, i.e. `return <expression(value);>`.
-
-- `go_mod` (optional) - Specify the go module for the final package, used as imports source for external types.
-
-- `c_module_filename`(optional) - override the name of the `C` module (`.h` and `.c`)
-
-# Contributing
-
-For contribution guidelines, read [CONTRIBUTING.md](CONTRIBUTING.md)
 
 # Versioning
 
@@ -92,3 +55,18 @@ each generator targets the same `uniffi-rs` version.
 To simplify this choice `uniffi-bindgen-cs` and `uniffi-bindgen-go` use tag naming convention
 as follows: `vX.Y.Z+vA.B.C`, where `X.Y.Z` is the version of the generator itself, and `A.B.C` is
 the version of uniffi-rs it is based on.
+
+The table shows `uniffi-rs` version history for tags that were published before tag naming convention described above was introduced.
+
+| uniffi-bindgen-cs version                | uniffi-rs version                                |
+|------------------------------------------|--------------------------------------------------|
+| v0.2.0                                   | v0.25.0                                          |
+| v0.1.0                                   | v0.23.0                                          |
+
+# Documentation
+
+More documentation is available in [docs](docs) directory.
+
+# Contributing
+
+For contribution guidelines, read [CONTRIBUTING.md](CONTRIBUTING.md).
