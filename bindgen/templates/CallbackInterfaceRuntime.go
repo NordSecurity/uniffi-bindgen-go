@@ -1,11 +1,4 @@
-type uniffiCallbackResult C.int32_t
-
-const (
-	idxCallbackFree                                          = 0
-	uniffiCallbackResultSuccess         uniffiCallbackResult = 1
-	uniffiCallbackResultError           uniffiCallbackResult = -2
-	uniffiCallbackUnexpectedResultError uniffiCallbackResult = -1
-)
+{% if self.include_once_check("CallbackHelpers.go") %}{% include "CallbackHelpers.go" %}{% endif %}
 
 type concurrentHandleMap[T any] struct {
 	leftMap       map[uint64]*T
@@ -52,12 +45,12 @@ type FfiConverterCallbackInterface[CallbackInterface any] struct {
 	handleMap *concurrentHandleMap[CallbackInterface]
 }
 
-func (c *FfiConverterCallbackInterface[CallbackInterface]) drop(handle uint64) rustBuffer {
+func (c *FfiConverterCallbackInterface[CallbackInterface]) drop(handle uint64) RustBuffer {
 	c.handleMap.remove(handle)
-	return rustBuffer{}
+	return RustBuffer{}
 }
 
-func (c *FfiConverterCallbackInterface[CallbackInterface]) lift(handle uint64) CallbackInterface {
+func (c *FfiConverterCallbackInterface[CallbackInterface]) Lift(handle uint64) CallbackInterface {
 	val, ok := c.handleMap.tryGet(handle)
 	if !ok {
 		panic(fmt.Errorf("no callback in handle map: %d", handle))
@@ -65,14 +58,14 @@ func (c *FfiConverterCallbackInterface[CallbackInterface]) lift(handle uint64) C
 	return *val
 }
 
-func (c *FfiConverterCallbackInterface[CallbackInterface]) read(reader io.Reader) CallbackInterface {
-	return c.lift(readUint64(reader))
+func (c *FfiConverterCallbackInterface[CallbackInterface]) Read(reader io.Reader) CallbackInterface {
+	return c.Lift(readUint64(reader))
 }
 
-func (c *FfiConverterCallbackInterface[CallbackInterface]) lower(value CallbackInterface) C.uint64_t {
+func (c *FfiConverterCallbackInterface[CallbackInterface]) Lower(value CallbackInterface) C.uint64_t {
 	return C.uint64_t(c.handleMap.insert(&value))
 }
 
-func (c *FfiConverterCallbackInterface[CallbackInterface]) write(writer io.Writer, value CallbackInterface) {
-	writeUint64(writer, uint64(c.lower(value)))
+func (c *FfiConverterCallbackInterface[CallbackInterface]) Write(writer io.Writer, value CallbackInterface) {
+	writeUint64(writer, uint64(c.Lower(value)))
 }

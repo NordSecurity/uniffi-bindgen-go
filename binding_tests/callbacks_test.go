@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/NordSecurity/uniffi-bindgen-go/binding_tests/generated/uniffi/callbacks"
+	"github.com/NordSecurity/uniffi-bindgen-go/binding_tests/generated/callbacks"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -59,15 +59,21 @@ func TestCallbackRegistrationIsNotAffectedByGC(t *testing.T) {
 func TestCallbackReferenceIsDropped(t *testing.T) {
 	telephone := callbacks.NewTelephone()
 	dropped := false
+	done :=  make(chan struct{})
 	func() {
 		callback := &OnCallAnswerImpl{}
 		runtime.SetFinalizer(callback, func(cb *OnCallAnswerImpl) {
 			dropped = true
+			done <- struct{}{}
 		})
 		telephone.Call(callback)
 	}()
 	runtime.GC()
 	// runtime.GC() is not a fully blocking call
-	time.Sleep(time.Millisecond * 100)
-	assert.Equal(t, true, dropped)
+	select {
+	case <- time.After(time.Millisecond * 100):
+		panic("timed out")
+	case <- done:
+		assert.Equal(t, true, dropped)
+	}
 }

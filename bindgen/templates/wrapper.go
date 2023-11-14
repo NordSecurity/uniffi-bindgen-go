@@ -4,9 +4,7 @@
 
 package {{ ci.namespace() }}
 
-/*
-{% include "BridgingHeaderTemplate.h" %}
-*/
+// #include <{{ config.header_filename() }}>
 import "C"
 
 import (
@@ -15,8 +13,11 @@ import (
 	"io"
 	"unsafe"
 	"encoding/binary"
+	{%- if ci.has_async_fns() %}
+	"runtime/cgo"
+	{%- endif %}
 	{%- for imported_package in self.imports() %}
-	"{{ imported_package }}"
+	{{ imported_package.render() }}
 	{%- endfor %}
 )
 
@@ -29,6 +30,11 @@ import (
 {% include "NamespaceLibraryTemplate.go" %}
 
 {{ type_helper_code }}
+
+{%- if ci.has_async_fns() %}
+{% include "Async.go" %}
+{%- endif %}
+
 {%- for func in ci.function_definitions() %}
 {% include "TopLevelFunctionTemplate.go" %}
 {%- endfor %}

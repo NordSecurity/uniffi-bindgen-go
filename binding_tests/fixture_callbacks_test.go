@@ -3,7 +3,8 @@ package binding_tests
 import (
 	"testing"
 
-	"github.com/NordSecurity/uniffi-bindgen-go/binding_tests/generated/uniffi/fixture_callbacks"
+	"github.com/NordSecurity/uniffi-bindgen-go/binding_tests/generated/fixture_callbacks"
+
 	"github.com/stretchr/testify/assert"
 )
 
@@ -15,7 +16,6 @@ func (getters) GetBool(v bool, arg2 bool) (bool, *fixture_callbacks.SimpleError)
 	}
 	return v, nil
 }
-
 func (getters) GetString(v string, arg2 bool) (string, *fixture_callbacks.SimpleError) {
 	if arg2 {
 		return "", fixture_callbacks.NewSimpleErrorUnexpectedError()
@@ -41,6 +41,16 @@ func (getters) GetList(v []int32, arg2 bool) ([]int32, *fixture_callbacks.Simple
 	return v, nil
 }
 
+func (getters) GetNothing(v string) *fixture_callbacks.SimpleError {
+	if v == "bad-argument" {
+		return fixture_callbacks.NewSimpleErrorBadArgument()
+        }
+        if v == "unexpected-error" {
+		return fixture_callbacks.NewSimpleErrorUnexpectedError()
+        }
+	return nil
+}
+
 type invalidGetters struct{}
 
 func (invalidGetters) GetBool(v bool, arg2 bool) (bool, *fixture_callbacks.SimpleError) {
@@ -59,6 +69,10 @@ func (invalidGetters) GetList(v []int32, arg2 bool) ([]int32, *fixture_callbacks
 	return nil, &fixture_callbacks.SimpleError{}
 }
 
+func (invalidGetters) GetNothing(v string) *fixture_callbacks.SimpleError {
+	return fixture_callbacks.NewSimpleErrorBadArgument()
+}
+
 type testGetterInput[T any] struct {
 	name          string
 	value         T
@@ -72,6 +86,17 @@ func testGetter[T any](t *testing.T, tt testGetterInput[T], getterFn func(callba
 	res, err := getterFn(foreignGetters, tt.value, tt.getError)
 	assert.Equal(t, tt.expectedRes, res)
 	assert.ErrorIs(t, err, tt.expectedError)
+}
+
+func TestRustGetters_GetNothing(t *testing.T) {
+	foreignGetters := getters{}
+	getters := fixture_callbacks.NewRustGetters()
+	err := getters.GetNothing(foreignGetters, "bad-argument")
+	assert.ErrorIs(t, err, fixture_callbacks.ErrSimpleErrorBadArgument)
+	err = getters.GetNothing(foreignGetters, "unexpected-error")
+	assert.ErrorIs(t, err, fixture_callbacks.ErrSimpleErrorUnexpectedError)
+	err = getters.GetNothing(foreignGetters, "foo")
+	assert.Equal(t, err, nil)
 }
 
 func TestRustGetters_GetBool(t *testing.T) {

@@ -6,22 +6,22 @@ type {{ ffi_converter_name }} struct{}
 
 var {{ ffi_converter_name }}INSTANCE = {{ ffi_converter_name }}{}
 
-func ({{ ffi_converter_name }}) lower(value int16) C.int16_t {
+func ({{ ffi_converter_name }}) Lower(value int16) C.int16_t {
 	return C.int16_t(value)
 }
 
-func ({{ ffi_converter_name }}) write(writer io.Writer, value int16) {
+func ({{ ffi_converter_name }}) Write(writer io.Writer, value int16) {
 	writeInt16(writer, value)
 }
 
-func ({{ ffi_converter_name }}) lift(value C.int16_t) int16 {
+func ({{ ffi_converter_name }}) Lift(value C.int16_t) int16 {
 	return int16(value)
 }
 
-func ({{ ffi_converter_name }}) read(reader io.Reader) int16 {
+func ({{ ffi_converter_name }}) Read(reader io.Reader) int16 {
 	return readInt16(reader)
 }
 
 type {{ type_|ffi_destroyer_name }} struct {}
 
-func ({{ type_|ffi_destroyer_name }}) destroy(_ {{ type_name }}) {}
+func ({{ type_|ffi_destroyer_name }}) Destroy(_ {{ type_name }}) {}

@@ -3,11 +3,11 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 use paste::paste;
-use uniffi_bindgen::backend::{CodeOracle, CodeType, Literal};
-use uniffi_bindgen::interface::{types::Type, Radix};
+use uniffi_bindgen::backend::{CodeType, Literal};
+use uniffi_bindgen::interface::{Radix, Type};
 
-fn render_literal(oracle: &dyn CodeOracle, literal: &Literal) -> String {
-    fn typed_number(oracle: &dyn CodeOracle, type_: &Type, num_str: String) -> String {
+fn render_literal(literal: &Literal) -> String {
+    fn typed_number(type_: &Type, num_str: String) -> String {
         match type_ {
             // special case Int32.
             Type::Int32 => num_str,
@@ -23,7 +23,11 @@ fn render_literal(oracle: &dyn CodeOracle, literal: &Literal) -> String {
             | Type::Float64 =>
             // XXX we should pass in the codetype itself.
             {
-                format!("{}({})", oracle.find(type_).type_label(oracle), num_str)
+                format!(
+                    "{}({})",
+                    super::GoCodeOracle.find(type_).type_label(),
+                    num_str
+                )
             }
             _ => panic!("Unexpected literal: {} is not a number", num_str),
         }
@@ -33,7 +37,6 @@ fn render_literal(oracle: &dyn CodeOracle, literal: &Literal) -> String {
         Literal::Boolean(v) => format!("{}", v),
         Literal::String(s) => format!("\"{}\"", s),
         Literal::Int(i, radix, type_) => typed_number(
-            oracle,
             type_,
             match radix {
                 Radix::Octal => format!("0o{:o}", i),
@@ -42,7 +45,6 @@ fn render_literal(oracle: &dyn CodeOracle, literal: &Literal) -> String {
             },
         ),
         Literal::UInt(i, radix, type_) => typed_number(
-            oracle,
             type_,
             match radix {
                 Radix::Octal => format!("0o{:o}", i),
@@ -50,38 +52,45 @@ fn render_literal(oracle: &dyn CodeOracle, literal: &Literal) -> String {
                 Radix::Hexadecimal => format!("{:#x}", i),
             },
         ),
-        Literal::Float(string, type_) => typed_number(oracle, type_, string.clone()),
+        Literal::Float(string, type_) => typed_number(type_, string.clone()),
         _ => unreachable!("Literal"),
     }
 }
 
 macro_rules! impl_code_type_for_primitive {
-    ($T:ty, $class_name:literal) => {
+    ($T:ty, $class_name:literal, $canonical_name:literal) => {
         paste! {
+            #[derive(Debug)]
             pub struct $T;
 
             impl CodeType for $T  {
-                fn type_label(&self, _oracle: &dyn CodeOracle) -> String {
+                fn type_label(&self) -> String {
                     $class_name.into()
                 }
 
-                fn literal(&self, oracle: &dyn CodeOracle, literal: &Literal) -> String {
-                    render_literal(oracle, &literal)
+
+                fn canonical_name(&self) -> String {
+                    $canonical_name.into()
+                }
+
+                fn literal(&self, literal: &Literal) -> String {
+                    render_literal(&literal)
                 }
             }
         }
     };
 }
 
-impl_code_type_for_primitive!(BooleanCodeType, "bool");
-impl_code_type_for_primitive!(StringCodeType, "string");
-impl_code_type_for_primitive!(Int8CodeType, "int8");
-impl_code_type_for_primitive!(Int16CodeType, "int16");
-impl_code_type_for_primitive!(Int32CodeType, "int32");
-impl_code_type_for_primitive!(Int64CodeType, "int64");
-impl_code_type_for_primitive!(UInt8CodeType, "uint8");
-impl_code_type_for_primitive!(UInt16CodeType, "uint16");
-impl_code_type_for_primitive!(UInt32CodeType, "uint32");
-impl_code_type_for_primitive!(UInt64CodeType, "uint64");
-impl_code_type_for_primitive!(Float32CodeType, "float32");
-impl_code_type_for_primitive!(Float64CodeType, "float64");
+impl_code_type_for_primitive!(BooleanCodeType, "bool", "Bool");
+impl_code_type_for_primitive!(StringCodeType, "string", "String");
+impl_code_type_for_primitive!(Int8CodeType, "int8", "Int8");
+impl_code_type_for_primitive!(Int16CodeType, "int16", "Int16");
+impl_code_type_for_primitive!(Int32CodeType, "int32", "Int32");
+impl_code_type_for_primitive!(Int64CodeType, "int64", "Int64");
+impl_code_type_for_primitive!(UInt8CodeType, "uint8", "Uint8");
+impl_code_type_for_primitive!(UInt16CodeType, "uint16", "Uint16");
+impl_code_type_for_primitive!(UInt32CodeType, "uint32", "Uint32");
+impl_code_type_for_primitive!(UInt64CodeType, "uint64", "Uint64");
+impl_code_type_for_primitive!(Float32CodeType, "float32", "Float32");
+impl_code_type_for_primitive!(Float64CodeType, "float64", "Float64");
+impl_code_type_for_primitive!(BytesCodeType, "[]byte", "Bytes");

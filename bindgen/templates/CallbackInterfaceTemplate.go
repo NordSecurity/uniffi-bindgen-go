@@ -1,4 +1,4 @@
-{%- let cbi = ci.get_callback_interface_definition(name).unwrap() %}
+{%- let cbi = ci.get_callback_interface_definition(name).expect("missing cbi") %}
 {%- let type_name = cbi|type_name %}
 {%- let foreign_callback = format!("foreignCallback{}", canonical_type_name) %}
 
@@ -15,27 +15,25 @@ type {{ type_name }} interface {
 // {{ foreign_callback }} cannot be callable be a compiled function at a same time
 type {{ foreign_callback }} struct {}
 
-{% let cgo_callback_fn = self.cgo_callback_fn(type_name) -%}
+{% let cgo_callback_fn = self.cgo_callback_fn(type_name, module_path) -%}
 //export {{ cgo_callback_fn }}
-func {{ cgo_callback_fn }}(handle C.uint64_t, method C.int32_t, args C.RustBuffer, outBuf *C.RustBuffer) C.int32_t {
+func {{ cgo_callback_fn }}(handle C.uint64_t, method C.int32_t, argsPtr *C.uint8_t, argsLen C.int32_t, outBuf *C.RustBuffer) C.int32_t {
 	cb := {{ type_|lift_fn }}(uint64(handle));
 	switch method {
 	case 0:
 		// 0 means Rust is done with the callback, and the callback
 		// can be dropped by the foreign language.
-		*outBuf = {{ ffi_converter_name }}INSTANCE.drop(uint64(handle)).asCRustBuffer()
-		// No return value.
+		*outBuf = {{ ffi_converter_name }}INSTANCE.drop(uint64(handle))
 		// See docs of ForeignCallback in `uniffi/src/ffi/foreigncallbacks.rs`
-		return C.int32_t(idxCallbackFree)
+		return C.int32_t(uniffiIdxCallbackFree)
 
 	{% for meth in cbi.methods() -%}
 	{% let method_name = meth.name()|fn_name -%}
 	{% let method_name = format!("Invoke{}", method_name) -%}
 	case {{ loop.index }}:
 		var result uniffiCallbackResult
-		result, *outBuf = {{ foreign_callback}}{}.{{ method_name }}(cb, fromCRustBuffer(args));
-		// Value written to out buffer.
-		// See docs of ForeignCallback in `uniffi/src/ffi/foreigncallbacks.rs`
+		args := unsafe.Slice((*byte)(argsPtr), argsLen)
+		result = {{ foreign_callback}}{}.{{ method_name }}(cb, args, outBuf);
 		return C.int32_t(result)
 	{% endfor %}
 	default:
@@ -49,10 +47,9 @@ func {{ cgo_callback_fn }}(handle C.uint64_t, method C.int32_t, args C.RustBuffe
 {% for meth in cbi.methods() -%}
 {% let method_name = meth.name()|fn_name -%}
 {% let method_name = format!("Invoke{}", method_name) -%}
-func ({{ foreign_callback }}) {{ method_name }} (callback {{ type_name }}, args rustBuffer) (uniffiCallbackResult, C.RustBuffer) {
-	defer args.free()
+func ({{ foreign_callback }}) {{ method_name }} (callback {{ type_name }}, args []byte, outBuf *C.RustBuffer) uniffiCallbackResult {
 	{% if meth.arguments().len() != 0 -%}
-	reader := args.asReader();
+	reader := bytes.NewReader(args)
 	{% endif -%}
 	{%- match meth.return_type() -%}
 	{%- when Some with (return_type) -%}
@@ -82,17 +79,19 @@ func ({{ foreign_callback }}) {{ method_name }} (callback {{ type_name }}, args 
 		// The only way to bypass an unexpected error is to bypass pointer to an empty
 		// instance of the error
 		if err.err == nil {
-			return uniffiCallbackUnexpectedResultError, rustBuffer{}.asCRustBuffer()
+			return uniffiCallbackUnexpectedResultError
 		}
-		return uniffiCallbackResultError, lowerIntoRustBuffer[*{{ error_type|type_name }}]( {{ error_type|ffi_converter_name }}INSTANCE, err)
+		*outBuf = LowerIntoRustBuffer[*{{ error_type|type_name }}]({{ error_type|ffi_converter_name }}INSTANCE, err)
+		return uniffiCallbackResultError
 	}
         {%- when None -%}
         {%- endmatch %}
 	{% match meth.return_type() -%}
 	{%- when Some with (return_type) -%}
-	return uniffiCallbackResultSuccess, lowerIntoRustBuffer[{{ return_type|type_name }}]({{ return_type|ffi_converter_name }}INSTANCE, result)
+	*outBuf = LowerIntoRustBuffer[{{ return_type|type_name }}]({{ return_type|ffi_converter_name }}INSTANCE, result)
+	return uniffiCallbackResultSuccess 
 	{%- else -%}
-	return uniffiCallbackResultSuccess, rustBuffer{}.asCRustBuffer()
+	return uniffiCallbackResultSuccess
 	{%- endmatch %}
 }
 {% endfor %}
@@ -117,6 +116,6 @@ func (c *{{ ffi_converter_name }}) register() {
 
 type {{ cbi|ffi_destroyer_name }} struct {}
 
-func ({{ cbi|ffi_destroyer_name }}) destroy(value {{ type_name }}) {
+func ({{ cbi|ffi_destroyer_name }}) Destroy(value {{ type_name }}) {
 }
 

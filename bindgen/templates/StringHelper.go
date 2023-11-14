@@ -8,11 +8,9 @@ type {{ ffi_converter_name }} struct{}
 
 var {{ ffi_converter_name }}INSTANCE = {{ ffi_converter_name }}{}
 
-func ({{ ffi_converter_name }}) lift(cRustBuf C.RustBuffer) string {
-	rustBuf := fromCRustBuffer(cRustBuf)
-	defer rustBuf.free()
-
-	reader := rustBuf.asReader()
+func ({{ ffi_converter_name }}) Lift(rb RustBufferI) string {
+	defer rb.Free()
+	reader := rb.AsReader()
 	b, err := io.ReadAll(reader)
 	if err != nil {
 		panic(fmt.Errorf("reading reader: %w", err))
@@ -20,7 +18,7 @@ func ({{ ffi_converter_name }}) lift(cRustBuf C.RustBuffer) string {
 	return string(b)
 }
 
-func ({{ ffi_converter_name }}) read(reader io.Reader) string {
+func ({{ ffi_converter_name }}) Read(reader io.Reader) string {
 	length := readInt32(reader)
 	buffer := make([]byte, length)
 	read_length, err := reader.Read(buffer)
@@ -33,11 +31,11 @@ func ({{ ffi_converter_name }}) read(reader io.Reader) string {
 	return string(buffer)
 }
 
-func ({{ ffi_converter_name }}) lower(value string) C.RustBuffer {
-	return stringToCRustBuffer(value)
+func ({{ ffi_converter_name }}) Lower(value string) RustBuffer {
+	return stringToRustBuffer(value)
 }
 
-func ({{ ffi_converter_name }}) write(writer io.Writer, value string) {
+func ({{ ffi_converter_name }}) Write(writer io.Writer, value string) {
 	if len(value) > math.MaxInt32 {
 		panic("String is too large to fit into Int32")
 	}
@@ -54,4 +52,4 @@ func ({{ ffi_converter_name }}) write(writer io.Writer, value string) {
 
 type {{ type_|ffi_destroyer_name }} struct {}
 
-func ({{ type_|ffi_destroyer_name }}) destroy(_ {{ type_name }}) {}
+func ({{ type_|ffi_destroyer_name }}) Destroy(_ {{ type_name }}) {}

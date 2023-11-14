@@ -5,11 +5,13 @@
 package binding_tests
 
 import (
-	"github.com/NordSecurity/uniffi-bindgen-go/binding_tests/generated/uniffi/objects"
-	"github.com/stretchr/testify/assert"
 	"runtime"
 	"testing"
 	"time"
+
+	"github.com/NordSecurity/uniffi-bindgen-go/binding_tests/generated/objects"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestObject0(t *testing.T) {

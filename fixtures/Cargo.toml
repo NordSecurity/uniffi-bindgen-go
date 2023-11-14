@@ -9,6 +9,7 @@ path = "src/lib.rs"
 crate-type = ["cdylib", "staticlib", "lib"]
 
 [dependencies]
+# Examples
 uniffi-example-arithmetic = { path = "../3rd-party/uniffi-rs/examples/arithmetic" }
 uniffi-example-callbacks = { path = "../3rd-party/uniffi-rs/examples/callbacks" }
 uniffi-example-custom-types = { path = "../3rd-party/uniffi-rs/examples/custom-types" }
@@ -16,10 +17,27 @@ uniffi-example-geometry = { path = "../3rd-party/uniffi-rs/examples/geometry/" }
 uniffi-example-rondpoint = { path = "../3rd-party/uniffi-rs/examples/rondpoint" }
 uniffi-example-sprites = { path = "../3rd-party/uniffi-rs/examples/sprites" }
 uniffi-example-todolist = { path = "../3rd-party/uniffi-rs/examples/todolist" }
+
+# Fixtures
 uniffi-fixture-callbacks = { path = "../3rd-party/uniffi-rs/fixtures/callbacks" }
 uniffi-fixture-coverall = { path = "../3rd-party/uniffi-rs/fixtures/coverall" }
-uniffi-fixture-external-types = { path = "../3rd-party/uniffi-rs/fixtures/external-types/lib" }
+# ext types
+uniffi-fixture-ext-types = { path = "../3rd-party/uniffi-rs/fixtures/ext-types/lib" }
+uniffi-fixture-ext-types-proc-macro = { path = "../3rd-party/uniffi-rs/fixtures/ext-types/proc-macro-lib" }
+uniffi-fixture-ext-types-lib-one = { path = "../3rd-party/uniffi-rs/fixtures/ext-types/uniffi-one" }
+uniffi-fixture-ext-types-guid = { path = "../3rd-party/uniffi-rs/fixtures/ext-types/guid" }
+
+uniffi-fixture-foreign-executor = { path = "../3rd-party/uniffi-rs/fixtures/foreign-executor" }
+uniffi-fixture-futures = { path = "../3rd-party/uniffi-rs/fixtures/futures" }
+uniffi-fixture-large-enum = { package = "large-enum", path = "../3rd-party/uniffi-rs/fixtures/large-enum" }
+uniffi-fixture-proc-macro = { path = "../3rd-party/uniffi-rs/fixtures/proc-macro" }
+uniffi-fixture-simple-fns = { path = "../3rd-party/uniffi-rs/fixtures/simple-fns" }
+uniffi-fixture-simple-iface = { path = "../3rd-party/uniffi-rs/fixtures/simple-iface" }
+uniffi-fixture-trait-methods = { path = "../3rd-party/uniffi-rs/fixtures/trait-methods" }
+uniffi-fixture-type-limits = { path = "../3rd-party/uniffi-rs/fixtures/type-limits" }
 uniffi-fixture-time = { path = "../3rd-party/uniffi-rs/fixtures/uniffi-fixture-time" }
+
+# Go specific
 uniffi-go-fixture-errors = { path = "errors" }
 uniffi-go-fixture-destroy = { path = "destroy" }
 uniffi-go-fixture-objects = { path = "objects" }

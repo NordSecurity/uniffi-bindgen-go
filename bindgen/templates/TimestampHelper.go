@@ -8,12 +8,11 @@ type FfiConverterTimestamp struct{}
 
 var FfiConverterTimestampINSTANCE = FfiConverterTimestamp{}
 
-func (c FfiConverterTimestamp) lift(cRustBuf C.RustBuffer) time.Time {
-	rustBuffer := fromCRustBuffer(cRustBuf)
-	return liftFromRustBuffer[time.Time](c, rustBuffer)
+func (c FfiConverterTimestamp) Lift(rb RustBufferI) time.Time {
+	return LiftFromRustBuffer[time.Time](c, rb)
 }
 
-func (c FfiConverterTimestamp) read(reader io.Reader) time.Time {
+func (c FfiConverterTimestamp) Read(reader io.Reader) time.Time {
 	sec := readInt64(reader)
 	nsec := readUint32(reader)
 
@@ -25,11 +24,11 @@ func (c FfiConverterTimestamp) read(reader io.Reader) time.Time {
 	return time.Unix(sec, int64(nsec) * sign)
 }
 
-func (c FfiConverterTimestamp) lower(value time.Time) C.RustBuffer {
-	return lowerIntoRustBuffer[time.Time](c, value)
+func (c FfiConverterTimestamp) Lower(value time.Time) RustBuffer {
+	return LowerIntoRustBuffer[time.Time](c, value)
 }
 
-func (c FfiConverterTimestamp) write(writer io.Writer, value time.Time) {
+func (c FfiConverterTimestamp) Write(writer io.Writer, value time.Time) {
 	sec := value.Unix()
 	nsec := uint32(value.Nanosecond())
 	if value.Unix() < 0 {
@@ -43,4 +42,4 @@ func (c FfiConverterTimestamp) write(writer io.Writer, value time.Time) {
 
 type {{ type_|ffi_destroyer_name }} struct {}
 
-func ({{ type_|ffi_destroyer_name }}) destroy(_ {{ type_name }}) {}
+func ({{ type_|ffi_destroyer_name }}) Destroy(_ {{ type_name }}) {}

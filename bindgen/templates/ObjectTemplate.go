@@ -4,7 +4,7 @@
 
 {{- self.add_import("runtime") }}
 
-{%- let obj = ci.get_object_definition(name).unwrap() %}
+{%- let obj = ci.get_object_definition(name).expect("missing obj") %}
 {%- let canonical_name = type_|canonical_name %}
 {%- if self.include_once_check("ObjectRuntime.go") %}{% include "ObjectRuntime.go" %}{% endif %}
 
@@ -30,8 +30,25 @@ func {{ canonical_name }}{{ cons.name()|fn_name }}({% call go::arg_list_decl(con
 func (_self {{ type_name }}){{ func.name()|fn_name }}({%- call go::arg_list_decl(func) -%}) {% call go::return_type_decl(func) %} {
 	_pointer := _self.ffiObject.incrementPointer("{{ type_name }}")
 	defer _self.ffiObject.decrementPointer()
+{%- if func.is_async() %}
+	{% call go::async_ffi_call_binding(func, "_pointer") %}
+}
+{%- else %}
 	{% call go::ffi_call_binding(func, "_pointer") %}
 }
+{%endif %}
+{% endfor %}
+
+{%- for tm in obj.uniffi_traits() -%}
+{%- match tm %}
+{%- when UniffiTrait::Display { fmt } %}
+func (_self {{ type_name }})String() string {
+	_pointer := _self.ffiObject.incrementPointer("{{ type_name }}")
+	defer _self.ffiObject.decrementPointer()
+	{% call go::ffi_call_binding(fmt, "_pointer") %}
+}
+{% else %}
+{% endmatch %}
 {% endfor %}
 
 func (object {{ type_name }})Destroy() {
@@ -43,7 +60,7 @@ type {{ obj|ffi_converter_name }} struct {}
 
 var {{ obj|ffi_converter_name }}INSTANCE = {{ obj|ffi_converter_name }}{}
 
-func (c {{ obj|ffi_converter_name }}) lift(pointer unsafe.Pointer) {{ type_name }} {
+func (c {{ obj|ffi_converter_name }}) Lift(pointer unsafe.Pointer) {{ type_name }} {
 	result := &{{ canonical_name }} {
 		newFfiObject(
 			pointer,
@@ -55,11 +72,11 @@ func (c {{ obj|ffi_converter_name }}) lift(pointer unsafe.Pointer) {{ type_name 
 	return result
 }
 
-func (c {{ obj|ffi_converter_name }}) read(reader io.Reader) {{ type_name }} {
-	return c.lift(unsafe.Pointer(uintptr(readUint64(reader))))
+func (c {{ obj|ffi_converter_name }}) Read(reader io.Reader) {{ type_name }} {
+	return c.Lift(unsafe.Pointer(uintptr(readUint64(reader))))
 }
 
-func (c {{ obj|ffi_converter_name }}) lower(value {{ type_name }}) unsafe.Pointer {
+func (c {{ obj|ffi_converter_name }}) Lower(value {{ type_name }}) unsafe.Pointer {
 	// TODO: this is bad - all synchronization from ObjectRuntime.go is discarded here,
 	// because the pointer will be decremented immediately after this function returns,
 	// and someone will be left holding onto a non-locked pointer.
@@ -68,12 +85,12 @@ func (c {{ obj|ffi_converter_name }}) lower(value {{ type_name }}) unsafe.Pointe
 	return pointer
 }
 
-func (c {{ obj|ffi_converter_name }}) write(writer io.Writer, value {{ type_name }}) {
-	writeUint64(writer, uint64(uintptr(c.lower(value))))
+func (c {{ obj|ffi_converter_name }}) Write(writer io.Writer, value {{ type_name }}) {
+	writeUint64(writer, uint64(uintptr(c.Lower(value))))
 }
 
 type {{ obj|ffi_destroyer_name }} struct {}
 
-func (_ {{ obj|ffi_destroyer_name }}) destroy(value {{ type_name }}) {
+func (_ {{ obj|ffi_destroyer_name }}) Destroy(value {{ type_name }}) {
 	value.Destroy()
 }

@@ -2,7 +2,7 @@ name: Rust
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "main"]
   pull_request:
     branches: [ "main" ]
 
@@ -13,18 +13,23 @@ jobs:
   build:
     runs-on: ubuntu-latest
     container:
-      image: rust:1.64
+      image: rust:1.70
     steps:
     - uses: actions/checkout@v3
       with:
         submodules: 'true'
-    - name: Build
+    - name: Build Bindgen
       run: ./build.sh
+    - name: Generate Test Bindings
+      run: ./build_bindings.sh
     - uses: actions/upload-artifact@v3
       with:
-        path: |
-          target/debug/libuniffi_fixtures.so
-          target/debug/uniffi-bindgen-go
+        name: lib
+        path: target/debug/libuniffi_fixtures.so
+    - uses: actions/upload-artifact@v3
+      with:
+        name: bindings
+        path: binding_tests/generated/
 
   test-bindings:
     runs-on: ubuntu-latest
@@ -37,9 +42,12 @@ jobs:
         submodules: 'true'
     - uses: actions/download-artifact@v3
       with:
-        name: artifact
+        name: lib
         path: target/debug
+    - uses: actions/download-artifact@v3
+      with:
+        name: bindings
+        path: binding_tests/generated
     - name: Test
       run: |
-        chmod +x target/debug/uniffi-bindgen-go
         ./test_bindings.sh

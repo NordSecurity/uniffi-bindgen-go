@@ -2,7 +2,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */#}
 
-{%- let e = ci.get_error_definition(name).unwrap() -%}
 type {{ type_name|class_name }} struct {
 	err error
 }
@@ -78,28 +77,27 @@ type {{ e|ffi_converter_name }} struct{}
 
 var {{ e|ffi_converter_name }}INSTANCE = {{ e|ffi_converter_name }}{}
 
-func (c {{ e|ffi_converter_name }}) lift(cErrBuf C.RustBuffer) error {
-	errBuf := fromCRustBuffer(cErrBuf)
-	return liftFromRustBuffer[error](c, errBuf)
+func (c {{ e|ffi_converter_name }}) Lift(eb RustBufferI) error {
+	return LiftFromRustBuffer[error](c, eb)
 }
 
-func (c {{ e|ffi_converter_name }}) lower(value *{{ type_name|class_name }}) C.RustBuffer {
-	return lowerIntoRustBuffer[*{{ type_name|class_name }}](c, value)
+func (c {{ e|ffi_converter_name }}) Lower(value *{{ type_name|class_name }}) RustBuffer {
+	return LowerIntoRustBuffer[*{{ type_name|class_name }}](c, value)
 }
 
-func (c {{ e|ffi_converter_name }}) read(reader io.Reader) error {
+func (c {{ e|ffi_converter_name }}) Read(reader io.Reader) error {
 	errorID := readUint32(reader)
 
 	{%- if e.is_flat() %}
 
-	message := {{ TypeIdentifier::String.borrow()|read_fn }}(reader)
+	message := {{ Type::String.borrow()|read_fn }}(reader)
 	switch errorID {
 	{%- for variant in e.variants() %}
 	case {{ loop.index }}:
 		return &{{ type_name|class_name }}{&{{ type_name|class_name }}{{ variant.name()|class_name }}{message}}
 	{%- endfor %}
 	default:
-		panic(fmt.Sprintf("Unknown error code %d in {{ e|ffi_converter_name}}.read()", errorID))
+		panic(fmt.Sprintf("Unknown error code %d in {{ e|ffi_converter_name}}.Read()", errorID))
 	}
 
 	{% else %}
@@ -114,13 +112,13 @@ func (c {{ e|ffi_converter_name }}) read(reader io.Reader) error {
 		}}
 	{%- endfor %}
 	default:
-		panic(fmt.Sprintf("Unknown error code %d in {{ e|ffi_converter_name}}.read()", errorID))
+		panic(fmt.Sprintf("Unknown error code %d in {{ e|ffi_converter_name}}.Read()", errorID))
 	}
 
 	{%- endif %}
 }
 
-func (c {{ e|ffi_converter_name }}) write(writer io.Writer, value *{{ type_name|class_name }}) {
+func (c {{ e|ffi_converter_name }}) Write(writer io.Writer, value *{{ type_name|class_name }}) {
 	switch variantValue := value.err.(type) {
 		{%- for variant in e.variants() %}
 		case *{{ type_name }}{{ variant.name()|class_name }}:
@@ -131,6 +129,6 @@ func (c {{ e|ffi_converter_name }}) write(writer io.Writer, value *{{ type_name|
 		{%- endfor %}
 		default:
 			_ = variantValue
-			panic(fmt.Sprintf("invalid error value `%v` in {{ e|ffi_converter_name }}.write", value))
+			panic(fmt.Sprintf("invalid error value `%v` in {{ e|ffi_converter_name }}.Write", value))
 	}
 }
