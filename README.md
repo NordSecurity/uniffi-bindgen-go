@@ -58,7 +58,7 @@ the version of uniffi-rs it is based on.
 
 The table shows `uniffi-rs` version history for tags that were published before tag naming convention described above was introduced.
 
-| uniffi-bindgen-cs version                | uniffi-rs version                                |
+| uniffi-bindgen-go version                | uniffi-rs version                                |
 |------------------------------------------|--------------------------------------------------|
 | v0.2.0                                   | v0.25.0                                          |
 | v0.1.0                                   | v0.23.0                                          |
