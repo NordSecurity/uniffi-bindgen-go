@@ -8,12 +8,14 @@
 {%- let obj_name = obj.name()|class_name %}
 {%- if self.include_once_check("ObjectRuntime.go") %}{% include "ObjectRuntime.go" %}{% endif %}
 
+{%- call go::docstring(obj, 0) %}
 type {{ obj_name }} struct {
 	ffiObject FfiObject
 }
 
 {%- match obj.primary_constructor() %}
 {%- when Some with (cons) %}
+{%- call go::docstring(cons, 0) %}
 func New{{ obj_name }}({% call go::arg_list_decl(cons) -%}) {% call go::return_type_decl(cons) %} {
 	{% call go::ffi_call_binding(func, "") %}
 }
@@ -21,12 +23,14 @@ func New{{ obj_name }}({% call go::arg_list_decl(cons) -%}) {% call go::return_t
 {%- endmatch %}
 
 {% for cons in obj.alternate_constructors() -%}
+{%- call go::docstring(cons, 0) %}
 func {{ obj_name }}{{ cons.name()|fn_name }}({% call go::arg_list_decl(cons) %}) {% call go::return_type_decl(cons) %} {
 	{% call go::ffi_call_binding(func, "") %}
 }
 {% endfor %}
 
 {% for func in obj.methods() -%}
+{%- call go::docstring(func, 0) %}
 func (_self {{ type_name }}){{ func.name()|fn_name }}({%- call go::arg_list_decl(func) -%}) {% call go::return_type_decl(func) %} {
 	_pointer := _self.ffiObject.incrementPointer("{{ type_name }}")
 	defer _self.ffiObject.decrementPointer()

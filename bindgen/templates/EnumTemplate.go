@@ -4,11 +4,12 @@
 
 {% let e = ci.get_enum_definition(name).expect("missing enum") -%}
 {%- if e.is_flat() -%}
-
+{%- call go::docstring(e, 0) %}
 type {{ type_name }} uint
 
 const (
 	{%- for variant in e.variants() %}
+	{%- call go::docstring(variant, 4) %}
 	{{ type_name }}{{ variant.name()|enum_variant_name }} {{ type_name }} = {{ loop.index }}
 	{%- endfor %}
 )
@@ -19,8 +20,10 @@ type {{ type_name }} interface {
 }
 
 {%- for variant in e.variants() %}
+{%- call go::docstring(variant, 0) %}
 type {{ type_name }}{{ variant.name()|class_name }} struct {
 	{%- for field in variant.fields() %}
+	{%- call go::docstring(field, 4) %}
 	{{ field.name()|field_name }} {{ field|type_name}}
 	{%- endfor %}
 }

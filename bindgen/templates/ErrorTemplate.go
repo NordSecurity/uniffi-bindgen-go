@@ -2,6 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */#}
 
+{%- call go::docstring(e, 0) %}
 type {{ type_name|class_name }} struct {
 	err error
 }
@@ -17,12 +18,14 @@ func (err {{ type_name|class_name }}) Unwrap() error {
 // Err* are used for checking error type with `errors.Is`
 {%- for variant in e.variants() %}
 {%- let variant_class_name = (type_name.clone() + variant.name())|class_name %}
+{%- call go::docstring(variant, 0) %}
 var Err{{ variant_class_name }} = fmt.Errorf("{{ variant_class_name }}")
 {%- endfor %}
 
 // Variant structs
 {%- for variant in e.variants() %}
 {%- let variant_class_name = (type_name.clone() + variant.name())|class_name %}
+{%- call go::docstring(variant, 0) %}
 type {{ variant_class_name }} struct {
 	{%- if e.is_flat() %}
 	message string

@@ -487,6 +487,15 @@ pub mod filters {
     pub fn enum_variant_name(nm: &str) -> Result<String, askama::Error> {
         Ok(oracle().enum_variant_name(nm))
     }
+
+    /// Get the idiomatic go rendering of docstring
+    pub fn docstring(docstring: &str, spaces: &i32) -> Result<String, askama::Error> {
+        let middle = textwrap::indent(&textwrap::dedent(docstring), " * ");
+        let wrapped = format!("/**\n{middle}\n */");
+
+        let spaces = usize::try_from(*spaces).unwrap_or_default();
+        Ok(textwrap::indent(&wrapped, &" ".repeat(spaces)))
+    }
 }
 
 /// Renders Go helper code for all types

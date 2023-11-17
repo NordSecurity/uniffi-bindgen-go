@@ -4,8 +4,10 @@
 
 {%- let rec = ci.get_record_definition(name).expect("missing record") %}
 
+{%- call go::docstring(rec, 0) %}
 type {{ type_name }} struct {
 	{%- for field in rec.fields() %}
+	{%- call go::docstring(field, 0) %}
 	{{ field.name()|field_name }} {{ field|type_name -}}
 	{%- endfor %}
 }

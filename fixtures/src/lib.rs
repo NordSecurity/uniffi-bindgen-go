@@ -33,6 +33,8 @@ mod uniffi_fixtures {
     uniffi_trait_methods::uniffi_reexport_scaffolding!();
     uniffi_type_limits::uniffi_reexport_scaffolding!();
 
+    uniffi_fixture_docstring::uniffi_reexport_scaffolding!();
+
     // Go specific
     uniffi_go_destroy::uniffi_reexport_scaffolding!();
     uniffi_go_errors::uniffi_reexport_scaffolding!();

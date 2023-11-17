@@ -6,8 +6,11 @@
 {{- self.add_import("sync") }}
 
 // Declaration and FfiConverters for {{ type_name }} Callback Interface
+
+{%- call go::docstring(cbi, 0) %}
 type {{ type_name }} interface {
 	{% for meth in cbi.methods() -%}
+	{%- call go::docstring(meth, 4) %}
 	{{ meth.name()|fn_name }}({% call go::arg_list_decl(meth) %}) {% call go::return_type_decl_cb(meth) %}
 	{% endfor %}
 }

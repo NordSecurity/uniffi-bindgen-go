@@ -36,6 +36,7 @@ uniffi-fixture-simple-iface = { path = "../3rd-party/uniffi-rs/fixtures/simple-i
 uniffi-fixture-trait-methods = { path = "../3rd-party/uniffi-rs/fixtures/trait-methods" }
 uniffi-fixture-type-limits = { path = "../3rd-party/uniffi-rs/fixtures/type-limits" }
 uniffi-fixture-time = { path = "../3rd-party/uniffi-rs/fixtures/uniffi-fixture-time" }
+uniffi-fixture-docstring = { path = "../3rd-party/uniffi-rs/fixtures/docstring" }
 
 # Go specific
 uniffi-go-fixture-destroy = { path = "destroy" }
