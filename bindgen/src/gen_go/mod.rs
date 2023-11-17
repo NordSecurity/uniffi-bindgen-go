@@ -489,12 +489,12 @@ pub mod filters {
     }
 
     /// Get the idiomatic go rendering of docstring
-    pub fn docstring(docstring: &str, spaces: &i32) -> Result<String, askama::Error> {
-        let middle = textwrap::indent(&textwrap::dedent(docstring), " * ");
-        let wrapped = format!("/**\n{middle}\n */");
+    pub fn docstring(docstring: &str, tabs: &i32) -> Result<String, askama::Error> {
+        let middle = textwrap::indent(&textwrap::dedent(docstring), "// ");
+        let wrapped = format!("{middle}");
 
-        let spaces = usize::try_from(*spaces).unwrap_or_default();
-        Ok(textwrap::indent(&wrapped, &" ".repeat(spaces)))
+        let tabs = usize::try_from(*tabs).unwrap_or_default();
+        Ok(textwrap::indent(&wrapped, &"\t".repeat(tabs)))
     }
 }
 
