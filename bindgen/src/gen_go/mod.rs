@@ -431,6 +431,12 @@ pub mod filters {
 
     /// Get the idiomatic Go rendering of a struct field name.
     pub fn field_name(nm: &str) -> Result<String, askama::Error> {
+        // Fields called 'Error' can clash with structs which implement the error
+        // interface, causing a compilation error. Suffix with _ similar to reserved
+        // keywords in var names.
+        if nm == "error" {
+            return Ok(String::from("Error_"));
+        }
         Ok(nm.to_string().to_upper_camel_case())
     }
 

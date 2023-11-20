@@ -28,6 +28,11 @@ interface ValidationError {
 };
 
 [Error]
+interface ErrorNamedError {
+  Error(string error);
+};
+
+[Error]
 interface ComplexError {
     Struct(Vec2 position_a, Vec2 position_b);
     List(sequence<Vec2> list);
