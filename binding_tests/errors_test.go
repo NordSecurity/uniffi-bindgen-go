@@ -141,3 +141,12 @@ func TestComplexErrorAsBase(t *testing.T) {
 	assert.ErrorAs(t, err, &expectedError)
 	assert.EqualError(t, expectedError, "ValidationError: InvalidUserAndMessage: UserId=100, Message=byebye")
 }
+
+func TestErrorNamedError(t *testing.T) {
+	// this test exists to ensure ErrorNamedError is not removed from the UDL without causing test failures.
+	// The purpose of ErrorNamedError is to ensure that the generated bindings produce compilable Go code,
+	// so there isn't really anything to actually test at runtime.
+	err := errors.NewErrorNamedErrorError("it's an error")
+	var expectedError *errors.ErrorNamedError
+	assert.ErrorAs(t, err, &expectedError)
+}
