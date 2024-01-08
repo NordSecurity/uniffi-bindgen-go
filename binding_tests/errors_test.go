@@ -149,4 +149,5 @@ func TestErrorNamedError(t *testing.T) {
 	err := errors.NewErrorNamedErrorError("it's an error")
 	var expectedError *errors.ErrorNamedError
 	assert.ErrorAs(t, err, &expectedError)
+	assert.Equal(t, "it's an error", expectedError.Unwrap().(*errors.ErrorNamedErrorError).Error_)
 }
