@@ -28,7 +28,7 @@ type {{ variant_class_name }} struct {
 	message string
 	{%- else %}
 	{%- for field in variant.fields() %}
-	{{ field.name()|field_name }} {{ field|type_name}}
+	{{ field.name()|error_field_name }} {{ field|type_name}}
 	{%- endfor %}
 	{%- endif %}
 }
@@ -44,7 +44,7 @@ func New{{ variant_class_name }}(
 		err: &{{ variant_class_name }}{
 		{%- if !e.is_flat() %}
 		{%- for field in variant.fields() %}
-			{{ field.name()|field_name }}: {{ field.name()|var_name }},
+			{{ field.name()|error_field_name }}: {{ field.name()|var_name }},
 		{%- endfor %}
 		{%- endif %}
 		},
@@ -60,8 +60,8 @@ func (err {{ variant_class_name }}) Error() string {
 		{% if !variant.fields().is_empty() %}": ",{% endif %}
 		{%- for field in variant.fields() %}
 		{% if !loop.first %}", ",{% endif %}
-		"{{ field.name()|field_name }}=",
-		err.{{ field.name()|field_name }},
+		"{{ field.name()|error_field_name }}=",
+		err.{{ field.name()|error_field_name }},
 		{%- endfor %}
 	)
 }
@@ -107,7 +107,7 @@ func (c {{ e|ffi_converter_name }}) Read(reader io.Reader) error {
 	case {{ loop.index }}:
 		return &{{ type_name|class_name }}{&{{ type_name|class_name }}{{ variant.name()|class_name }}{
 			{%- for field in variant.fields() %}
-			{{ field.name()|field_name }}: {{ field|read_fn }}(reader),
+			{{ field.name()|error_field_name }}: {{ field|read_fn }}(reader),
 			{%- endfor %}
 		}}
 	{%- endfor %}
@@ -124,7 +124,7 @@ func (c {{ e|ffi_converter_name }}) Write(writer io.Writer, value *{{ type_name|
 		case *{{ type_name }}{{ variant.name()|class_name }}:
 			writeInt32(writer, {{ loop.index }})
 			{%- for field in variant.fields() %}
-			{{ field|write_fn }}(writer, variantValue.{{ field.name()|field_name }})
+			{{ field|write_fn }}(writer, variantValue.{{ field.name()|error_field_name }})
 			{%- endfor %}
 		{%- endfor %}
 		default:

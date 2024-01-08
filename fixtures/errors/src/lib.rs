@@ -25,6 +25,12 @@ pub enum ValidationError {
 }
 
 #[derive(Debug, thiserror::Error)]
+pub enum ErrorNamedError {
+    #[error("Error {error}")]
+    Error { error: String },
+}
+
+#[derive(Debug, thiserror::Error)]
 pub enum ComplexError {
     #[error("Struct")]
     Struct { position_a: Vec2, position_b: Vec2 },

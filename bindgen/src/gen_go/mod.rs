@@ -434,6 +434,16 @@ pub mod filters {
         Ok(nm.to_string().to_upper_camel_case())
     }
 
+    pub fn error_field_name(nm: &str) -> Result<String, askama::Error> {
+        // Fields called 'Error' can clash with structs which implement the error
+        // interface, causing a compilation error. Suffix with _ similar to reserved
+        // keywords in var names.
+        if nm == "error" {
+            return Ok(String::from("Error_"));
+        }
+        Ok(nm.to_string().to_upper_camel_case())
+    }
+
     pub fn type_name(type_: &impl AsType) -> Result<String, askama::Error> {
         Ok(oracle().find(type_).type_label())
     }
