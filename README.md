@@ -19,7 +19,14 @@ cargo install uniffi-bindgen-go --git https://github.com/NordSecurity/uniffi-bin
 ```
 uniffi-bindgen-go path/to/definitions.udl
 ```
+
 Generates bindings file `path/to/uniffi/definitions/definitions.go`
+
+# Linking 
+
+You will need to make sure the compiled Rust binaries are in your `LD_LIBRARY_PATH` (set this to `target/release/` if you have built with the `--release` flag, for instance).
+
+You can also create a script to properly link these bindings - see `test_bindings.sh` in the root of this repository for an example. 
 
 # How to integrate bindings
 
