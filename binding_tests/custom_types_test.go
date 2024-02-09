@@ -8,9 +8,9 @@ import (
 	"net/url"
 	"testing"
 
-    "github.com/NordSecurity/uniffi-bindgen-go/binding_tests/generated/custom_types"
+	"github.com/NordSecurity/uniffi-bindgen-go/binding_tests/generated/custom_types"
 
-    "github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/assert"
 )
 
 func unwrap[T any](value T, err error) T {

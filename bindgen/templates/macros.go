@@ -204,4 +204,10 @@ RustBufferFromExternal({{ arg|lower_fn }}({{ arg.name()|var_name }}))
 {%- endmatch -%}
 {%- endmacro -%}
 
-
+{%- macro docstring(defn, indent_tabs) %}
+{%- match defn.docstring() %}
+{%- when Some(docstring) %}
+{{ docstring|docstring(indent_tabs) }}
+{%- else %}
+{%- endmatch %}
+{%- endmacro %}

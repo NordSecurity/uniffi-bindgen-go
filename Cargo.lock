@@ -1183,6 +1183,7 @@ dependencies = [
  "paste",
  "serde",
  "serde_json",
+ "textwrap",
  "toml",
  "uniffi_bindgen",
  "uniffi_meta",
@@ -1203,6 +1204,7 @@ dependencies = [
  "uniffi-example-todolist",
  "uniffi-fixture-callbacks",
  "uniffi-fixture-coverall",
+ "uniffi-fixture-docstring",
  "uniffi-fixture-ext-types",
  "uniffi-fixture-ext-types-guid",
  "uniffi-fixture-ext-types-lib-one",
@@ -1292,6 +1294,18 @@ dependencies = [
  "once_cell",
  "thiserror",
  "uniffi",
+]
+
+[[package]]
+name = "uniffi-fixture-docstring"
+version = "0.22.0"
+dependencies = [
+ "camino",
+ "glob",
+ "thiserror",
+ "uniffi",
+ "uniffi_bindgen",
+ "uniffi_testing",
 ]
 
 [[package]]

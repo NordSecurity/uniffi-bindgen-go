@@ -59,7 +59,7 @@ func TestCallbackRegistrationIsNotAffectedByGC(t *testing.T) {
 func TestCallbackReferenceIsDropped(t *testing.T) {
 	telephone := callbacks.NewTelephone()
 	dropped := false
-	done :=  make(chan struct{})
+	done := make(chan struct{})
 	func() {
 		callback := &OnCallAnswerImpl{}
 		runtime.SetFinalizer(callback, func(cb *OnCallAnswerImpl) {
@@ -71,9 +71,9 @@ func TestCallbackReferenceIsDropped(t *testing.T) {
 	runtime.GC()
 	// runtime.GC() is not a fully blocking call
 	select {
-	case <- time.After(time.Millisecond * 100):
+	case <-time.After(time.Millisecond * 100):
 		panic("timed out")
-	case <- done:
+	case <-done:
 		assert.Equal(t, true, dropped)
 	}
 }

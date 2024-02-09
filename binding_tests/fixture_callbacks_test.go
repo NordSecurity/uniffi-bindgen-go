@@ -44,10 +44,10 @@ func (getters) GetList(v []int32, arg2 bool) ([]int32, *fixture_callbacks.Simple
 func (getters) GetNothing(v string) *fixture_callbacks.SimpleError {
 	if v == "bad-argument" {
 		return fixture_callbacks.NewSimpleErrorBadArgument()
-        }
-        if v == "unexpected-error" {
+	}
+	if v == "unexpected-error" {
 		return fixture_callbacks.NewSimpleErrorUnexpectedError()
-        }
+	}
 	return nil
 }
 
