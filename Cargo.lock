@@ -1170,7 +1170,7 @@ dependencies = [
 
 [[package]]
 name = "uniffi-bindgen-go"
-version = "0.2.0+v0.25.0"
+version = "0.2.1+v0.25.0"
 dependencies = [
  "anyhow",
  "askama",
