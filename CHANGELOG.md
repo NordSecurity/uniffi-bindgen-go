@@ -1,5 +1,10 @@
 ----
 
+### v0.2.1+v0.25.0
+
+- Fix generated code when `error` field name is used in an associated error variant
+- Implement docstrings
+
 ### v0.2.0+v0.25.0
 
 - **BREAKING**: Update to uniffi 0.25.0.
