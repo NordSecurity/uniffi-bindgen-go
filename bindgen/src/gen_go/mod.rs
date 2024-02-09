@@ -497,6 +497,14 @@ pub mod filters {
     pub fn enum_variant_name(nm: &str) -> Result<String, askama::Error> {
         Ok(oracle().enum_variant_name(nm))
     }
+
+    /// Get the idiomatic C# rendering of docstring
+    pub fn docstring(docstring: &str, tabs: &i32) -> Result<String, askama::Error> {
+        let docstring = textwrap::indent(&textwrap::dedent(docstring), "// ");
+
+        let tabs = usize::try_from(*tabs).unwrap_or_default();
+        Ok(textwrap::indent(&docstring, &"\t".repeat(tabs)))
+    }
 }
 
 /// Renders Go helper code for all types
