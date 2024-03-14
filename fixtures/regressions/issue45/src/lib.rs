@@ -3,9 +3,9 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #[derive(uniffi::Record)]
-struct Record {
-    id: String,
-    tag: String,
+pub struct Record {
+    pub id: String,
+    pub tag: String,
 }
 
 // Ensure multiple futures packages work fine together, the other one being
