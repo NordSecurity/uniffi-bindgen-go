@@ -3,8 +3,8 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */#}
 
 const (
-	uniffiRustFuturePollReady      C.int8_t = 0
-	uniffiRustFuturePollMaybeReady C.int8_t = 1
+	uniffiRustFuturePollReady      int8 = 0
+	uniffiRustFuturePollMaybeReady int8 = 1
 )
 
 func uniffiRustCallAsync(
@@ -111,8 +111,8 @@ func uniffiRustCallAsyncInner(
 	pollFunc func(*C.void, unsafe.Pointer, *C.RustCallStatus),
 	freeFunc func(*C.void, *C.RustCallStatus),
 ) (*C.void, error) {
-	pollResult := C.int8_t(-1)
-	waiter := make(chan C.int8_t, 1)
+	pollResult := int8(-1)
+	waiter := make(chan int8, 1)
 	chanHandle := cgo.NewHandle(waiter)
 
 	rustFuture, err := rustCallWithError(converter, func(status *C.RustCallStatus) *C.void {
@@ -146,8 +146,8 @@ func uniffiRustCallAsyncInner(
 //export uniffiFutureContinuationCallback{{ config.package_name.as_ref().unwrap() }}
 func uniffiFutureContinuationCallback{{ config.package_name.as_ref().unwrap() }}(ptr unsafe.Pointer, pollResult C.int8_t) {
 	doneHandle := *(*cgo.Handle)(ptr)
-	done := doneHandle.Value().((chan C.int8_t))
-	done <- pollResult
+	done := doneHandle.Value().((chan int8))
+	done <- int8(pollResult)
 }
 
 func uniffiInitContinuationCallback() {
