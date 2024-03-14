@@ -41,3 +41,4 @@ uniffi-go-fixture-destroy = { path = "destroy" }
 uniffi-go-fixture-errors = { path = "errors" }
 uniffi-go-fixture-name-case = { path = "name-case" }
 uniffi-go-fixture-objects = { path = "objects" }
+uniffi-go-fixture-issue45 = { path = "regressions/issue45" }
