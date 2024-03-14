@@ -30,7 +30,7 @@ type {{ variant_class_name }} struct {
 	message string
 	{%- else %}
 	{%- for field in variant.fields() %}
-	{{ field.name()|error_field_name }} {{ field|type_name}}
+	{{ field.name()|error_field_name }} {{ field|variant_type_name}}
 	{%- endfor %}
 	{%- endif %}
 }
@@ -39,7 +39,7 @@ type {{ variant_class_name }} struct {
 func New{{ variant_class_name }}(
 	{%- if !e.is_flat() %}
 	{%- for field in variant.fields() %}
-	{{ field.name()|var_name }} {{ field|type_name}},
+	{{ field.name()|var_name }} {{ field|variant_type_name}},
 	{%- endfor %}
 	{%- endif %}
 ) *{{ type_name.clone() }} {
@@ -110,7 +110,7 @@ func (c {{ e|ffi_converter_name }}) Read(reader io.Reader) error {
 	case {{ loop.index }}:
 		return &{{ type_name|class_name }}{&{{ type_name|class_name }}{{ variant.name()|class_name }}{
 			{%- for field in variant.fields() %}
-			{{ field.name()|error_field_name }}: {{ field|read_fn }}(reader),
+			{{ field.name()|error_field_name }}: {{ field|read_fn }}(reader){{field|error_type_cast}},
 			{%- endfor %}
 		}}
 	{%- endfor %}

@@ -20,6 +20,12 @@ enum BoobyTrapError {
 };
 
 [Error]
+interface NestedError {
+  Nested(ValidationError source);
+};
+
+
+[Error]
 interface ValidationError {
   InvalidUser(i32 user_id);
   InvalidMessage(string message);

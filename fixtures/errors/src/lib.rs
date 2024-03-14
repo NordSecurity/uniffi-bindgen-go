@@ -45,6 +45,12 @@ pub enum ComplexError {
     },
 }
 
+#[derive(Debug, thiserror::Error)]
+pub enum NestedError {
+    #[error(transparent)]
+    Nested { source: ValidationError },
+}
+
 #[derive(Debug)]
 pub struct Vec2 {
     x: f64,
@@ -54,6 +60,17 @@ pub struct Vec2 {
 impl Vec2 {
     pub fn new(x: f64, y: f64) -> Vec2 {
         Vec2 { x, y }
+    }
+}
+
+#[uniffi::export]
+fn try_nested(trip: bool) -> Result<(), NestedError> {
+    if trip {
+        Err(NestedError::Nested {
+            source: ValidationError::UnknownError,
+        })
+    } else {
+        Ok(())
     }
 }
 
