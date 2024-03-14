@@ -60,7 +60,7 @@
 {% macro return_type_decl_async(func) %}
 	{%- match func.return_type() -%}
 	{%- when Some with (return_type) -%}
-		{{return_type|maybe_namespace}}{{ return_type|ffi_type_name }}
+		{{ return_type|ffi_type_name }}
         {%- when None -%}
 	{%- endmatch %}
 {%- endmacro %}
