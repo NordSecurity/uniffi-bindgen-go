@@ -465,29 +465,17 @@ pub mod filters {
     }
 
     /// FFI type name to be used to reference cgo types
-    pub fn ffi_type_name<T: Clone + Into<FfiType>>(type_: &T) -> Result<String, askama::Error> {
+    pub fn ffi_type_name(type_: &Type) -> Result<String, askama::Error> {
         let ffi_type: FfiType = type_.clone().into();
         let result = match ffi_type {
             FfiType::RustArcPtr(_) => "unsafe.Pointer".into(),
-            FfiType::RustBuffer(_) => "RustBufferI".into(),
+            FfiType::RustBuffer(_) => match type_ {
+                Type::External { namespace, .. } => format!("{}.RustBufferI", namespace),
+                _ => "RustBufferI".into(),
+            },
             _ => format!("C.{}", oracle().ffi_type_label(&ffi_type)),
         };
         Ok(result)
-    }
-
-    // Return the Go package name for the given type, if it has one, followed by a '.'
-    // Returns the empty string if the type has no package name associated with it e.g primitive types.
-    //
-    // for multi-package bindings, it may be required to specify which
-    // RustBufferI should be used when creating completeFunc. Failure to
-    // specify the right package here will result in compilation errors.
-    pub fn maybe_namespace(type_: &impl AsType) -> Result<String, askama::Error> {
-        let type_label = oracle().find(type_).type_label();
-        if let Some((package_name, _)) = type_label.split_once(".") {
-            Ok(format!("{}.", package_name))
-        } else {
-            Ok(String::from(""))
-        }
     }
 
     /// FFI type name to be used to reference cgo types. Such that they exactly match to the cgo bindings and can be used with `//export`.
