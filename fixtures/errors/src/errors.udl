@@ -20,6 +20,11 @@ enum BoobyTrapError {
 };
 
 [Error]
+interface NestedError {
+  Nested(ValidationError source);
+};
+
+[Error]
 interface ValidationError {
   InvalidUser(i32 user_id);
   InvalidMessage(string message);
@@ -38,6 +43,10 @@ interface ComplexError {
     List(sequence<Vec2> list);
     Map(record<i32, Vec2> map);
     Option(i32? id_a, i32? id_b);
+};
+
+callback interface Callback {
+    void do_something(BoobyTrapError error);
 };
 
 dictionary Vec2 {

@@ -370,7 +370,7 @@ impl GoCodeOracle {
 pub mod filters {
     use super::*;
 
-    fn oracle() -> &'static GoCodeOracle {
+    pub fn oracle() -> &'static GoCodeOracle {
         &GoCodeOracle
     }
 
@@ -574,5 +574,13 @@ impl<'a> TypeRenderer<'a> {
 
     pub fn cgo_callback_fn(&self, name: &str, module_path: &str) -> String {
         format!("{module_path}_cgo_{name}")
+    }
+
+    pub fn field_type_name(&self, field: &Field) -> String {
+        let name = filters::oracle().find(&field.as_type()).type_label();
+        match self.ci.is_name_used_as_error(&name) {
+            true => format!("*{name}"),
+            false => name.to_string(),
+        }
     }
 }
