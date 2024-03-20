@@ -30,7 +30,7 @@ type {{ variant_class_name }} struct {
 	message string
 	{%- else %}
 	{%- for field in variant.fields() %}
-	{{ field.name()|error_field_name }} {{ field|type_name}}
+	{{ field.name()|error_field_name }} {{ self.field_type_name(field) }}
 	{%- endfor %}
 	{%- endif %}
 }
@@ -39,7 +39,7 @@ type {{ variant_class_name }} struct {
 func New{{ variant_class_name }}(
 	{%- if !e.is_flat() %}
 	{%- for field in variant.fields() %}
-	{{ field.name()|var_name }} {{ field|type_name}},
+	{{ field.name()|var_name }} {{ self.field_type_name(field) }},
 	{%- endfor %}
 	{%- endif %}
 ) *{{ type_name.clone() }} {
@@ -81,14 +81,14 @@ type {{ e|ffi_converter_name }} struct{}
 var {{ e|ffi_converter_name }}INSTANCE = {{ e|ffi_converter_name }}{}
 
 func (c {{ e|ffi_converter_name }}) Lift(eb RustBufferI) error {
-	return LiftFromRustBuffer[error](c, eb)
+	return LiftFromRustBuffer[*{{ type_name|class_name }}](c, eb)
 }
 
 func (c {{ e|ffi_converter_name }}) Lower(value *{{ type_name|class_name }}) RustBuffer {
 	return LowerIntoRustBuffer[*{{ type_name|class_name }}](c, value)
 }
 
-func (c {{ e|ffi_converter_name }}) Read(reader io.Reader) error {
+func (c {{ e|ffi_converter_name }}) Read(reader io.Reader) *{{ type_name|class_name }} {
 	errorID := readUint32(reader)
 
 	{%- if e.is_flat() %}

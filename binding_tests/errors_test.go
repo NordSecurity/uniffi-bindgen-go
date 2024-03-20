@@ -151,3 +151,13 @@ func TestErrorNamedError(t *testing.T) {
 	assert.ErrorAs(t, err, &expectedError)
 	assert.Equal(t, "it's an error", expectedError.Unwrap().(*errors.ErrorNamedErrorError).Error_)
 }
+
+func TestNestedError(t *testing.T) {
+	assert.Equal(t, nil, errors.TryNested(false))
+	err := errors.TryNested(true)
+	var expectedError *errors.NestedError
+	assert.ErrorAs(t, err, &expectedError)
+	var expectedNestedError *errors.NestedErrorNested
+	assert.ErrorAs(t, expectedError.Unwrap(), &expectedNestedError)
+	assert.Equal(t, "ValidationError: UnknownError", expectedNestedError.Source.Error())
+}
