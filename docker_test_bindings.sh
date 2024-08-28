@@ -7,4 +7,4 @@ docker run \
     --volume $HOME/.cache/go-build:/root/.cache/go-build \
     --volume $PWD:/mounted_workdir \
     --workdir /mounted_workdir \
-    golang:1.19 ./test_bindings.sh
+    golang:1.20 ./test_bindings.sh
