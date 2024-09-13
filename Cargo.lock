@@ -1219,6 +1219,7 @@ dependencies = [
  "uniffi-fixture-type-limits",
  "uniffi-go-fixture-destroy",
  "uniffi-go-fixture-errors",
+ "uniffi-go-fixture-issue43",
  "uniffi-go-fixture-issue45",
  "uniffi-go-fixture-name-case",
  "uniffi-go-fixture-objects",
@@ -1443,6 +1444,16 @@ version = "1.0.0"
 dependencies = [
  "thiserror",
  "uniffi",
+ "uniffi_build",
+ "uniffi_macros",
+]
+
+[[package]]
+name = "uniffi-go-fixture-issue43"
+version = "1.0.0"
+dependencies = [
+ "uniffi",
+ "uniffi-go-fixture-issue45",
  "uniffi_build",
  "uniffi_macros",
 ]
