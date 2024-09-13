@@ -6,8 +6,8 @@ package binding_tests
 
 import (
 	"github.com/NordSecurity/uniffi-bindgen-go/binding_tests/generated/issue45"
-	"testing"
 	"github.com/stretchr/testify/assert"
+	"testing"
 )
 
 // Ensure multiple futures packages work fine together, the other one being

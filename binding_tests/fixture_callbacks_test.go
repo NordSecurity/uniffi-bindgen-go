@@ -1,6 +1,8 @@
 package binding_tests
 
 import (
+	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/NordSecurity/uniffi-bindgen-go/binding_tests/generated/fixture_callbacks"
@@ -71,6 +73,29 @@ func (invalidGetters) GetList(v []int32, arg2 bool) ([]int32, *fixture_callbacks
 
 func (invalidGetters) GetNothing(v string) *fixture_callbacks.SimpleError {
 	return fixture_callbacks.NewSimpleErrorBadArgument()
+}
+
+type goStringifier struct{}
+
+func (goStringifier) FromSimpleType(value int32) string {
+	return fmt.Sprintf("Go: %d", value)
+}
+
+func (goStringifier) FromComplexType(values *[]*float64) string {
+	if values == nil {
+		return "Go: nil"
+	}
+
+	var strNumbers []string
+	for _, num := range *values {
+		if num != nil {
+			strNumbers = append(strNumbers, fmt.Sprintf("%f", *num))
+		} else {
+			strNumbers = append(strNumbers, "nil")
+		}
+	}
+
+	return fmt.Sprintf("Go: %s", strings.Join(strNumbers, " "))
 }
 
 type testGetterInput[T any] struct {
@@ -311,4 +336,19 @@ func TestRustGetters_GetStringOptionalCallback(t *testing.T) {
 			assert.ErrorIs(t, err, tt.expectedError)
 		})
 	}
+}
+
+func TestRustGetters_CallbackReferenceDoesNotInvalidateOtherReferences(t *testing.T) {
+	stringifier := goStringifier{}
+	rustStringifier1 := fixture_callbacks.NewRustStringifier(stringifier)
+
+	{
+		rustStringifier2 := fixture_callbacks.NewRustStringifier(stringifier)
+		assert.Equal(t, "Go: 123", rustStringifier2.FromSimpleType(123))
+		rustStringifier2.Destroy()
+		// `stringifier` must remain valid after `rustStringifier2` drops the reference
+	}
+
+	assert.Equal(t, "Go: 321", rustStringifier1.FromSimpleType(321))
+	rustStringifier1.Destroy()
 }
