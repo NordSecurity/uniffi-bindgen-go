@@ -1,5 +1,11 @@
 ----
 
+### UNRELEASED (PATCH, NON-BREAKING CHANGES)
+
+- Fix multiple crates sharing RustBufferI not working [#43](https://github.com/NordSecurity/uniffi-bindgen-go/issues/43)
+- Fix multiple async packages not working together [#45](https://github.com/NordSecurity/uniffi-bindgen-go/issues/45)
+- Internal refactorings to callbacks
+
 ### v0.2.1+v0.25.0
 
 - Fix generated code when `error` field name is used in an associated error variant
