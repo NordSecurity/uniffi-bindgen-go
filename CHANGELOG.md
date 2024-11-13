@@ -1,5 +1,12 @@
 ----
 
+### v0.2.2+v0.25.0
+
+- Fix multiple async packages not working together [#45](https://github.com/NordSecurity/uniffi-bindgen-go/issues/45).
+- Add package name to `RustBufferI` if it needs it [#43](https://github.com/NordSecurity/uniffi-bindgen-go/issues/43).
+- Fix several issues with the error interface [#36](https://github.com/NordSecurity/uniffi-bindgen-go/issues/36).
+- Cleanup callback code.
+
 ### v0.2.1+v0.25.0
 
 - Fix generated code when `error` field name is used in an associated error variant
