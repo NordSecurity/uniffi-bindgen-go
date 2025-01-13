@@ -9,9 +9,9 @@ crate-type = ["lib", "cdylib"]
 name = "uniffi_go_issue43"
 
 [dependencies]
-uniffi = {path = "../../../3rd-party/uniffi-rs/uniffi"}
-uniffi_macros = {path = "../../../3rd-party/uniffi-rs/uniffi_macros"}
+uniffi.workspace = true
+uniffi_macros.workspace = true
 uniffi-go-fixture-issue45 = {path = "../issue45"}
 
 [build-dependencies]
-uniffi_build = {path = "../../../3rd-party/uniffi-rs/uniffi_build", features=["builtin-bindgen"]}
+uniffi_build.workspace = true

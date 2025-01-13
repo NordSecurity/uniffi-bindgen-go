@@ -9,10 +9,11 @@ crate-type = ["lib", "cdylib"]
 name = "uniffi_go_destroy"
 
 [dependencies]
-uniffi_macros = {path = "../../3rd-party/uniffi-rs/uniffi_macros"}
-uniffi = {path = "../../3rd-party/uniffi-rs/uniffi"}
 once_cell = "1.12"
 thiserror = "1.0"
 
+uniffi.workspace = true
+uniffi_macros.workspace = true
+
 [build-dependencies]
-uniffi_build = {path = "../../3rd-party/uniffi-rs/uniffi_build"}
+uniffi_build.workspace = true
