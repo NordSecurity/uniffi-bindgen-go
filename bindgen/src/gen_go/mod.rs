@@ -34,23 +34,18 @@ pub struct Config {
     go_mod: Option<String>,
 }
 
-impl uniffi_bindgen::BindingsConfig for Config {
-    fn update_from_ci(&mut self, ci: &ComponentInterface) {
+// TODO(pna): ensure this is needed
+impl Config {
+    pub fn update_from_ci(&mut self, ci: &ComponentInterface) {
         self.package_name
             .get_or_insert_with(|| ci.namespace().into());
         self.cdylib_name
             .get_or_insert_with(|| format!("uniffi_{}", ci.namespace()));
     }
-    fn update_from_cdylib_name(&mut self, cdylib_name: &str) {
+
+    pub fn update_from_cdylib_name(&mut self, cdylib_name: &str) {
         self.cdylib_name
             .get_or_insert_with(|| cdylib_name.to_string());
-    }
-
-    fn update_from_dependency_configs(
-        &mut self,
-        _config_map: std::collections::HashMap<&str, &Self>,
-    ) {
-        // unused
     }
 }
 
@@ -259,7 +254,8 @@ impl GoCodeOracle {
             Type::CallbackInterface { name, .. } => {
                 Box::new(callback_interface::CallbackInterfaceCodeType::new(name))
             }
-            Type::ForeignExecutor => Box::new(executor::ForeignExecutorCodeType),
+            // TODO(pna): remove
+            // Type::ForeignExecutor => Box::new(executor::ForeignExecutorCodeType),
             Type::External {
                 name,
                 module_path,
@@ -358,11 +354,19 @@ impl GoCodeOracle {
             FfiType::RustArcPtr(_) => "void*".into(),
             FfiType::RustBuffer(_) => "RustBuffer".into(),
             FfiType::ForeignBytes => "ForeignBytes".into(),
-            FfiType::ForeignCallback => "ForeignCallback".to_string(),
-            FfiType::ForeignExecutorHandle => "int".into(),
-            FfiType::ForeignExecutorCallback => "ForeignExecutorCallback".into(),
-            FfiType::RustFutureHandle | FfiType::RustFutureContinuationData => "void*".into(),
-            FfiType::RustFutureContinuationCallback => "RustFutureContinuation".into(),
+
+            FfiType::Callback(_) => todo!(),
+            FfiType::Struct(_) => todo!(),
+            FfiType::Handle => todo!(),
+            FfiType::RustCallStatus => todo!(),
+            FfiType::Reference(_ffi_type) => todo!(),
+            FfiType::VoidPointer => todo!(),
+            // TODO(pna): remove
+            // FfiType::ForeignCallback => "ForeignCallback".to_string(),
+            // FfiType::ForeignExecutorHandle => "int".into(),
+            // FfiType::ForeignExecutorCallback => "ForeignExecutorCallback".into(),
+            // FfiType::RustFutureHandle | FfiType::RustFutureContinuationData => "void*".into(),
+            // FfiType::RustFutureContinuationCallback => "RustFutureContinuation".into(),
         }
     }
 }

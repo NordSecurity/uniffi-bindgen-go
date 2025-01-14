@@ -97,8 +97,11 @@
 {%- when Type::External { name, module_path, kind, namespace, tagged } %}
 {%- include "ExternalTemplate.go" %}
 
+// TODO(pna): fix
+{#
 {%- when Type::ForeignExecutor %}
 {% if self.include_once_check("ForeignExecutorTemplate.go") %}{% include "ForeignExecutorTemplate.go" %}{% endif %}
+#}
 
 {%- else %}
 {%- endmatch %}

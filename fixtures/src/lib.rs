@@ -21,11 +21,13 @@ mod uniffi_fixtures {
     uniffi_coverall::uniffi_reexport_scaffolding!();
     uniffi_ext_types_lib::uniffi_reexport_scaffolding!();
     uniffi_one::uniffi_reexport_scaffolding!();
-    ext_types_guid::uniffi_reexport_scaffolding!();
+
+    // TODO(pna): removed
+    // ext_types_guid::uniffi_reexport_scaffolding!();
+    // uniffi_fixture_foreign_executor::uniffi_reexport_scaffolding!();
 
     // Can't use, as it results in a duplicate definition
     // uniffi_ext_types_proc_macro_lib::uniffi_reexport_scaffolding!();
-    uniffi_fixture_foreign_executor::uniffi_reexport_scaffolding!();
     uniffi_fixture_large_enum::uniffi_reexport_scaffolding!();
     uniffi_futures::uniffi_reexport_scaffolding!();
     uniffi_proc_macro::uniffi_reexport_scaffolding!();
