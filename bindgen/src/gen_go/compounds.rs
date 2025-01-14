@@ -10,7 +10,7 @@ use uniffi_bindgen::{
 
 fn render_literal(literal: &Literal, inner: &Type) -> String {
     match literal {
-        Literal::Null => "nil".into(),
+        Literal::None => "nil".into(),
 
         // For optionals
         _ => super::GoCodeOracle.find(inner).literal(literal),
