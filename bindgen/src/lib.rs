@@ -9,8 +9,8 @@ use clap::Parser;
 use fs_err::{self as fs};
 use gen_go::generate_go_bindings;
 use serde::{Deserialize, Serialize};
-use std::{collections::HashMap, process::Command};
-use uniffi_bindgen::{interface::ComponentInterface, Component, GenerationSettings};
+use std::process::Command;
+use uniffi_bindgen::{Component, GenerationSettings};
 
 #[derive(Parser)]
 #[clap(name = "uniffi-bindgen")]
@@ -49,9 +49,7 @@ struct Cli {
     source: Utf8PathBuf,
 }
 
-struct BindingGeneratorGo {
-    try_format_code: bool,
-}
+struct BindingGeneratorGo;
 
 // Replicate the config structure.
 
@@ -70,12 +68,35 @@ struct InnerConfig {
 impl uniffi_bindgen::BindingGenerator for BindingGeneratorGo {
     type Config = Config;
 
+    fn new_config(&self, _root_toml: &toml::Value) -> anyhow::Result<Self::Config> {
+        Ok(Config::default())
+    }
+
+    fn update_component_configs(
+        &self,
+        settings: &uniffi_bindgen::GenerationSettings,
+        components: &mut Vec<uniffi_bindgen::Component<Self::Config>>,
+    ) -> anyhow::Result<()> {
+        for component in components {
+            component.config.bindings.go.update_from_ci(&component.ci);
+            if let Some(name) = &settings.cdylib {
+                component.config.bindings.go.update_from_cdylib_name(name);
+            }
+        }
+        Ok(())
+    }
+
     fn write_bindings(
         &self,
         settings: &GenerationSettings,
         components: &[Component<Self::Config>],
     ) -> anyhow::Result<()> {
-        for Component { ci, config } in components {
+        for Component {
+            ci,
+            config,
+            package_name: _package_name,
+        } in components
+        {
             let config = &config.bindings.go;
 
             let bindings_path = full_bindings_path(config, &settings.out_dir);
@@ -90,7 +111,7 @@ impl uniffi_bindgen::BindingGenerator for BindingGeneratorGo {
             let c_file = bindings_path.join(config.c_filename());
             fs::write(c_file, c_file_content)?;
 
-            if self.try_format_code {
+            if settings.try_format_code {
                 match Command::new("go").arg("fmt").arg(&go_file).output() {
                     Ok(out) => {
                         if !out.status.success() {
@@ -117,24 +138,6 @@ impl uniffi_bindgen::BindingGenerator for BindingGeneratorGo {
         }
         Ok(())
     }
-
-    fn new_config(&self, _root_toml: &toml::Value) -> anyhow::Result<Self::Config> {
-        todo!()
-    }
-
-    fn update_component_configs(
-        &self,
-        settings: &uniffi_bindgen::GenerationSettings,
-        components: &mut Vec<uniffi_bindgen::Component<Self::Config>>,
-    ) -> anyhow::Result<()> {
-        for component in components {
-            component.config.bindings.go.update_from_ci(&component.ci);
-            if let Some(name) = &settings.cdylib {
-                component.config.bindings.go.update_from_cdylib_name(name);
-            }
-        }
-        Ok(())
-    }
 }
 
 fn full_bindings_path(config: &gen_go::Config, out_dir: &Utf8Path) -> Utf8PathBuf {
@@ -153,9 +156,8 @@ pub fn main() -> anyhow::Result<()> {
         source,
     } = Cli::parse();
 
-    let binding_gen = BindingGeneratorGo {
-        try_format_code: !no_format,
-    };
+    let binding_gen = BindingGeneratorGo;
+
     if library_mode {
         if lib_file.is_some() {
             panic!("--lib-file is not compatible with --library.")
@@ -163,15 +165,13 @@ pub fn main() -> anyhow::Result<()> {
         let out_dir = out_dir.expect("--out-dir is required when using --library");
         let library_path = source;
 
-        todo!("lib mode");
-        // TODO(pna): enable library mode
-        #[cfg(never)]
-        uniffi_bindgen::library_mode::generate_external_bindings(
-            binding_gen,
+        uniffi_bindgen::library_mode::generate_bindings(
             &library_path,
             crate_name,
+            &binding_gen,
             config.as_deref(),
             &out_dir,
+            !no_format,
         )?;
     } else {
         let udl_file = source;
