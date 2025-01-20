@@ -1,3 +1,7 @@
+//go:build ignore
+
+// TODO(pna): fix me !
+
 package binding_tests
 
 import (

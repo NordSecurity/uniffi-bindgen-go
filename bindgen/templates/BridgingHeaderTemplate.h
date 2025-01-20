@@ -42,6 +42,8 @@ typedef struct RustCallStatus {
 	RustBuffer errorBuf;
 } RustCallStatus;
 
+#endif // UNIFFI_SHARED_H
+
 {%- for def in ci.ffi_definitions() %}
 #ifndef {{ def.name()|if_guard_name }}
 #define {{ def.name()|if_guard_name }}

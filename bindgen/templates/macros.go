@@ -116,7 +116,7 @@
 		{{ prefix }},
 	{%- endif %}
 	{%- for arg in func.arguments() %}
-                {%- call lower_fn_call(arg) -%}
+		{%- call lower_fn_call(arg) -%}
 		{%- if !loop.last %}, {% endif %}
 	{%- endfor %}
 	{%- if func.arguments().len() > 0 %},{% endif %} _uniffiStatus
