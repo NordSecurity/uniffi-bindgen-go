@@ -9,24 +9,24 @@ type RustBufferI interface {
 	Free()
 	ToGoBytes() []byte
 	Data() unsafe.Pointer
-	Len() int
-	Capacity() int
+	Len() uint64
+	Capacity() uint64
 }
 
 func RustBufferFromExternal(b RustBufferI) RustBuffer {
 	return RustBuffer {
-		capacity: C.int(b.Capacity()),
-		len: C.int(b.Len()),
+		capacity: C.uint64_t(b.Capacity()),
+		len: C.uint64_t(b.Len()),
 		data: (*C.uchar)(b.Data()),
 	}
 }
 
-func (cb RustBuffer) Capacity() int {
-	return int(cb.capacity)
+func (cb RustBuffer) Capacity() uint64 {
+	return uint64(cb.capacity)
 }
 
-func (cb RustBuffer) Len() int {
-	return int(cb.len)
+func (cb RustBuffer) Len() uint64 {
+	return uint64(cb.len)
 }
 
 func (cb RustBuffer) Data() unsafe.Pointer {
@@ -34,7 +34,7 @@ func (cb RustBuffer) Data() unsafe.Pointer {
 }
 
 func (cb RustBuffer) AsReader() *bytes.Reader {
-	b := unsafe.Slice((*byte)(cb.data), C.int(cb.len))
+	b := unsafe.Slice((*byte)(cb.data), C.uint64_t(cb.len))
 	return bytes.NewReader(b)
 }
 
