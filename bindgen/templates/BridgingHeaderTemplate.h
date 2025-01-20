@@ -31,6 +31,59 @@ typedef struct RustBuffer {
 	uint8_t *data;
 } RustBuffer;
 
+typedef struct ForeignBytes {
+	int32_t len;
+	const uint8_t *data;
+} ForeignBytes;
+
+// Error definitions
+typedef struct RustCallStatus {
+	int8_t code;
+	RustBuffer errorBuf;
+} RustCallStatus;
+
+{%- for def in ci.ffi_definitions() %}
+#ifndef {{ def.name()|if_guard_name }}
+#define {{ def.name()|if_guard_name }}
+{%- match def %}
+{% when FfiDefinition::CallbackFunction(callback) %}
+typedef
+    {%- match callback.return_type() %}{% when Some(return_type) %} {{ return_type|cgo_ffi_type }} {% when None %} void {% endmatch -%}
+    (*{{ callback.name()|ffi_callback_name }})(
+        {%- for arg in callback.arguments() -%}
+        {{ arg.type_().borrow()|cgo_ffi_type }}
+        {%- if !loop.last || callback.has_rust_call_status_arg() %}, {% endif %}
+        {%- endfor -%}
+        {%- if callback.has_rust_call_status_arg() %}
+        RustCallStatus * uniffiCallStatus
+        {%- endif %}
+    );
+{% when FfiDefinition::Struct(struct) %}
+typedef struct {{ struct.name()|ffi_struct_name }} {
+    {%- for field in struct.fields() %}
+    {{ field.type_().borrow()|cgo_ffi_type }} {{ field.name()|var_name }};
+    {%- endfor %}
+} {{ struct.name()|ffi_struct_name }};
+{% when FfiDefinition::Function(func) %}
+{% match func.return_type() -%}{%- when Some with (type_) %}{{ type_|cgo_ffi_type }}{% when None %}void{% endmatch %} {{ func.name() }}(
+    {%- if func.arguments().len() > 0 %}
+        {%- for arg in func.arguments() %}
+            {{- arg.type_().borrow()|cgo_ffi_type }} {{ arg.name() -}}{% if !loop.last || func.has_rust_call_status_arg() %}, {% endif %}
+        {%- endfor %}
+        {%- if func.has_rust_call_status_arg() %}RustCallStatus *out_status{% endif %}
+    {%- else %}
+        {%- if func.has_rust_call_status_arg() %}RustCallStatus *out_status{%- else %}void{% endif %}
+    {% endif %}
+);
+{%- endmatch %}
+#endif
+{%- endfor %}
+
+{#
+TODO(pna): remove once all test are passing
+
+Old concretezied function
+
 typedef int32_t (*ForeignCallback)(uint64_t, int32_t, uint8_t *, int32_t, RustBuffer *);
 
 // Task defined in Rust that Go executes
@@ -44,17 +97,6 @@ typedef void (*RustTaskCallback)(const void *, int8_t);
 //   task: RustTaskCallback to call
 //   task_data: data to pass the task callback
 typedef int8_t (*ForeignExecutorCallback)(uint64_t, uint32_t, RustTaskCallback, void *);
-
-typedef struct ForeignBytes {
-	int32_t len;
-	const uint8_t *data;
-} ForeignBytes;
-
-// Error definitions
-typedef struct RustCallStatus {
-	int8_t code;
-	RustBuffer errorBuf;
-} RustCallStatus;
 
 // Continuation callback for UniFFI Futures
 typedef void (*RustFutureContinuation)(void * , int8_t);
@@ -70,6 +112,7 @@ int8_t uniffiForeignExecutorCallback{{ config.package_name.as_ref().unwrap() }}(
 
 void uniffiFutureContinuationCallback{{ config.package_name.as_ref().unwrap() }}(void*, int8_t);
 
+
 {% for func in ci.iter_ffi_function_definitions() -%}
 	{%- match func.return_type() -%}{%- when Some with (type_) %}{{ type_|cgo_ffi_type }}{% when None %}void{% endmatch %} {{ func.name() }}(
 	{% call go::arg_list_ffi_decl(func) %}
@@ -81,4 +124,5 @@ void uniffiFutureContinuationCallback{{ config.package_name.as_ref().unwrap() }}
 int32_t {{ func }}(uint64_t, int32_t, uint8_t *, int32_t, RustBuffer *);
 {%- endfor %}
 
+#}
 

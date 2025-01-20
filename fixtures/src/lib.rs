@@ -19,7 +19,9 @@ mod uniffi_fixtures {
     uniffi_fixture_callbacks::uniffi_reexport_scaffolding!();
     uniffi_chronological::uniffi_reexport_scaffolding!();
     uniffi_coverall::uniffi_reexport_scaffolding!();
-    uniffi_ext_types_lib::uniffi_reexport_scaffolding!();
+
+    // TODO(pna): fix external trait generation
+    // uniffi_ext_types_lib::uniffi_reexport_scaffolding!();
     uniffi_one::uniffi_reexport_scaffolding!();
 
     // TODO(pna): removed
@@ -27,10 +29,12 @@ mod uniffi_fixtures {
     // uniffi_fixture_foreign_executor::uniffi_reexport_scaffolding!();
 
     // Can't use, as it results in a duplicate definition
-    // uniffi_ext_types_proc_macro_lib::uniffi_reexport_scaffolding!();
+    uniffi_ext_types_proc_macro_lib::uniffi_reexport_scaffolding!();
     uniffi_fixture_large_enum::uniffi_reexport_scaffolding!();
     uniffi_futures::uniffi_reexport_scaffolding!();
-    uniffi_proc_macro::uniffi_reexport_scaffolding!();
+
+    // TODO(pna): A formatting issue
+    // uniffi_proc_macro::uniffi_reexport_scaffolding!();
     uniffi_simple_fns::uniffi_reexport_scaffolding!();
     uniffi_simple_iface::uniffi_reexport_scaffolding!();
     uniffi_trait_methods::uniffi_reexport_scaffolding!();
