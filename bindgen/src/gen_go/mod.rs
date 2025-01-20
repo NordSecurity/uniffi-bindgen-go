@@ -352,15 +352,15 @@ impl GoCodeOracle {
             FfiType::Float32 => "float".into(),
             FfiType::Float64 => "double".into(),
             FfiType::RustArcPtr(_) => "void*".into(),
+            FfiType::Handle => "uint64_t".into(),
+            FfiType::VoidPointer => "void*".into(),
             FfiType::RustBuffer(_) => "RustBuffer".into(),
             FfiType::ForeignBytes => "ForeignBytes".into(),
+            FfiType::RustCallStatus => "RustCallStatus".into(),
 
-            FfiType::Callback(_) => todo!(),
-            FfiType::Struct(_) => todo!(),
-            FfiType::Handle => todo!(),
-            FfiType::RustCallStatus => todo!(),
-            FfiType::Reference(_ffi_type) => todo!(),
-            FfiType::VoidPointer => todo!(),
+            FfiType::Callback(nm) => self.ffi_callback_name(nm),
+            FfiType::Struct(nm) => self.ffi_struct_name(nm),
+            FfiType::Reference(ffi_type) => format!("{}*", self.ffi_type_label(ffi_type)),
             // TODO(pna): remove
             // FfiType::ForeignCallback => "ForeignCallback".to_string(),
             // FfiType::ForeignExecutorHandle => "int".into(),
@@ -369,9 +369,21 @@ impl GoCodeOracle {
             // FfiType::RustFutureContinuationCallback => "RustFutureContinuation".into(),
         }
     }
+
+    /// Get the idiomatic C rendering of an FFI callback function name
+    fn ffi_callback_name(&self, nm: &str) -> String {
+        format!("Uniffi{}", nm.to_upper_camel_case())
+    }
+
+    /// Get the idiomatic C rendering of an FFI struct name
+    fn ffi_struct_name(&self, nm: &str) -> String {
+        format!("Uniffi{}", nm.to_upper_camel_case())
+    }
 }
 
 pub mod filters {
+    use heck::ToShoutySnakeCase;
+
     use super::*;
 
     pub fn oracle() -> &'static GoCodeOracle {
@@ -511,6 +523,22 @@ pub mod filters {
 
         let tabs = usize::try_from(*tabs).unwrap_or_default();
         Ok(textwrap::indent(&docstring, &"\t".repeat(tabs)))
+    }
+
+    /// Get the idiomatic C rendering of an if guard name
+    pub fn if_guard_name(nm: &str) -> Result<String, askama::Error> {
+        // Ok(oracle().if_guard_name(nm))
+        Ok(format!("UNIFFI_FFIDEF_{}", nm.to_shouty_snake_case()))
+    }
+
+    /// Get the idiomatic C rendering of an FFI callback function name
+    pub fn ffi_callback_name(nm: &str) -> Result<String, askama::Error> {
+        Ok(oracle().ffi_callback_name(nm))
+    }
+
+    /// Get the idiomatic C rendering of an FFI struct name
+    pub fn ffi_struct_name(nm: &str) -> Result<String, askama::Error> {
+        Ok(oracle().ffi_struct_name(nm))
     }
 }
 
