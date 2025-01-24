@@ -18,7 +18,7 @@ type {{ obj_name }} struct {
 {%- when Some with (cons) %}
 {%- call go::docstring(cons, 0) %}
 func New{{ obj_name }}({% call go::arg_list_decl(cons) -%}) {% call go::return_type_decl(cons) %} {
-	{% call go::ffi_call_binding(func, "") %}
+	{% call go::ffi_call_binding(cons, "") %}
 }
 {%- when None %}
 {%- endmatch %}
@@ -26,7 +26,7 @@ func New{{ obj_name }}({% call go::arg_list_decl(cons) -%}) {% call go::return_t
 {% for cons in obj.alternate_constructors() -%}
 {%- call go::docstring(cons, 0) %}
 func {{ obj_name }}{{ cons.name()|fn_name }}({% call go::arg_list_decl(cons) %}) {% call go::return_type_decl(cons) %} {
-	{% call go::ffi_call_binding(func, "") %}
+	{% call go::ffi_call_binding(cons, "") %}
 }
 {% endfor %}
 
