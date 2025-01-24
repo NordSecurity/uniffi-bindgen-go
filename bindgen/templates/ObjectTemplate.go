@@ -6,6 +6,7 @@
 
 {%- let obj = ci.get_object_definition(name).expect("missing obj") %}
 {%- let obj_name = obj.name()|class_name %}
+
 {%- if self.include_once_check("ObjectRuntime.go") %}{% include "ObjectRuntime.go" %}{% endif %}
 
 {%- call go::docstring(obj, 0) %}
@@ -68,9 +69,13 @@ func (c {{ obj|ffi_converter_name }}) Lift(pointer unsafe.Pointer) {{ type_name 
 	result := &{{ obj_name }} {
 		newFfiObject(
 			pointer,
+			func(pointer unsafe.Pointer, status *C.RustCallStatus) unsafe.Pointer {
+				return C.{{ obj.ffi_object_clone().name() }}(pointer, status)
+			},
 			func(pointer unsafe.Pointer, status *C.RustCallStatus) {
 				C.{{ obj.ffi_object_free().name() }}(pointer, status)
-		}),
+			},
+		),
 	}
 	runtime.SetFinalizer(result, ({{ type_name }}).Destroy)
 	return result

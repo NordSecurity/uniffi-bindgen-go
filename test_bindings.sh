@@ -7,8 +7,14 @@ ROOT_DIR="$SCRIPT_DIR"
 BINDINGS_DIR="$ROOT_DIR/binding_tests"
 BINARIES_DIR="$ROOT_DIR/target/debug"
 
+if [ -n "${1:-}" ]; then
+	SELECT="-run ${1}"
+else
+	SELECT=""
+fi
+
 pushd $BINDINGS_DIR
 LD_LIBRARY_PATH="${LD_LIBRARY_PATH:-}:$BINARIES_DIR" \
 	CGO_LDFLAGS="-luniffi_fixtures -L$BINARIES_DIR -lm -ldl" \
 	CGO_ENABLED=1 \
-	go test -v
+	go test -v $SELECT

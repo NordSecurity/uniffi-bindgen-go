@@ -11,13 +11,19 @@
 type FfiObject struct {
 	pointer unsafe.Pointer
 	callCounter atomic.Int64
+	cloneFunction func(unsafe.Pointer, *C.RustCallStatus) unsafe.Pointer
 	freeFunction func(unsafe.Pointer, *C.RustCallStatus)
 	destroyed atomic.Bool
 }
 
-func newFfiObject(pointer unsafe.Pointer, freeFunction func(unsafe.Pointer, *C.RustCallStatus)) FfiObject {
+func newFfiObject(
+	pointer unsafe.Pointer, 
+	cloneFunction func(unsafe.Pointer, *C.RustCallStatus) unsafe.Pointer, 
+	freeFunction func(unsafe.Pointer, *C.RustCallStatus),
+) FfiObject {
 	return FfiObject {
 		pointer: pointer,
+		cloneFunction: cloneFunction, 
 		freeFunction: freeFunction,
 	}
 }
@@ -36,7 +42,9 @@ func (ffiObject *FfiObject)incrementPointer(debugName string) unsafe.Pointer {
 		}
 	}
 
-	return ffiObject.pointer
+	return rustCall(func(status *C.RustCallStatus) unsafe.Pointer {
+		return ffiObject.cloneFunction(ffiObject.pointer, status)
+	})
 }
 
 func (ffiObject *FfiObject)decrementPointer() {
