@@ -81,6 +81,12 @@ typedef struct {{ struct.name()|ffi_struct_name }} {
 #endif
 {%- endfor %}
 
+{%- for func in self.cgo_callback_fns() %}
+// Arguments can be left as empty, as this is just to forward declare symbol for go code,
+// C.{{ func }} in go, will always give an untyped unsafe.Pointer,
+extern void {{ func }}();
+{%- endfor %}
+
 {#
 TODO(pna): remove once all test are passing
 
@@ -121,10 +127,6 @@ void uniffiFutureContinuationCallback{{ config.package_name.as_ref().unwrap() }}
 );
 
 {% endfor -%}
-
-{%- for func in self.cgo_callback_fns() %}
-int32_t {{ func }}(uint64_t, int32_t, uint8_t *, int32_t, RustBuffer *);
-{%- endfor %}
 
 #}
 
