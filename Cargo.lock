@@ -1092,6 +1092,7 @@ dependencies = [
  "uniffi-example-rondpoint",
  "uniffi-example-sprites",
  "uniffi-example-todolist",
+ "uniffi-example-traits",
  "uniffi-fixture-callbacks",
  "uniffi-fixture-coverall",
  "uniffi-fixture-docstring",
@@ -1172,6 +1173,15 @@ version = "0.22.0"
 source = "git+https://github.com/mozilla/uniffi-rs.git?tag=v0.28.0#cd38ccea8236df7d93aff336c325a3a8e524af5d"
 dependencies = [
  "once_cell",
+ "thiserror",
+ "uniffi 0.28.0 (git+https://github.com/mozilla/uniffi-rs.git?tag=v0.28.0)",
+]
+
+[[package]]
+name = "uniffi-example-traits"
+version = "0.22.0"
+source = "git+https://github.com/mozilla/uniffi-rs.git?tag=v0.28.0#cd38ccea8236df7d93aff336c325a3a8e524af5d"
+dependencies = [
  "thiserror",
  "uniffi 0.28.0 (git+https://github.com/mozilla/uniffi-rs.git?tag=v0.28.0)",
 ]

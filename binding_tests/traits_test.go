@@ -24,7 +24,7 @@ func TestTraits(t *testing.T) {
 		// Check that the name is one of the expected values
 		assert.Contains(t, []string{"go", "stop"}, name)
 		// Check that we can round-trip the button through Rust
-		assert.Equal(t, Press(button).Name(), name)
+		assert.Equal(t, name, Press(button).Name())
 	}
 
 	assert.Equal(t, "GoButton", Press(goButton{}).Name())
