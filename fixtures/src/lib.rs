@@ -17,7 +17,7 @@ mod uniffi_fixtures {
     // Fixtures
 
     uniffi_fixture_docstring::uniffi_reexport_scaffolding!();
-    uniffi_fixture_callbacks::uniffi_reexport_scaffolding!();
+    // uniffi_fixture_callbacks::uniffi_reexport_scaffolding!();
     uniffi_chronological::uniffi_reexport_scaffolding!();
     uniffi_coverall::uniffi_reexport_scaffolding!();
 
@@ -30,9 +30,9 @@ mod uniffi_fixtures {
     // uniffi_fixture_foreign_executor::uniffi_reexport_scaffolding!();
 
     // Can't use, as it results in a duplicate definition
-    uniffi_ext_types_proc_macro_lib::uniffi_reexport_scaffolding!();
+    // uniffi_ext_types_proc_macro_lib::uniffi_reexport_scaffolding!();
     uniffi_fixture_large_enum::uniffi_reexport_scaffolding!();
-    uniffi_futures::uniffi_reexport_scaffolding!();
+    // uniffi_futures::uniffi_reexport_scaffolding!();
 
     // TODO(pna): A formatting issue
     // uniffi_proc_macro::uniffi_reexport_scaffolding!();

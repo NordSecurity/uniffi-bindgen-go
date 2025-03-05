@@ -1,5 +1,3 @@
-//go:build ignore
-
 // TODO(pna): need to use new callback logic
 
 /* This Source Code Form is subject to the terms of the Mozilla Public
@@ -34,6 +32,12 @@ type OnCallAnswerBusyImpl struct{}
 
 func (OnCallAnswerBusyImpl) Answer() (string, *callbacks.TelephoneError) {
 	return "", callbacks.NewTelephoneErrorBusy()
+}
+
+type GoSim struct{}
+
+func (sim *GoSim) Name() string {
+	return "go"
 }
 
 func TestCallbackWorks(t *testing.T) {
