@@ -1,7 +1,3 @@
-//go:build ignore
-
-// TODO(pna): fix callback logic
-
 package binding_tests
 
 import (

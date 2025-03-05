@@ -48,13 +48,13 @@ func {{ callback_name }}(
 		// instance of the error
 		if err.err == nil {
 			*callStatus = C.RustCallStatus {
-				code: uniffiCallbackUnexpectedResultError,
+				code: C.int8_t(uniffiCallbackUnexpectedResultError),
 			}
 			return
 		}
 		
 		*callStatus = C.RustCallStatus {
-			code: uniffiCallbackResultError,
+			code: C.int8_t(uniffiCallbackResultError),
 			errorBuf: {{ error_type|lower_fn }}(err),
 		}
 		return
@@ -72,6 +72,7 @@ func {{ callback_name }}(
 
 {% endfor %}
 
+{# TODO(pna): make this part of oracle / filter api #}
 {%- let free_callback = format!("{module_path}_cgo_dispatchCallbackInterface{name}Free") %}
 {%- let free_type = "CallbackInterfaceFree"|ffi_callback_name %}
 
@@ -92,7 +93,6 @@ var {{ vtable_name }} = {{ vtable|ffi_type_name_cgo_safe }} {
 
 //export {{ free_callback }}
 func {{ free_callback }}(handle C.uint64_t) {
-	fmt.Println("Virtual Free")
 	{{ ffi_converter_var }}.handleMap.remove(uint64(handle))
 }
 

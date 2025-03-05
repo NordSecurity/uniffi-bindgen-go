@@ -41,27 +41,57 @@ func (sim *GoSim) Name() string {
 }
 
 func TestCallbackWorks(t *testing.T) {
-	telephone := callbacks.NewTelephone()
-	callback := &OnCallAnswerImpl{}
-	telephone.Call(callback)
-	assert.Equal(t, 1, callback.answerCount)
+	cases := []struct {
+		name  string
+		phone callbacks.TelephoneIterface
+	}{
+		{"simple", callbacks.NewTelephone()},
+		{"fancy", callbacks.NewFancyTelephone()},
+	}
 
-	telephone.Call(callback)
-	assert.Equal(t, 2, callback.answerCount)
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			telephone := callbacks.NewTelephone()
+			callback := &OnCallAnswerImpl{}
+			msg, err := c.phone.Call(callbacks.GetSimCards()[0], callback)
+			if assert.NoError(t, err) {
+				assert.Equal(t, 1, callback.answerCount)
+				assert.Equal(t, "hello, 1", msg)
+			}
 
-	callback = &OnCallAnswerImpl{}
-	telephone.Call(callback)
-	assert.Equal(t, 1, callback.answerCount)
+			msg, err = telephone.Call(callbacks.GetSimCards()[0], callback)
+			if assert.NoError(t, err) {
+				assert.Equal(t, 2, callback.answerCount)
+				assert.Equal(t, "hello, 2", msg)
+			}
 
-	callbackBusy := OnCallAnswerBusyImpl{}
-	telephone.Call(callbackBusy)
+			callback = &OnCallAnswerImpl{}
+			msg, err = telephone.Call(callbacks.GetSimCards()[0], callback)
+			if assert.NoError(t, err) {
+				assert.Equal(t, 1, callback.answerCount)
+				assert.Equal(t, "hello, 1", msg)
+			}
+
+			callbackBusy := OnCallAnswerBusyImpl{}
+			msg, err = telephone.Call(callbacks.GetSimCards()[0], callbackBusy)
+			if assert.Error(t, err) {
+				assert.ErrorIs(t, err, callbacks.ErrTelephoneErrorBusy)
+			}
+
+			sim := &GoSim{}
+			msg, err = telephone.Call(sim, callback)
+			if assert.NoError(t, err) {
+				assert.Equal(t, "go est bon marché", msg)
+			}
+		})
+	}
 }
 
 func TestCallbackRegistrationIsNotAffectedByGC(t *testing.T) {
 	telephone := callbacks.NewTelephone()
 	callback := &OnCallAnswerImpl{}
 	runtime.GC()
-	telephone.Call(callback)
+	telephone.Call(callbacks.GetSimCards()[0], callback)
 }
 
 func TestCallbackReferenceIsDropped(t *testing.T) {
@@ -74,7 +104,7 @@ func TestCallbackReferenceIsDropped(t *testing.T) {
 			dropped = true
 			done <- struct{}{}
 		})
-		telephone.Call(callback)
+		telephone.Call(callbacks.GetSimCards()[0], callback)
 	}()
 	runtime.GC()
 	// runtime.GC() is not a fully blocking call

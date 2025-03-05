@@ -125,11 +125,12 @@
 // Arglist as used in the _UniFFILib function declations.
 // Note unfiltered name but ffi_type_name filters.
 -#}
-{%- macro arg_list_ffi_decl(func) %}
-	{%- for arg in func.arguments() %}
-		{{- arg.type_().borrow()|cgo_ffi_type }} {{ arg.name() -}},
+{%- macro arg_list_ffi_decl(args, has_call_status) %}
+	{%- for arg in args %}
+		{{- arg.type_().borrow()|cgo_ffi_type }} {{ arg.name() -}}
+		{%- if !loop.last %}, {% endif -%}
 	{% endfor -%}
-	RustCallStatus* out_status
+	{%- if has_call_status %}, RustCallStatus* callStatus {% endif -%}
 {%- endmacro -%}
 
 {%- macro async_ffi_call_binding(func, prefix) -%}

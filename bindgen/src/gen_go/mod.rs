@@ -174,10 +174,17 @@ impl<'config, 'ci> BridgingHeader<'config, 'ci> {
 
     // This represents true callback functions used in CGo layer. This is needed due to
     // https://github.com/golang/go/issues/19837
-    pub fn cgo_callback_fns(&self) -> Vec<String> {
-        let free_callback = |name: &str, path: &str| -> String {
-            format!("{path}_cgo_dispatchCallbackInterface{name}Free")
-        };
+    /// Returns (name, return_type, args, has_call_status)
+    pub fn cgo_callback_fns(&self) -> Vec<(String, Option<FfiType>, Vec<FfiArgument>, bool)> {
+        let free_callback =
+            |name: &str, path: &str| -> (String, Option<FfiType>, Vec<FfiArgument>, bool) {
+                (
+                    format!("{path}_cgo_dispatchCallbackInterface{name}Free"),
+                    None,
+                    vec![FfiArgument::new("handle", FfiType::Handle)],
+                    false,
+                )
+            };
         let obj_callbacks = self
             .ci
             .object_definitions()
@@ -188,7 +195,14 @@ impl<'config, 'ci> BridgingHeader<'config, 'ci> {
                 let free = free_callback(def.name(), &module);
                 def.vtable_methods()
                     .into_iter()
-                    .map(move |(ffi_cb, _)| oracle().cgo_callback_fn_name(&ffi_cb, &module))
+                    .map(move |(ffi_cb, _)| {
+                        (
+                            oracle().cgo_callback_fn_name(&ffi_cb, &module),
+                            ffi_cb.return_type().cloned(),
+                            ffi_cb.arguments().into_iter().cloned().collect(),
+                            ffi_cb.has_rust_call_status_arg(),
+                        )
+                    })
                     .chain([free])
             });
 
@@ -201,7 +215,14 @@ impl<'config, 'ci> BridgingHeader<'config, 'ci> {
                 let free = free_callback(def.name(), &module);
                 def.vtable_methods()
                     .into_iter()
-                    .map(move |(ffi_cb, _)| oracle().cgo_callback_fn_name(&ffi_cb, &module))
+                    .map(move |(ffi_cb, _)| {
+                        (
+                            oracle().cgo_callback_fn_name(&ffi_cb, &module),
+                            ffi_cb.return_type().cloned(),
+                            ffi_cb.arguments().into_iter().cloned().collect(),
+                            ffi_cb.has_rust_call_status_arg(),
+                        )
+                    })
                     .chain([free])
             });
 
@@ -577,7 +598,7 @@ pub mod filters {
         let result = match ffi_type {
             FfiType::RustArcPtr(_) => "unsafe.Pointer".into(),
             FfiType::RustBuffer(_) => "RustBuffer".into(),
-            FfiType::VoidPointer => "*void".into(),
+            FfiType::VoidPointer => "*C.void".into(),
             FfiType::Reference(inner) => format!("*{}", ffi_type_name_cgo_safe(&*inner)?),
             _ => format!("C.{}", oracle().ffi_type_label(&ffi_type)),
         };
