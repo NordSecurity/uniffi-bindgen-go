@@ -81,10 +81,17 @@ typedef struct {{ struct.name()|ffi_struct_name }} {
 #endif
 {%- endfor %}
 
-{%- for func in self.cgo_callback_fns() %}
+{%- for (name, return_type, args, has_call_status) in self.cgo_callback_fns() %}
 // Arguments can be left as empty, as this is just to forward declare symbol for go code,
-// C.{{ func }} in go, will always give an untyped unsafe.Pointer,
-extern void {{ func }}();
+// C.{{ name }} in go, will always give an untyped unsafe.Pointer,
+// extern void {{ name }}();
+extern
+{%- match return_type -%}
+{%- when Some with (type_) %} {{- type_|cgo_ffi_type }}
+{%- when None %} void
+{%- endmatch %} {{ name }}(
+	{%- call go::arg_list_ffi_decl(args, has_call_status) -%}
+);
 {%- endfor %}
 
 {#
