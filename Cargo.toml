@@ -11,10 +11,10 @@ members = [
 ]
 
 [workspace.dependencies]
-uniffi = "=0.28.0"
-uniffi_testing = "=0.28.0"
-uniffi_macros = "=0.28.0"
-uniffi_build = { version = "=0.28.0", features=["builtin-bindgen"] }
-uniffi_bindgen = "=0.28.0"
-uniffi_meta = "=0.28.0"
-uniffi_udl = "=0.28.0"
+uniffi = "0.28.3"
+uniffi_testing = "0.28.3"
+uniffi_macros = "0.28.3"
+uniffi_build = { version = "0.28.3", features=["builtin-bindgen"] }
+uniffi_bindgen = "0.28.3"
+uniffi_meta = "0.28.3"
+uniffi_udl = "0.28.3"

@@ -52,14 +52,14 @@ func uniffiRustCallAsyncWithResult[T any, U any](
 	return liftFunc(res)
 }
 
-func uniffiRustCallAsyncWithError(
-	converter BufLifter[error],
+func uniffiRustCallAsyncWithError[E error](
+	converter BufReader[*E],
 	rustFutureFunc func(*C.RustCallStatus) *C.void,
 	pollFunc func(*C.void, unsafe.Pointer, *C.RustCallStatus),
 	completeFunc func(*C.void, *C.RustCallStatus),
 	_liftFunc func(bool),
 	freeFunc func(*C.void, *C.RustCallStatus),
-) error {
+) *E {
 	rustFuture, err := uniffiRustCallAsyncInner(converter, rustFutureFunc, pollFunc, freeFunc)
 	if err != nil {
 		return err
@@ -77,14 +77,14 @@ func uniffiRustCallAsyncWithError(
 	return err
 }
 
-func uniffiRustCallAsyncWithErrorAndResult[T any, U any](
-	converter BufLifter[error],
+func uniffiRustCallAsyncWithErrorAndResult[E error, T any, U any](
+	converter BufReader[*E],
 	rustFutureFunc func(*C.RustCallStatus) *C.void,
 	pollFunc func(*C.void, unsafe.Pointer, *C.RustCallStatus),
 	completeFunc func(*C.void, *C.RustCallStatus) T,
 	liftFunc func(T) U,
 	freeFunc func(*C.void, *C.RustCallStatus),
-) (U, error) {
+) (U, *E) {
 	var returnValue U
 	rustFuture, err := uniffiRustCallAsyncInner(converter, rustFutureFunc, pollFunc, freeFunc)
 	if err != nil {
@@ -105,12 +105,12 @@ func uniffiRustCallAsyncWithErrorAndResult[T any, U any](
 	return liftFunc(res), nil
 }
 
-func uniffiRustCallAsyncInner(
-	converter BufLifter[error],
+func uniffiRustCallAsyncInner[E error](
+	converter BufReader[*E],
 	rustFutureFunc func(*C.RustCallStatus) *C.void,
 	pollFunc func(*C.void, unsafe.Pointer, *C.RustCallStatus),
 	freeFunc func(*C.void, *C.RustCallStatus),
-) (*C.void, error) {
+) (*C.void, *E) {
 	pollResult := int8(-1)
 	waiter := make(chan int8, 1)
 	chanHandle := cgo.NewHandle(waiter)

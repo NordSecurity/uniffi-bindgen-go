@@ -25,42 +25,42 @@ type {{ type_name }} interface {
 {%- call go::docstring(variant, 0) %}
 type {{ type_name }}{{ variant.name()|class_name }} struct {
 	{%- for field in variant.fields() %}
-	{{ field.name()|field_name }} {{ field|type_name}}
+	{{ field.name()|field_name|or_pos_field(loop.index0) }} {{ field|type_name(ci) }}
 	{%- endfor %}
 }
 
 func (e {{ type_name }}{{ variant.name()|class_name }}) Destroy() {
 	{%- for field in variant.fields() %}
-		{{ field|destroy_fn }}(e.{{ field.name()|field_name }});
+		{{ field|destroy_fn }}(e.{{ field.name()|field_name|or_pos_field(loop.index0) }});
 	{%- endfor %}
 }
 {%- endfor %}
 
 {%- endif %}
 
-type {{ e|ffi_converter_name}} struct {}
+type {{ ffi_converter_name }} struct {}
 
-var {{ e|ffi_converter_name }}INSTANCE = {{ e|ffi_converter_name }}{}
+var {{ ffi_converter_instance }} = {{ ffi_converter_name }}{}
 
-func (c {{ e|ffi_converter_name }}) Lift(rb RustBufferI) {{ type_name }} {
+func (c {{ ffi_converter_name }}) Lift(rb RustBufferI) {{ type_name }} {
 	return LiftFromRustBuffer[{{ type_name }}](c, rb)
 }
 
-func (c {{ e|ffi_converter_name }}) Lower(value {{ type_name }}) RustBuffer {
+func (c {{ ffi_converter_name }}) Lower(value {{ type_name }}) RustBuffer {
 	return LowerIntoRustBuffer[{{ type_name }}](c, value)
 }
 
 {%- if e.is_flat() %}
-func ({{ e|ffi_converter_name }}) Read(reader io.Reader) {{ type_name }} {
+func ({{ ffi_converter_name }}) Read(reader io.Reader) {{ type_name }} {
 	id := readInt32(reader)
 	return {{ type_name }}(id)
 }
 
-func ({{ e|ffi_converter_name }}) Write(writer io.Writer, value {{ type_name }}) {
+func ({{ ffi_converter_name }}) Write(writer io.Writer, value {{ type_name }}) {
 	writeInt32(writer, int32(value))
 }
 {%- else %}
-func ({{ e|ffi_converter_name }}) Read(reader io.Reader) {{ type_name }} {
+func ({{ ffi_converter_name }}) Read(reader io.Reader) {{ type_name }} {
 	id := readInt32(reader)
 	switch (id) {
 		{%- for variant in e.variants() %}
@@ -72,22 +72,22 @@ func ({{ e|ffi_converter_name }}) Read(reader io.Reader) {{ type_name }} {
 			};
 		{%- endfor %}
 		default:
-			panic(fmt.Sprintf("invalid enum value %v in {{ e|ffi_converter_name }}.Read()", id));
+			panic(fmt.Sprintf("invalid enum value %v in {{ ffi_converter_name }}.Read()", id));
 	}
 }
 
-func ({{ e|ffi_converter_name }}) Write(writer io.Writer, value {{ type_name }}) {
+func ({{ ffi_converter_name }}) Write(writer io.Writer, value {{ type_name }}) {
 	switch variant_value := value.(type) {
 		{%- for variant in e.variants() %}
 		case {{ type_name }}{{ variant.name()|class_name }}:
 			writeInt32(writer, {{ loop.index }})
 			{%- for field in variant.fields() %}
-			{{ field|write_fn }}(writer, variant_value.{{ field.name()|field_name }})
+			{{ field|write_fn }}(writer, variant_value.{{ field.name()|field_name|or_pos_field(loop.index0) }})
 			{%- endfor %}
 		{%- endfor %}
 		default:
 			_ = variant_value
-			panic(fmt.Sprintf("invalid enum value `%v` in {{ e|ffi_converter_name }}.Write", value))
+			panic(fmt.Sprintf("invalid enum value `%v` in {{ ffi_converter_name }}.Write", value))
 	}
 }
 {%- endif %}

@@ -50,12 +50,12 @@ func TestFallibleObject1(t *testing.T) {
 	assert.Nil(t, object)
 
 	object, err = objects.NewFallibleObject1("hello, world")
-	if assert.NoError(t, err) {
+	if assert.Nil(t, err) {
 		assert.Equal(t, "hello, world", object.GetMessage())
 	}
 
 	object, err = objects.FallibleObject1NewCustom("hello, world")
-	if assert.NoError(t, err) {
+	if assert.Nil(t, err) {
 		assert.Equal(t, "hello, world", object.GetMessage())
 	}
 }

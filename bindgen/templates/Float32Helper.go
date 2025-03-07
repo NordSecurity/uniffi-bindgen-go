@@ -4,7 +4,7 @@
 
 type {{ ffi_converter_name }} struct{}
 
-var {{ ffi_converter_name }}INSTANCE = {{ ffi_converter_name }}{}
+var {{ ffi_converter_instance }} = {{ ffi_converter_name }}{}
 
 func ({{ ffi_converter_name }}) Lower(value float32) C.float {
 	return C.float(value)
@@ -22,6 +22,6 @@ func ({{ ffi_converter_name }}) Read(reader io.Reader) float32 {
 	return readFloat32(reader)
 }
 
-type {{ type_|ffi_destroyer_name }} struct {}
+type {{ ffi_destroyer_name }} struct {}
 
-func ({{ type_|ffi_destroyer_name }}) Destroy(_ {{ type_name }}) {}
+func ({{ ffi_destroyer_name }}) Destroy(_ {{ type_name }}) {}

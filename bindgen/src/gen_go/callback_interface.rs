@@ -2,7 +2,9 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-use uniffi_bindgen::backend::{CodeType, Literal};
+use uniffi_bindgen::{backend::Literal, ComponentInterface};
+
+use super::CodeType;
 
 #[derive(Debug)]
 pub struct CallbackInterfaceCodeType {
@@ -16,7 +18,7 @@ impl CallbackInterfaceCodeType {
 }
 
 impl CodeType for CallbackInterfaceCodeType {
-    fn type_label(&self) -> String {
+    fn type_label(&self, _ci: &ComponentInterface) -> String {
         super::GoCodeOracle.class_name(&self.id)
     }
 
@@ -24,11 +26,11 @@ impl CodeType for CallbackInterfaceCodeType {
         format!("CallbackInterface{}", self.id)
     }
 
-    fn literal(&self, _literal: &Literal) -> String {
+    fn literal(&self, _literal: &Literal, _ci: &ComponentInterface) -> String {
         unreachable!();
     }
 
     fn initialization_fn(&self) -> Option<String> {
-        Some(format!("(&{}{{}}).register", self.ffi_converter_name()))
+        Some(format!("{}.register", self.ffi_converter_instance()))
     }
 }

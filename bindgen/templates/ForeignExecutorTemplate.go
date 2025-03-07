@@ -72,7 +72,7 @@ func uniffiInitForeignExecutor() {
         {% endmatch %}
 }
 
-type {{ type_|ffi_destroyer_name }} struct {}
+type {{ ffi_destroyer_name }} struct {}
 
-func ({{ type_|ffi_destroyer_name }}) Destroy(_ {{ type_name }}) {}
+func ({{ ffi_destroyer_name }}) Destroy(_ {{ type_name }}) {}
 

@@ -40,17 +40,23 @@ func {{ impl_name }}{{ cons.name()|fn_name }}({% call go::arg_list_decl(cons) %}
 {% endfor %}
 
 {% for func in obj.methods() -%}
+{# TODO(pna): impl async #}
+{%- if !func.is_async() %}
+
 {%- call go::docstring(func, 0) %}
 func (_self {{ impl_type_name }}) {{ func.name()|fn_name }}({%- call go::arg_list_decl(func) -%}) {% call go::return_type_decl(func) %} {
 	_pointer := _self.ffiObject.incrementPointer("{{ type_name }}")
 	defer _self.ffiObject.decrementPointer()
 {%- if func.is_async() %}
-	{% call go::async_ffi_call_binding(func, "_pointer") %}
+	// TODO(pna): impl async
+	{# {% call go::async_ffi_call_binding(func, "_pointer") %} #}
 }
 {%- else %}
 	{% call go::ffi_call_binding(func, "_pointer") %}
 }
-{%endif %}
+{% endif %}
+
+{% endif %}
 {% endfor %}
 
 {%- for tm in obj.uniffi_traits() -%}
@@ -70,22 +76,39 @@ func (object {{ impl_type_name }}) Destroy() {
 	object.ffiObject.destroy()
 }
 
-{%- let ffi_converter_type = obj|ffi_converter_name %}
-{%- let ffi_converter_var = format!("{ffi_converter_type}INSTANCE") %}
-
-type {{ ffi_converter_type }} struct {
+type {{ ffi_converter_name }} struct {
 	{%- if obj.has_callback_interface() %}
 	handleMap *concurrentHandleMap[{{ type_name }}]
 	{% endif -%}
 }
 
-var {{ ffi_converter_var }} = {{ ffi_converter_type }}{
+var {{ ffi_converter_instance }} = {{ ffi_converter_name }}{
 	{%- if obj.has_callback_interface() %}
 	handleMap: newConcurrentHandleMap[{{ type_name }}](),
 	{% endif -%}
 }
 
-func (c {{ ffi_converter_type }}) Lift(pointer unsafe.Pointer) {{ type_name }} {
+
+{% if ci.is_name_used_as_error(name) %}
+func (_self {{impl_name}}) Error() string {
+	{%- let has_display = obj|has_display %}
+	{%- if has_display %}
+	return _self.String()
+	{%- else %}
+	return "{{ canonical_type_name }}"
+	{%- endif %}
+}
+
+func (_self {{impl_type_name}}) AsError() error {
+	if _self == nil {
+		return nil
+	} else {
+		return _self
+	}
+}
+{% endif -%}
+
+func (c {{ ffi_converter_name }}) Lift(pointer unsafe.Pointer) {{ type_name }} {
 	result := &{{ impl_name }} {
 		newFfiObject(
 			pointer,
@@ -101,11 +124,11 @@ func (c {{ ffi_converter_type }}) Lift(pointer unsafe.Pointer) {{ type_name }} {
 	return result
 }
 
-func (c {{ ffi_converter_type }}) Read(reader io.Reader) {{ type_name }} {
+func (c {{ ffi_converter_name }}) Read(reader io.Reader) {{ type_name }} {
 	return c.Lift(unsafe.Pointer(uintptr(readUint64(reader))))
 }
 
-func (c {{ ffi_converter_type }}) Lower(value {{ type_name }}) unsafe.Pointer {
+func (c {{ ffi_converter_name }}) Lower(value {{ type_name }}) unsafe.Pointer {
 	// TODO: this is bad - all synchronization from ObjectRuntime.go is discarded here,
 	// because the pointer will be decremented immediately after this function returns,
 	// and someone will be left holding onto a non-locked pointer.
@@ -119,20 +142,18 @@ func (c {{ ffi_converter_type }}) Lower(value {{ type_name }}) unsafe.Pointer {
 	
 }
 
-func (c {{ ffi_converter_type }}) Write(writer io.Writer, value {{ type_name }}) {
+func (c {{ ffi_converter_name }}) Write(writer io.Writer, value {{ type_name }}) {
 	writeUint64(writer, uint64(uintptr(c.Lower(value))))
 }
 
 type {{ obj|ffi_destroyer_name }} struct {}
 
 func (_ {{ obj|ffi_destroyer_name }}) Destroy(value {{ type_name }}) {
-	// TODO(pna): Not yet confident this is actualy ok
-	// techinaly we will only get destroy for type that we actualy own here
 	{%- if obj.has_callback_interface() %}
 	if val, ok := value.({{ impl_type_name }}); ok {
 		val.Destroy()
 	} else {
-		fmt.Println("Hmm what is this type exacly?")
+		panic("Expected {{ impl_type_name }}")
 	}
 	{%- else %}
 		value.Destroy()

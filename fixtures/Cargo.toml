@@ -23,25 +23,28 @@ uniffi-example-traits = { git = "https://github.com/mozilla/uniffi-rs.git", tag 
 uniffi-fixture-callbacks = { git = "https://github.com/mozilla/uniffi-rs.git", tag = "v0.28.0"}
 uniffi-fixture-coverall = { git = "https://github.com/mozilla/uniffi-rs.git", tag = "v0.28.0"}
 uniffi-fixture-docstring = { git = "https://github.com/mozilla/uniffi-rs.git", tag = "v0.28.0"}
+uniffi-fixture-enum-types = { git = "https://github.com/mozilla/uniffi-rs.git", tag = "v0.28.0"}
+uniffi-fixture-error-types = { git = "https://github.com/mozilla/uniffi-rs.git", tag = "v0.28.0"}
+uniffi-fixture-ext-types-custom-types = { git = "https://github.com/mozilla/uniffi-rs.git", tag = "v0.28.0"}
 uniffi-fixture-ext-types = { git = "https://github.com/mozilla/uniffi-rs.git", tag = "v0.28.0"}
-uniffi-fixture-ext-types-proc-macro = { git = "https://github.com/mozilla/uniffi-rs.git", tag = "v0.28.0"}
 uniffi-fixture-ext-types-lib-one = { git = "https://github.com/mozilla/uniffi-rs.git", tag = "v0.28.0"}
+uniffi-fixture-ext-types-proc-macro = { git = "https://github.com/mozilla/uniffi-rs.git", tag = "v0.28.0"}
 # TODO(pna): gone?
-# uniffi-fixture-ext-types-guid = { git = "https://github.com/mozilla/uniffi-rs.git", tag = "v0.28.0"}
 # uniffi-fixture-foreign-executor = { git = "https://github.com/mozilla/uniffi-rs.git", tag = "v0.28.0"}
 uniffi-fixture-futures = { git = "https://github.com/mozilla/uniffi-rs.git", tag = "v0.28.0"}
 uniffi-fixture-large-enum = { package = "large-enum", git = "https://github.com/mozilla/uniffi-rs.git", tag = "v0.28.0"}
+uniffi-fixture-large-error = { package = "large-error", git = "https://github.com/mozilla/uniffi-rs.git", tag = "v0.28.0"}
 uniffi-fixture-proc-macro = { git = "https://github.com/mozilla/uniffi-rs.git", tag = "v0.28.0"}
 uniffi-fixture-simple-fns = { git = "https://github.com/mozilla/uniffi-rs.git", tag = "v0.28.0"}
 uniffi-fixture-simple-iface = { git = "https://github.com/mozilla/uniffi-rs.git", tag = "v0.28.0"}
+uniffi-fixture-time = { git = "https://github.com/mozilla/uniffi-rs.git", tag = "v0.28.0"}
 uniffi-fixture-trait-methods = { git = "https://github.com/mozilla/uniffi-rs.git", tag = "v0.28.0"}
 uniffi-fixture-type-limits = { git = "https://github.com/mozilla/uniffi-rs.git", tag = "v0.28.0"}
-uniffi-fixture-time = { git = "https://github.com/mozilla/uniffi-rs.git", tag = "v0.28.0"}
 
 # Go specific
 uniffi-go-fixture-destroy = { path = "destroy" }
 uniffi-go-fixture-errors = { path = "errors" }
-uniffi-go-fixture-name-case = { path = "name-case" }
-uniffi-go-fixture-objects = { path = "objects" }
 uniffi-go-fixture-issue43 = { path = "regressions/issue43" }
 uniffi-go-fixture-issue45 = { path = "regressions/issue45" }
+uniffi-go-fixture-name-case = { path = "name-case" }
+uniffi-go-fixture-objects = { path = "objects" }

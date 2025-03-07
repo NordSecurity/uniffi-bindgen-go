@@ -2,11 +2,9 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */#}
 
-{%- let type_name = type_|type_name %}
-
 type {{ ffi_converter_name }} struct{}
 
-var {{ ffi_converter_name }}INSTANCE = {{ ffi_converter_name }}{}
+var {{ ffi_converter_instance }} = {{ ffi_converter_name }}{}
 
 func (c {{ ffi_converter_name }}) Lift(rb RustBufferI) {{ type_name }} {
 	return LiftFromRustBuffer[{{ type_name }}](c, rb)

@@ -8,7 +8,7 @@
 type {{ type_name }} struct {
 	{%- for field in rec.fields() %}
 	{%- call go::docstring(field, 1) %}
-	{{ field.name()|field_name }} {{ field|type_name -}}
+	{{ field.name()|field_name }} {{ field|type_name(ci) -}}
 	{%- endfor %}
 }
 
@@ -18,9 +18,9 @@ func (r *{{ type_name }}) Destroy() {
 	{%- endfor %}
 }
 
-type {{ rec|ffi_converter_name }} struct {}
+type {{ ffi_converter_name }} struct {}
 
-var {{ rec|ffi_converter_name }}INSTANCE = {{ rec|ffi_converter_name }}{}
+var {{ ffi_converter_instance }} = {{ ffi_converter_name }}{}
 
 func (c {{ rec|ffi_converter_name }}) Lift(rb RustBufferI) {{ type_name }} {
 	return LiftFromRustBuffer[{{ type_name }}](c, rb)
