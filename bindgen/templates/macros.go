@@ -4,18 +4,8 @@
 
 {% macro arg_list_decl(func) %}
 	{%- for arg in func.arguments() -%}
-          {%- let type_ = arg.as_type() -%}
-          {%- match type_ -%}
-          {%- when Type::Enum { name, module_path } -%}
-              {%- let e = ci.get_enum_definition(name).expect("missing cbi") -%}
-              {%- if ci.is_name_used_as_error(name) -%}
-                  {{ arg.name()|var_name }} *{{ arg|type_name }}
-              {%- else -%}
-                  {{ arg.name()|var_name }} {{ arg|type_name }}
-              {%- endif -%}
-          {%- else -%}
-              {{ arg.name()|var_name }} {{ arg|type_name }}
-          {%- endmatch -%}
+	    {%- let type_ = arg.as_type() -%}
+	    {{ arg.name()|var_name }} {{ arg|type_name(ci) }}
 		{%- if !loop.last %}, {% endif -%}
 	{%- endfor -%}
 {%- endmacro %}
@@ -25,14 +15,14 @@
 	{%- when Some with (return_type) -%}
 		{%- match func.throws_type() -%}
 		{%- when Some with (throws_type) -%}
-		({{ return_type|type_name }}, error)
+		({{ return_type|type_name(ci) }}, {{ throws_type|type_name(ci) }})
 		{%- when None -%}
-		{{ return_type|type_name }}
+		{{ return_type|type_name(ci) }}
 		{%- endmatch %}
 	{%- when None -%}
 		{%- match func.throws_type() -%}
 		{%- when Some with (throws_type) -%}
-		error
+		{{ throws_type|type_name(ci) }}
 		{%- when None -%}
 		{%- endmatch %}
 	{%- endmatch %}
@@ -43,14 +33,14 @@
 	{%- when Some with (return_type) -%}
 		{%- match func.throws_type() -%}
 		{%- when Some with (throws_type) -%}
-		({{ return_type|type_name }}, *{{ throws_type|type_name }})
+		({{ return_type|type_name(ci) }}, {{ throws_type|type_name(ci) }})
 		{%- when None -%}
-		{{ return_type|type_name }}
+		{{ return_type|type_name(ci) }}
 		{%- endmatch %}
 	{%- when None -%}
 		{%- match func.throws_type() -%}
 		{%- when Some with (throws_type) -%}
-		*{{ throws_type|type_name }}
+		{{ throws_type|type_name(ci) }}
 		{%- when None -%}
 		{%- endmatch %}
 	{%- endmatch %}
@@ -72,7 +62,7 @@
 		{%- when Some with (throws_type) -%}
 		_uniffiRV, _uniffiErr := {% call to_ffi_call(func, prefix) %}
 		if _uniffiErr != nil {
-			var _uniffiDefaultValue {{ return_type|type_name }}
+			var _uniffiDefaultValue {{ return_type|type_name(ci) }}
 			return _uniffiDefaultValue, _uniffiErr
 		} else {
 			return {{ return_type|lift_fn }}(_uniffiRV), _uniffiErr
@@ -94,7 +84,7 @@
 {%- macro to_ffi_call(func, prefix) -%}
 	{%- match func.throws_type() %}
 	{%- when Some with (e) -%}
-	rustCallWithError({{ e|ffi_converter_name }}{},
+	rustCallWithError[{{ e|canonical_name }}]({{ e|ffi_converter_name }}{},
 	{%- else -%}
 	rustCall(
 	{%- endmatch %}
@@ -138,10 +128,10 @@
         {%- when Some with (e) -%}
 	  {%- match func.return_type() -%}
   	  {%- when Some with (return_type) -%}
-        return uniffiRustCallAsyncWithErrorAndResult(
+        return uniffiRustCallAsyncWithErrorAndResult[{{ e|canonical_name }}](
 	    {{ e|ffi_converter_name }}{},
 	  {%- else -%}
-        return uniffiRustCallAsyncWithError(
+        return uniffiRustCallAsyncWithError[{{ e|canonical_name }}](
 	    {{ e|ffi_converter_name }}{},
 	  {%- endmatch -%}
  	{%- else -%}

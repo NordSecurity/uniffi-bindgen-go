@@ -2,10 +2,10 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-use uniffi_bindgen::backend::{CodeType, Literal};
+use uniffi_bindgen::{backend::Literal, ComponentInterface};
 use uniffi_meta::ObjectImpl;
 
-use super::filters::oracle;
+use super::{filters::oracle, CodeType};
 
 #[derive(Debug)]
 pub struct ObjectCodeType {
@@ -20,7 +20,7 @@ impl ObjectCodeType {
 }
 
 impl CodeType for ObjectCodeType {
-    fn type_label(&self) -> String {
+    fn type_label(&self, _ci: &ComponentInterface) -> String {
         if self.imp.has_callback_interface() {
             // When object has callback interface, it is represented
             // as interface, that is already a fat pointer
@@ -31,16 +31,16 @@ impl CodeType for ObjectCodeType {
     }
 
     fn canonical_name(&self) -> String {
-        self.id.clone()
+        oracle().class_name(&self.id)
     }
 
-    fn literal(&self, _literal: &Literal) -> String {
+    fn literal(&self, _literal: &Literal, _ci: &ComponentInterface) -> String {
         unreachable!();
     }
 
     fn initialization_fn(&self) -> Option<String> {
         self.imp
             .has_callback_interface()
-            .then(|| format!("{}INSTANCE.register", self.ffi_converter_name()))
+            .then(|| format!("{}.register", self.ffi_converter_instance()))
     }
 }

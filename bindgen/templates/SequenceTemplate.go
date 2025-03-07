@@ -4,11 +4,11 @@
 
 {{- self.add_import("math") }}
 
-{%- let inner_type_name = inner_type|type_name %}
+{%- let inner_type_name = inner_type|type_name(ci) %}
 
 type {{ ffi_converter_name }} struct{}
 
-var {{ ffi_converter_name }}INSTANCE = {{ ffi_converter_name }}{}
+var {{ ffi_converter_instance }} = {{ ffi_converter_name }}{}
 
 func (c {{ ffi_converter_name }}) Lift(rb RustBufferI) {{ type_name }} {
 	return LiftFromRustBuffer[{{ type_name }}](c, rb)
@@ -41,9 +41,9 @@ func (c {{ ffi_converter_name }}) Write(writer io.Writer, value {{ type_name }})
 	}
 }
 
-type {{ type_|ffi_destroyer_name }} struct {}
+type {{ ffi_destroyer_name }} struct {}
 
-func ({{ type_|ffi_destroyer_name }}) Destroy(sequence {{ type_name }}) {
+func ({{ ffi_destroyer_name }}) Destroy(sequence {{ type_name }}) {
 	for _, value := range sequence {
 		{{ inner_type|destroy_fn }}(value)	
 	}

@@ -44,7 +44,7 @@ func (c FfiConverterBytes) Read(reader io.Reader) []byte {
 	return buffer
 }
 
-type {{ type_|ffi_destroyer_name }} struct {}
+type {{ ffi_destroyer_name }} struct {}
 
-func ({{ type_|ffi_destroyer_name }}) Destroy(_ {{ type_name }}) {}
+func ({{ ffi_destroyer_name }}) Destroy(_ {{ type_name }}) {}
 

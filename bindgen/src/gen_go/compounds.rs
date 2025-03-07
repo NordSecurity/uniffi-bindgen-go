@@ -3,17 +3,16 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 use paste::paste;
-use uniffi_bindgen::{
-    backend::{CodeType, Literal},
-    interface::Type,
-};
+use uniffi_bindgen::{backend::Literal, interface::Type, ComponentInterface};
 
-fn render_literal(literal: &Literal, inner: &Type) -> String {
+use super::CodeType;
+
+fn render_literal(literal: &Literal, inner: &Type, ci: &ComponentInterface) -> String {
     match literal {
         Literal::None => "nil".into(),
 
         // For optionals
-        _ => super::GoCodeOracle.find(inner).literal(literal),
+        _ => super::GoCodeOracle.find(inner).literal(literal, ci),
     }
 }
 
@@ -35,16 +34,16 @@ macro_rules! impl_code_type_for_compound {
              }
 
              impl CodeType for $T  {
-                 fn type_label(&self) -> String {
-                     format!($type_label_pattern, $crate::gen_go::GoCodeOracle.find(self.inner()).type_label())
+                 fn type_label(&self, ci: &ComponentInterface) -> String {
+                     format!($type_label_pattern, $crate::gen_go::GoCodeOracle.find(self.inner()).type_label(ci))
                  }
 
                  fn canonical_name(&self) -> String {
                      format!($canonical_name_pattern, $crate::gen_go::GoCodeOracle.find(self.inner()).canonical_name())
                  }
 
-                 fn literal(&self, literal: &Literal) -> String {
-                     render_literal(literal, self.inner())
+                 fn literal(&self, literal: &Literal, ci: &ComponentInterface) -> String {
+                     render_literal(literal, self.inner(), ci)
                  }
              }
          }
@@ -75,11 +74,11 @@ impl MapCodeType {
 }
 
 impl CodeType for MapCodeType {
-    fn type_label(&self) -> String {
+    fn type_label(&self, ci: &ComponentInterface) -> String {
         format!(
             "map[{}]{}",
-            super::GoCodeOracle.find(self.key()).type_label(),
-            super::GoCodeOracle.find(self.value()).type_label(),
+            super::GoCodeOracle.find(self.key()).type_label(ci),
+            super::GoCodeOracle.find(self.value()).type_label(ci),
         )
     }
 
@@ -91,7 +90,7 @@ impl CodeType for MapCodeType {
         )
     }
 
-    fn literal(&self, literal: &Literal) -> String {
-        render_literal(literal, &self.value)
+    fn literal(&self, literal: &Literal, ci: &ComponentInterface) -> String {
+        render_literal(literal, &self.value, ci)
     }
 }

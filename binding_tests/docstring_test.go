@@ -1,7 +1,3 @@
-//go:build ignore
-
-// TODO(pna): fix me !
-
 package binding_tests
 
 import (
@@ -13,9 +9,34 @@ import (
 	"github.com/stretchr/testify/assert"
 	"io"
 	"os"
-	"regexp"
 	"strings"
 )
+
+// See https://github.com/mozilla/uniffi-rs/blob/v0.28.3/fixtures/docstring/tests/test_generated_bindings.rs#L13
+var DOCSTRINGS []string = []string{
+	"<docstring-alternate-constructor>",
+	"<docstring-associated-enum-variant-2>",
+	"<docstring-associated-enum-variant>",
+	"<docstring-associated-enum>",
+	"<docstring-associated-error-variant-2>",
+	"<docstring-associated-error-variant>",
+	"<docstring-associated-error>",
+	"<docstring-callback-method>",
+	"<docstring-callback>",
+	"<docstring-enum-variant-2>",
+	"<docstring-enum-variant>",
+	"<docstring-enum>",
+	"<docstring-error-variant-2>",
+	"<docstring-error-variant>",
+	"<docstring-error>",
+	"<docstring-function>",
+	"<docstring-method>",
+	"<docstring-namespace>",
+	"<docstring-object>",
+	"<docstring-primary-constructor>",
+	"<docstring-record-field>",
+	"<docstring-record>",
+}
 
 type ExampleCallback struct{}
 
@@ -80,18 +101,5 @@ func readDocstringBindingsFile(t *testing.T) string {
 }
 
 func getExpectedDocstrings(t *testing.T) []string {
-	cwd, err := os.Getwd()
-	assert.NoError(t, err)
-
-	file, err := os.Open(fmt.Sprintf("%s/../3rd-party/uniffi-rs/fixtures/docstring/tests/test_generated_bindings.rs", cwd))
-	assert.NoError(t, err)
-	defer file.Close()
-
-	bytes, err := io.ReadAll(file)
-	assert.NoError(t, err)
-
-	re, err := regexp.Compile(`<docstring-.*>`)
-	assert.NoError(t, err)
-
-	return re.FindAllString(string(bytes), -1)
+	return DOCSTRINGS
 }

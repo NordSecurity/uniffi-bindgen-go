@@ -5,8 +5,9 @@
 {%- import "macros.go" as go %}
 
 {%- for type_ in ci.iter_types() %}
-{%- let type_name = type_|type_name %}
+{%- let type_name = type_|type_name(ci) %}
 {%- let ffi_converter_name = type_|ffi_converter_name %}
+{%- let ffi_converter_instance = type_|ffi_converter_instance %}
 {%- let ffi_destroyer_name = type_|ffi_destroyer_name %}
 {%- let canonical_type_name = type_|canonical_name %}
 {#
@@ -96,12 +97,6 @@
 
 {%- when Type::External { name, module_path, kind, namespace, tagged } %}
 {%- include "ExternalTemplate.go" %}
-
-// TODO(pna): fix
-{#
-{%- when Type::ForeignExecutor %}
-{% if self.include_once_check("ForeignExecutorTemplate.go") %}{% include "ForeignExecutorTemplate.go" %}{% endif %}
-#}
 
 {%- else %}
 {%- endmatch %}

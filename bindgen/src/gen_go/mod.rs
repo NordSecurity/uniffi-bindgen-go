@@ -4,25 +4,100 @@
 
 use anyhow::{Context, Result};
 use askama::Template;
-use filters::oracle;
 use heck::{ToLowerCamelCase, ToSnakeCase, ToUpperCamelCase};
 use serde::{Deserialize, Serialize};
 use std::borrow::Borrow;
 use std::cell::RefCell;
 use std::collections::{BTreeSet, HashMap, HashSet};
-use uniffi_bindgen::backend::{CodeType, TemplateExpression};
+use uniffi_bindgen::backend::TemplateExpression;
 use uniffi_bindgen::interface::*;
+
+use self::filters::oracle;
+
+pub mod filters;
 
 mod callback_interface;
 mod compounds;
 mod custom;
 mod enum_;
-mod executor;
 mod external;
 mod miscellany;
 mod object;
 mod primitives;
 mod record;
+
+pub trait CodeType: std::fmt::Debug {
+    /// The language specific label used to reference this type. This will be used in
+    /// method signatures and property declarations.
+    fn type_label(&self, ci: &ComponentInterface) -> String;
+
+    /// A representation of this type label that can be used as part of another
+    /// identifier. e.g. `read_foo()`, or `FooInternals`.
+    ///
+    /// This is especially useful when creating specialized objects or methods to deal
+    /// with this type only.
+    fn canonical_name(&self) -> String;
+
+    fn literal(&self, _literal: &Literal, ci: &ComponentInterface) -> String {
+        unimplemented!("Unimplemented for {}", self.type_label(ci))
+    }
+
+    /// Name of the FfiConverter
+    ///
+    /// This is the object that contains the lower, write, lift, and read methods for this type.
+    /// Depending on the binding this will either be a singleton or a class with static methods.
+    ///
+    /// This is the newer way of handling these methods and replaces the lower, write, lift, and
+    /// read CodeType methods.  Currently only used by Kotlin, but the plan is to move other
+    /// backends to using this.
+    fn ffi_converter_name(&self) -> String {
+        format!("FfiConverter{}", self.canonical_name())
+    }
+
+    fn ffi_converter_instance(&self) -> String {
+        format!("{}INSTANCE", self.ffi_converter_name())
+    }
+
+    fn ffi_destroyer_name(&self) -> String {
+        format!("FfiDestroyer{}", self.canonical_name())
+    }
+
+    /// An expression for lowering a value into something we can pass over the FFI.
+    fn lower(&self) -> String {
+        format!("{}.Lower", self.ffi_converter_instance())
+    }
+
+    /// An expression for writing a value into a byte buffer.
+    fn write(&self) -> String {
+        format!("{}.Write", self.ffi_converter_instance())
+    }
+
+    /// An expression for lifting a value from something we received over the FFI.
+    fn lift(&self) -> String {
+        format!("{}.Lift", self.ffi_converter_instance())
+    }
+
+    /// An expression for reading a value from a byte buffer.
+    fn read(&self) -> String {
+        format!("{}.Read", self.ffi_converter_instance())
+    }
+
+    // An expression to destroy this type
+    fn destroy(&self) -> String {
+        format!("{}{{}}.Destroy", self.ffi_destroyer_name())
+    }
+
+    /// A list of imports that are needed if this type is in use.
+    /// Classes are imported exactly once.
+    fn imports(&self) -> Option<Vec<String>> {
+        None
+    }
+
+    /// Function to run at startup
+    fn initialization_fn(&self) -> Option<String> {
+        None
+    }
+}
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct Config {
@@ -35,7 +110,6 @@ pub struct Config {
     go_mod: Option<String>,
 }
 
-// TODO(pna): ensure this is needed
 impl Config {
     pub fn update_from_ci(&mut self, ci: &ComponentInterface) {
         self.package_name
@@ -131,10 +205,11 @@ impl<'a> GoWrapper<'a> {
             .iter_types()
             .map(|t| GoCodeOracle.find(t))
             .filter_map(|t| t.initialization_fn())
-            .chain(
-                self.has_async_fns
-                    .then(|| "uniffiInitContinuationCallback".into()),
-            )
+            // TODO(pna): impl async
+            // .chain(
+            //     self.has_async_fns
+            //         .then(|| "uniffiInitContinuationCallback".into()),
+            // )
             .collect()
     }
 }
@@ -446,189 +521,6 @@ impl GoCodeOracle {
     }
 }
 
-pub mod filters {
-    use heck::ToShoutySnakeCase;
-
-    use super::*;
-
-    pub fn oracle() -> &'static GoCodeOracle {
-        &GoCodeOracle
-    }
-
-    pub fn ffi_converter_name(type_: &impl AsType) -> Result<String, askama::Error> {
-        Ok(oracle().find(type_).ffi_converter_name())
-    }
-
-    pub fn ffi_destroyer_name(type_: &impl AsType) -> Result<String, askama::Error> {
-        let class_name = oracle().class_name(&format!(
-            "FfiDestroyer{}",
-            oracle().find(type_).canonical_name()
-        ));
-        match type_.as_type() {
-            Type::External { namespace, .. } => Ok(format!("{}.{}", namespace, class_name)),
-            _ => Ok(class_name),
-        }
-    }
-
-    pub fn read_fn(type_: &impl AsType) -> Result<String, askama::Error> {
-        Ok(format!(
-            "{}INSTANCE.Read",
-            oracle().find(type_).ffi_converter_name()
-        ))
-    }
-
-    pub fn lift_fn(type_: &impl AsType) -> Result<String, askama::Error> {
-        Ok(format!(
-            "{}INSTANCE.Lift",
-            oracle().find(type_).ffi_converter_name()
-        ))
-    }
-
-    pub fn write_fn(type_: &impl AsType) -> Result<String, askama::Error> {
-        Ok(format!(
-            "{}INSTANCE.Write",
-            oracle().find(type_).ffi_converter_name()
-        ))
-    }
-
-    pub fn lower_fn(type_: &impl AsType) -> Result<String, askama::Error> {
-        Ok(format!(
-            "{}INSTANCE.Lower",
-            oracle().find(type_).ffi_converter_name()
-        ))
-    }
-
-    pub fn destroy_fn(type_: &impl AsType) -> Result<String, askama::Error> {
-        Ok(format!("{}{{}}.Destroy", ffi_destroyer_name(type_)?))
-    }
-
-    pub fn var_name(nm: &str) -> Result<String, askama::Error> {
-        Ok(oracle().var_name(nm))
-    }
-
-    pub fn import_name(nm: &str) -> Result<String, askama::Error> {
-        Ok(oracle().import_name(nm))
-    }
-
-    /// Get the idiomatic Go rendering of a struct field name.
-    pub fn field_name(nm: &str) -> Result<String, askama::Error> {
-        Ok(nm.to_string().to_upper_camel_case())
-    }
-
-    pub fn error_field_name(nm: &str) -> Result<String, askama::Error> {
-        // Fields called 'Error' can clash with structs which implement the error
-        // interface, causing a compilation error. Suffix with _ similar to reserved
-        // keywords in var names.
-        if nm == "error" {
-            return Ok(String::from("Error_"));
-        }
-        Ok(nm.to_string().to_upper_camel_case())
-    }
-
-    pub fn type_name(type_: &impl AsType) -> Result<String, askama::Error> {
-        Ok(oracle().find(type_).type_label())
-    }
-
-    pub fn canonical_name(type_: &impl AsType) -> Result<String, askama::Error> {
-        Ok(oracle().find(type_).canonical_name())
-    }
-
-    pub fn class_name(nm: &str) -> Result<String, askama::Error> {
-        Ok(oracle().class_name(nm))
-    }
-
-    pub fn object_names(obj: &Object) -> Result<(String, String), askama::Error> {
-        Ok(oracle().object_names(obj))
-    }
-
-    pub fn into_ffi_type(type_: &Type) -> Result<FfiType, askama::Error> {
-        Ok(type_.into())
-    }
-
-    /// FFI type representation in C code
-    pub fn cgo_ffi_type(type_: &FfiType) -> Result<String, askama::Error> {
-        let result = match type_ {
-            FfiType::Reference(inner) => format!("{}*", cgo_ffi_type(inner)?),
-            other => oracle().ffi_type_label(other),
-        };
-
-        Ok(result)
-    }
-
-    /// FFI function name to be used in as C to Go callback
-    pub fn cgo_callback_fn_name(
-        f: &FfiCallbackFunction,
-        module_path: &str,
-    ) -> Result<String, askama::Error> {
-        Ok(oracle().cgo_callback_fn_name(f, module_path))
-    }
-
-    /// FFI type name to be used to reference cgo types
-    /// NOTE(pna): used for CustomType template, need to understand this better
-    pub fn ffi_type_name(type_: &Type) -> Result<String, askama::Error> {
-        let ffi_type: FfiType = type_.clone().into();
-        let result = match ffi_type {
-            FfiType::RustArcPtr(_) => "unsafe.Pointer".into(),
-            FfiType::RustBuffer(_) => match type_ {
-                Type::External { namespace, .. } => format!("{}.RustBufferI", namespace),
-                _ => "RustBufferI".into(),
-            },
-            FfiType::VoidPointer => "*void".into(),
-            FfiType::Reference(inner) => format!("*{}", ffi_type_name_cgo_safe(&*inner)?),
-            _ => format!("C.{}", oracle().ffi_type_label(&ffi_type)),
-        };
-        Ok(result)
-    }
-
-    /// FFI type name to be used to reference cgo types. Such that they exactly match to the cgo bindings and can be used with `//export`.
-    pub fn ffi_type_name_cgo_safe<T: Clone + Into<FfiType>>(
-        type_: &T,
-    ) -> Result<String, askama::Error> {
-        let ffi_type: FfiType = type_.clone().into();
-        let result = match ffi_type {
-            FfiType::RustArcPtr(_) => "unsafe.Pointer".into(),
-            FfiType::RustBuffer(_) => "RustBuffer".into(),
-            FfiType::VoidPointer => "*C.void".into(),
-            FfiType::Reference(inner) => format!("*{}", ffi_type_name_cgo_safe(&*inner)?),
-            _ => format!("C.{}", oracle().ffi_type_label(&ffi_type)),
-        };
-        Ok(result)
-    }
-
-    /// Get the idiomatic Go rendering of a function name.
-    pub fn fn_name(nm: &str) -> Result<String, askama::Error> {
-        Ok(oracle().fn_name(nm))
-    }
-
-    /// Get the idiomatic Go rendering of a function name.
-    pub fn enum_variant_name(nm: &str) -> Result<String, askama::Error> {
-        Ok(oracle().enum_variant_name(nm))
-    }
-
-    /// Get the idiomatic Go rendering of docstring
-    pub fn docstring(docstring: &str, tabs: &i32) -> Result<String, askama::Error> {
-        let docstring = textwrap::indent(&textwrap::dedent(docstring), "// ");
-
-        let tabs = usize::try_from(*tabs).unwrap_or_default();
-        Ok(textwrap::indent(&docstring, &"\t".repeat(tabs)))
-    }
-
-    /// Get the idiomatic C rendering of an if guard name
-    pub fn if_guard_name(nm: &str) -> Result<String, askama::Error> {
-        Ok(format!("UNIFFI_FFIDEF_{}", nm.to_shouty_snake_case()))
-    }
-
-    /// Get the idiomatic C rendering of an FFI callback function name
-    pub fn ffi_callback_name(nm: &str) -> Result<String, askama::Error> {
-        Ok(oracle().ffi_callback_name(nm))
-    }
-
-    /// Get the idiomatic C rendering of an FFI struct name
-    pub fn ffi_struct_name(nm: &str) -> Result<String, askama::Error> {
-        Ok(oracle().ffi_struct_name(nm))
-    }
-}
-
 /// Renders Go helper code for all types
 ///
 /// This template is a bit different than others in that it stores internal state from the render
@@ -694,8 +586,8 @@ impl<'a> TypeRenderer<'a> {
         ""
     }
 
-    pub fn field_type_name(&self, field: &Field) -> String {
-        let name = filters::oracle().find(&field.as_type()).type_label();
+    pub fn field_type_name(&self, field: &Field, ci: &ComponentInterface) -> String {
+        let name = oracle().find(&field.as_type()).type_label(ci);
         match self.ci.is_name_used_as_error(&name) {
             true => format!("*{name}"),
             false => name.to_string(),

@@ -1,7 +1,3 @@
-//go:build ignore
-
-// TODO(pna): fix me !
-
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -25,7 +21,7 @@ func TestReturnErrorWithVoid(t *testing.T) {
 
 func TestNoReturnErrorWithVoid(t *testing.T) {
 	err := errors.TryVoid(false)
-	assert.NoError(t, err)
+	assert.Nil(t, err)
 }
 
 func TestReturnErrorWithValue(t *testing.T) {
@@ -36,7 +32,7 @@ func TestReturnErrorWithValue(t *testing.T) {
 
 func TestNoReturnErrorWithValue(t *testing.T) {
 	value, err := errors.TryString(false)
-	if assert.NoError(t, err) {
+	if assert.Nil(t, err) {
 		assert.Equal(t, "hello world", value)
 	}
 }
@@ -48,7 +44,8 @@ func TestFlatErrorIs(t *testing.T) {
 }
 
 func TestFlatErrorAs(t *testing.T) {
-	err := errors.TryVoid(true)
+	var err error
+	err = errors.TryVoid(true)
 
 	{
 		var expectedError *errors.BoobyTrapError
@@ -68,7 +65,9 @@ func TestFlatErrorAs(t *testing.T) {
 }
 
 func TestComplexErrorMessage(t *testing.T) {
-	err := errors.ValidateMessage(100, "")
+	var err error
+
+	err = errors.ValidateMessage(100, "")
 	assert.EqualError(t, err, "ValidationError: InvalidUser: UserId=100")
 
 	err = errors.ValidateMessage(0, "byebye")
@@ -157,7 +156,7 @@ func TestErrorNamedError(t *testing.T) {
 }
 
 func TestNestedError(t *testing.T) {
-	assert.Equal(t, nil, errors.TryNested(false))
+	assert.Nil(t, errors.TryNested(false))
 	err := errors.TryNested(true)
 	var expectedError *errors.NestedError
 	assert.ErrorAs(t, err, &expectedError)

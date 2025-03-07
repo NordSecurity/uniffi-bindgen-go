@@ -52,33 +52,33 @@ func TestCallbackWorks(t *testing.T) {
 			telephone := callbacks.NewTelephone()
 			callback := &OnCallAnswerImpl{}
 			msg, err := c.phone.Call(callbacks.GetSimCards()[0], callback)
-			if assert.NoError(t, err) {
+			if assert.Nil(t, err) {
 				assert.Equal(t, 1, callback.answerCount)
 				assert.Equal(t, "hello, 1", msg)
 			}
 
 			msg, err = telephone.Call(callbacks.GetSimCards()[0], callback)
-			if assert.NoError(t, err) {
+			if assert.Nil(t, err) {
 				assert.Equal(t, 2, callback.answerCount)
 				assert.Equal(t, "hello, 2", msg)
 			}
 
 			callback = &OnCallAnswerImpl{}
 			msg, err = telephone.Call(callbacks.GetSimCards()[0], callback)
-			if assert.NoError(t, err) {
+			if assert.Nil(t, err) {
 				assert.Equal(t, 1, callback.answerCount)
 				assert.Equal(t, "hello, 1", msg)
 			}
 
 			callbackBusy := OnCallAnswerBusyImpl{}
 			msg, err = telephone.Call(callbacks.GetSimCards()[0], callbackBusy)
-			if assert.Error(t, err) {
+			if assert.NotNil(t, err) {
 				assert.ErrorIs(t, err, callbacks.ErrTelephoneErrorBusy)
 			}
 
 			sim := &GoSim{}
 			msg, err = telephone.Call(sim, callback)
-			if assert.NoError(t, err) {
+			if assert.Nil(t, err) {
 				assert.Equal(t, "go est bon marché", msg)
 			}
 		})
