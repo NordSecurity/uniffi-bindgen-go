@@ -14,9 +14,9 @@ path = "src/main.rs"
 [dependencies]
 anyhow = "1"
 askama = { version = "0.12", default-features = false, features = ["config"] }
-clap = { version = "3.1", features = ["cargo", "std", "derive"] }
+clap = { version = "4", features = ["cargo", "std", "derive"] }
 extend = "1.1"
-heck = "0.4"
+heck = "0.5"
 cargo_metadata = "0.15"
 serde = "1"
 toml = "0.5"
