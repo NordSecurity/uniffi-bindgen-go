@@ -5,6 +5,8 @@
 use uniffi_bindgen::backend::{CodeType, Literal};
 use uniffi_meta::ObjectImpl;
 
+use super::filters::oracle;
+
 #[derive(Debug)]
 pub struct ObjectCodeType {
     id: String,
@@ -22,7 +24,7 @@ impl CodeType for ObjectCodeType {
         if self.imp.has_callback_interface() {
             // When object has callback interface, it is represented
             // as interface, that is already a fat pointer
-            super::GoCodeOracle.class_name(&self.id)
+            oracle().class_name(&self.id)
         } else {
             format!("*{}", super::GoCodeOracle.class_name(&self.id))
         }

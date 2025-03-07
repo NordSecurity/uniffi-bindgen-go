@@ -152,7 +152,7 @@ func uniffiFutureContinuationCallback{{ config.package_name.as_ref().unwrap() }}
 
 func uniffiInitContinuationCallback() {
 	rustCall(func(uniffiStatus *C.RustCallStatus) bool {
-		// TODO(pna): fix this !!!
+		// TODO(pna): fix this with async
 		{#
 		C.{{ ci.ffi_rust_future_continuation_callback_set().name() }}(
 			C.RustFutureContinuation(C.uniffiFutureContinuationCallback{{config.package_name.as_ref().unwrap()}}),

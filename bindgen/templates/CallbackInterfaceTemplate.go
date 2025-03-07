@@ -21,7 +21,7 @@ var {{ ffi_converter_var }} = {{ ffi_converter_type }} {
 	handleMap: newConcurrentHandleMap[{{ type_name }}](),
 }
 
-// TODO(pna): where was this used?
+// TODO(pna): where was this used? recheck after all test's are passing
 func (c {{ ffi_converter_type }}) drop(handle uint64) RustBuffer {
 	c.handleMap.remove(handle)
 	return RustBuffer{}
