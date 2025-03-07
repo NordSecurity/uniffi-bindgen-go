@@ -72,8 +72,7 @@ func {{ callback_name }}(
 
 {% endfor %}
 
-{# TODO(pna): make this part of oracle / filter api #}
-{%- let free_callback = format!("{module_path}_cgo_dispatchCallbackInterface{name}Free") %}
+{%- let free_callback = self::oracle().cgo_vtable_free_fn_name(name, module_path) %}
 {%- let free_type = "CallbackInterfaceFree"|ffi_callback_name %}
 
 {%- let vtable_name = vtable|cgo_ffi_type -%}

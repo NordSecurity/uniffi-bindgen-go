@@ -1,5 +1,7 @@
 #include <{{ config.header_filename() }}>
 
+{# TODO(pna): at finaliztion check if this is even needed anymore #}
+
 // This file exists beacause of
 // https://github.com/golang/go/issues/11263
 {# TODO(pna): ensure regression was not reintroduced #}

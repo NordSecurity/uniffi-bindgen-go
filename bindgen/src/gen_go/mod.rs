@@ -163,57 +163,49 @@ pub fn generate_go_bindings(
 #[derive(Template)]
 #[template(syntax = "c", escape = "none", path = "BridgingHeaderTemplate.h")]
 pub struct BridgingHeader<'config, 'ci> {
-    config: &'config Config,
+    // TODO(pna): verify is this is needed
+    _config: &'config Config,
     ci: &'ci ComponentInterface,
 }
 
 impl<'config, 'ci> BridgingHeader<'config, 'ci> {
-    pub fn new(config: &'config Config, ci: &'ci ComponentInterface) -> Self {
-        Self { config, ci }
+    pub fn new(_config: &'config Config, ci: &'ci ComponentInterface) -> Self {
+        Self { _config, ci }
     }
 
     // This represents true callback functions used in CGo layer. This is needed due to
     // https://github.com/golang/go/issues/19837
     /// Returns (name, return_type, args, has_call_status)
+    /// Idealy we would use FfiCalback
     pub fn cgo_callback_fns(&self) -> Vec<(String, Option<FfiType>, Vec<FfiArgument>, bool)> {
         let free_callback =
-            |name: &str, path: &str| -> (String, Option<FfiType>, Vec<FfiArgument>, bool) {
+            |name: &str, module: &str| -> (String, Option<FfiType>, Vec<FfiArgument>, bool) {
                 (
-                    format!("{path}_cgo_dispatchCallbackInterface{name}Free"),
+                    oracle().cgo_vtable_free_fn_name(name, module),
                     None,
                     vec![FfiArgument::new("handle", FfiType::Handle)],
                     false,
                 )
             };
+
         let obj_callbacks = self
             .ci
             .object_definitions()
             .iter()
             .filter(|obj| obj.has_callback_interface())
-            .flat_map(|def| {
-                let module = module_path(def);
-                let free = free_callback(def.name(), &module);
-                def.vtable_methods()
-                    .into_iter()
-                    .map(move |(ffi_cb, _)| {
-                        (
-                            oracle().cgo_callback_fn_name(&ffi_cb, &module),
-                            ffi_cb.return_type().cloned(),
-                            ffi_cb.arguments().into_iter().cloned().collect(),
-                            ffi_cb.has_rust_call_status_arg(),
-                        )
-                    })
-                    .chain([free])
-            });
+            .map(|def| (module_path(def), def.name(), def.vtable_methods()));
 
         let cbi_callbacks = self
             .ci
             .callback_interface_definitions()
             .iter()
-            .flat_map(|def| {
-                let module = module_path(def);
-                let free = free_callback(def.name(), &module);
-                def.vtable_methods()
+            .map(|def| (module_path(def), def.name(), def.vtable_methods()));
+
+        obj_callbacks
+            .chain(cbi_callbacks)
+            .flat_map(|(module, name, vtable)| {
+                let free = free_callback(name, &module);
+                vtable
                     .into_iter()
                     .map(move |(ffi_cb, _)| {
                         (
@@ -224,9 +216,8 @@ impl<'config, 'ci> BridgingHeader<'config, 'ci> {
                         )
                     })
                     .chain([free])
-            });
-
-        obj_callbacks.chain(cbi_callbacks).collect()
+            })
+            .collect()
     }
 }
 
@@ -306,8 +297,6 @@ impl GoCodeOracle {
             Type::CallbackInterface { name, .. } => {
                 Box::new(callback_interface::CallbackInterfaceCodeType::new(name))
             }
-            // TODO(pna): remove
-            // Type::ForeignExecutor => Box::new(executor::ForeignExecutorCodeType),
             Type::External {
                 name,
                 module_path,
@@ -409,8 +398,14 @@ impl GoCodeOracle {
         nm.to_snake_case()
     }
 
+    /// Get cgo symbol name for a callback function
     fn cgo_callback_fn_name(&self, f: &FfiCallbackFunction, module_path: &str) -> String {
         format!("{module_path}_cgo_dispatch{}", f.name())
+    }
+
+    /// Get cgo symbol name for a vtable free function
+    fn cgo_vtable_free_fn_name(&self, nm: &str, module_path: &str) -> String {
+        format!("{module_path}_cgo_dispatchCallbackInterface{nm}Free")
     }
 
     fn ffi_type_label(&self, ffi_type: &FfiType) -> String {
@@ -436,12 +431,7 @@ impl GoCodeOracle {
             FfiType::Struct(nm) => self.ffi_struct_name(nm),
             FfiType::Reference(_ffi_type) => {
                 panic!("Cannot be constructed at this level, ffi_type_name_cgo_safe should be used")
-            } // TODO(pna): remove
-              // FfiType::ForeignCallback => "ForeignCallback".to_string(),
-              // FfiType::ForeignExecutorHandle => "int".into(),
-              // FfiType::ForeignExecutorCallback => "ForeignExecutorCallback".into(),
-              // FfiType::RustFutureHandle | FfiType::RustFutureContinuationData => "void*".into(),
-              // FfiType::RustFutureContinuationCallback => "RustFutureContinuation".into(),
+            }
         }
     }
 
@@ -625,7 +615,6 @@ pub mod filters {
 
     /// Get the idiomatic C rendering of an if guard name
     pub fn if_guard_name(nm: &str) -> Result<String, askama::Error> {
-        // Ok(oracle().if_guard_name(nm))
         Ok(format!("UNIFFI_FFIDEF_{}", nm.to_shouty_snake_case()))
     }
 
@@ -703,10 +692,6 @@ impl<'a> TypeRenderer<'a> {
             .borrow_mut()
             .insert(ImportRequirement::Module { mod_name });
         ""
-    }
-
-    pub fn cgo_callback_fn(&self, name: &str, module_path: &str) -> String {
-        format!("{module_path}_cgo_{name}")
     }
 
     pub fn field_type_name(&self, field: &Field) -> String {
