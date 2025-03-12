@@ -323,7 +323,7 @@ impl GoCodeOracle {
     }
 
     fn interface_name(&self, nm: &str) -> String {
-        nm.to_string() + "Iterface"
+        nm.to_string() + "Interface"
     }
 
     fn impl_name(&self, nm: &str) -> String {

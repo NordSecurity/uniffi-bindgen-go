@@ -44,7 +44,7 @@ typedef struct RustCallStatus {
 
 #endif // UNIFFI_SHARED_H
 
-{%- for def in ci.ffi_definitions() %}
+{% for def in ci.ffi_definitions() %}
 #ifndef {{ def.name()|if_guard_name }}
 #define {{ def.name()|if_guard_name }}
 {%- match def %}
@@ -52,13 +52,8 @@ typedef struct RustCallStatus {
 typedef
     {%- match callback.return_type() %}{% when Some(return_type) %} {{ return_type|cgo_ffi_type }} {% when None %} void {% endmatch -%}
     (*{{ callback.name()|ffi_callback_name }})(
-        {%- for arg in callback.arguments() -%}
-        {{ arg.type_().borrow()|cgo_ffi_type }}
-        {%- if !loop.last || callback.has_rust_call_status_arg() %}, {% endif %}
-        {%- endfor -%}
-        {%- if callback.has_rust_call_status_arg() %}
-        RustCallStatus * uniffiCallStatus
-        {%- endif %}
+        {%- call go::arg_list_ffi_decl(callback.arguments(),
+                                       callback.has_rust_call_status_arg()) -%}
     );
 {% when FfiDefinition::Struct(struct) %}
 typedef struct {{ struct.name()|ffi_struct_name }} {
@@ -81,18 +76,14 @@ typedef struct {{ struct.name()|ffi_struct_name }} {
 #endif
 {%- endfor %}
 
-{%- for (name, return_type, args, has_call_status) in self.cgo_callback_fns() %}
-// Arguments can be left as empty, as this is just to forward declare symbol for go code,
-// C.{{ name }} in go, will always give an untyped unsafe.Pointer,
-// extern void {{ name }}();
-extern
+{% for (name, return_type, args, has_call_status) in self.cgo_callback_fns() %}
 {%- match return_type -%}
 {%- when Some with (type_) %} {{- type_|cgo_ffi_type }}
 {%- when None %} void
 {%- endmatch %} {{ name }}(
 	{%- call go::arg_list_ffi_decl(args, has_call_status) -%}
 );
-{%- endfor %}
+{% endfor %}
 
 {#
 TODO(pna): remove once all test are passing
