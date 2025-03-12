@@ -9,8 +9,9 @@ use clap::Parser;
 use fs_err::{self as fs};
 use gen_go::generate_go_bindings;
 use serde::{Deserialize, Serialize};
-use std::{collections::HashMap, process::Command};
-use uniffi_bindgen::{interface::ComponentInterface, BindingsConfig};
+use std::process::Command;
+use uniffi_bindgen::{Component, GenerationSettings};
+
 #[derive(Parser)]
 #[clap(name = "uniffi-bindgen")]
 #[clap(version = clap::crate_version!())]
@@ -48,9 +49,7 @@ struct Cli {
     source: Utf8PathBuf,
 }
 
-struct BindingGeneratorGo {
-    try_format_code: bool,
-}
+struct BindingGeneratorGo;
 
 // Replicate the config structure.
 
@@ -66,80 +65,77 @@ struct InnerConfig {
     go: gen_go::Config,
 }
 
-impl BindingsConfig for Config {
-    fn update_from_ci(&mut self, ci: &ComponentInterface) {
-        self.bindings.go.update_from_ci(ci);
-    }
-
-    fn update_from_cdylib_name(&mut self, cdylib_name: &str) {
-        self.bindings.go.update_from_cdylib_name(cdylib_name);
-    }
-
-    fn update_from_dependency_configs(&mut self, config_map: HashMap<&str, &Self>) {
-        self.bindings.go.update_from_dependency_configs(
-            config_map
-                .iter()
-                .map(|(key, config)| (*key, &config.bindings.go))
-                .collect(),
-        );
-    }
-}
-
 impl uniffi_bindgen::BindingGenerator for BindingGeneratorGo {
     type Config = Config;
 
+    fn new_config(&self, _root_toml: &toml::Value) -> anyhow::Result<Self::Config> {
+        Ok(Config::default())
+    }
+
+    fn update_component_configs(
+        &self,
+        settings: &uniffi_bindgen::GenerationSettings,
+        components: &mut Vec<uniffi_bindgen::Component<Self::Config>>,
+    ) -> anyhow::Result<()> {
+        for component in components {
+            component.config.bindings.go.update_from_ci(&component.ci);
+            if let Some(name) = &settings.cdylib {
+                component.config.bindings.go.update_from_cdylib_name(name);
+            }
+        }
+        Ok(())
+    }
+
     fn write_bindings(
         &self,
-        ci: &ComponentInterface,
-        config: &Self::Config,
-        out_dir: &Utf8Path,
+        settings: &GenerationSettings,
+        components: &[Component<Self::Config>],
     ) -> anyhow::Result<()> {
-        let config = &config.bindings.go;
+        for Component {
+            ci,
+            config,
+            package_name: _package_name,
+        } in components
+        {
+            let config = &config.bindings.go;
 
-        let bindings_path = full_bindings_path(config, out_dir);
-        fs::create_dir_all(&bindings_path)?;
-        let go_file = bindings_path.join(format!("{}.go", ci.namespace()));
-        let (header, c_file_content, wrapper) = generate_go_bindings(&config, &ci)?;
-        fs::write(&go_file, wrapper)?;
+            let bindings_path = full_bindings_path(config, &settings.out_dir);
+            fs::create_dir_all(&bindings_path)?;
+            let go_file = bindings_path.join(format!("{}.go", ci.namespace()));
+            let (header, c_file_content, wrapper) = generate_go_bindings(&config, &ci)?;
+            fs::write(&go_file, wrapper)?;
 
-        let header_file = bindings_path.join(config.header_filename());
-        fs::write(header_file, header)?;
+            let header_file = bindings_path.join(config.header_filename());
+            fs::write(header_file, header)?;
 
-        let c_file = bindings_path.join(config.c_filename());
-        fs::write(c_file, c_file_content)?;
+            let c_file = bindings_path.join(config.c_filename());
+            fs::write(c_file, c_file_content)?;
 
-        if self.try_format_code {
-            match Command::new("go").arg("fmt").arg(&go_file).output() {
-                Ok(out) => {
-                    if !out.status.success() {
-                        let msg = match String::from_utf8(out.stderr) {
-                            Ok(v) => v,
-                            Err(e) => format!("{}", e).to_owned(),
-                        };
+            if settings.try_format_code {
+                match Command::new("go").arg("fmt").arg(&go_file).output() {
+                    Ok(out) => {
+                        if !out.status.success() {
+                            let msg = match String::from_utf8(out.stderr) {
+                                Ok(v) => v,
+                                Err(e) => format!("{}", e).to_owned(),
+                            };
+                            println!(
+                                "Warning: Unable to auto-format {} using go fmt: {}",
+                                go_file.file_name().unwrap(),
+                                msg
+                            )
+                        }
+                    }
+                    Err(e) => {
                         println!(
                             "Warning: Unable to auto-format {} using go fmt: {}",
                             go_file.file_name().unwrap(),
-                            msg
+                            e
                         )
                     }
                 }
-                Err(e) => {
-                    println!(
-                        "Warning: Unable to auto-format {} using go fmt: {}",
-                        go_file.file_name().unwrap(),
-                        e
-                    )
-                }
             }
         }
-
-        Ok(())
-    }
-    fn check_library_path(
-        &self,
-        _library_path: &Utf8Path,
-        _cdylib_name: Option<&str>,
-    ) -> anyhow::Result<()> {
         Ok(())
     }
 }
@@ -160,9 +156,8 @@ pub fn main() -> anyhow::Result<()> {
         source,
     } = Cli::parse();
 
-    let binding_gen = BindingGeneratorGo {
-        try_format_code: !no_format,
-    };
+    let binding_gen = BindingGeneratorGo;
+
     if library_mode {
         if lib_file.is_some() {
             panic!("--lib-file is not compatible with --library.")
@@ -170,22 +165,24 @@ pub fn main() -> anyhow::Result<()> {
         let out_dir = out_dir.expect("--out-dir is required when using --library");
         let library_path = source;
 
-        uniffi_bindgen::library_mode::generate_external_bindings(
-            binding_gen,
+        uniffi_bindgen::library_mode::generate_bindings(
             &library_path,
             crate_name,
+            &binding_gen,
             config.as_deref(),
             &out_dir,
+            !no_format,
         )?;
     } else {
         let udl_file = source;
         uniffi_bindgen::generate_external_bindings(
-            binding_gen,
+            &binding_gen,
             udl_file,
             config,
             out_dir,
             lib_file,
             crate_name.as_deref(),
+            !no_format,
         )?;
     }
 

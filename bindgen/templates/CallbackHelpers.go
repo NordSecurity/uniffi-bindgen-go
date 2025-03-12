@@ -1,4 +1,4 @@
-type uniffiCallbackResult C.int32_t
+type uniffiCallbackResult C.int8_t
 
 const (
 	uniffiIdxCallbackFree               uniffiCallbackResult = 0

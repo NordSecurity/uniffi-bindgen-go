@@ -22,11 +22,11 @@ jobs:
       run: ./build.sh
     - name: Generate Test Bindings
       run: ./build_bindings.sh
-    - uses: actions/upload-artifact@v3
+    - uses: actions/upload-artifact@v4
       with:
         name: lib
         path: target/debug/libuniffi_fixtures.so
-    - uses: actions/upload-artifact@v3
+    - uses: actions/upload-artifact@v4
       with:
         name: bindings
         path: binding_tests/generated/

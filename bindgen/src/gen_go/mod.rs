@@ -4,6 +4,7 @@
 
 use anyhow::{Context, Result};
 use askama::Template;
+use filters::oracle;
 use heck::{ToLowerCamelCase, ToSnakeCase, ToUpperCamelCase};
 use serde::{Deserialize, Serialize};
 use std::borrow::Borrow;
@@ -34,23 +35,18 @@ pub struct Config {
     go_mod: Option<String>,
 }
 
-impl uniffi_bindgen::BindingsConfig for Config {
-    fn update_from_ci(&mut self, ci: &ComponentInterface) {
+// TODO(pna): ensure this is needed
+impl Config {
+    pub fn update_from_ci(&mut self, ci: &ComponentInterface) {
         self.package_name
             .get_or_insert_with(|| ci.namespace().into());
         self.cdylib_name
             .get_or_insert_with(|| format!("uniffi_{}", ci.namespace()));
     }
-    fn update_from_cdylib_name(&mut self, cdylib_name: &str) {
+
+    pub fn update_from_cdylib_name(&mut self, cdylib_name: &str) {
         self.cdylib_name
             .get_or_insert_with(|| cdylib_name.to_string());
-    }
-
-    fn update_from_dependency_configs(
-        &mut self,
-        _config_map: std::collections::HashMap<&str, &Self>,
-    ) {
-        // unused
     }
 }
 
@@ -167,22 +163,60 @@ pub fn generate_go_bindings(
 #[derive(Template)]
 #[template(syntax = "c", escape = "none", path = "BridgingHeaderTemplate.h")]
 pub struct BridgingHeader<'config, 'ci> {
-    config: &'config Config,
+    // TODO(pna): verify is this is needed
+    _config: &'config Config,
     ci: &'ci ComponentInterface,
 }
 
 impl<'config, 'ci> BridgingHeader<'config, 'ci> {
-    pub fn new(config: &'config Config, ci: &'ci ComponentInterface) -> Self {
-        Self { config, ci }
+    pub fn new(_config: &'config Config, ci: &'ci ComponentInterface) -> Self {
+        Self { _config, ci }
     }
 
-    // This represents true callback functions used in CGo layer. Thi is needed due to
+    // This represents true callback functions used in CGo layer. This is needed due to
     // https://github.com/golang/go/issues/19837
-    pub fn cgo_callback_fns(&self) -> Vec<String> {
-        self.ci
+    /// Returns (name, return_type, args, has_call_status)
+    /// Idealy we would use FfiCalback
+    pub fn cgo_callback_fns(&self) -> Vec<(String, Option<FfiType>, Vec<FfiArgument>, bool)> {
+        let free_callback =
+            |name: &str, module: &str| -> (String, Option<FfiType>, Vec<FfiArgument>, bool) {
+                (
+                    oracle().cgo_vtable_free_fn_name(name, module),
+                    None,
+                    vec![FfiArgument::new("handle", FfiType::Handle)],
+                    false,
+                )
+            };
+
+        let obj_callbacks = self
+            .ci
+            .object_definitions()
+            .iter()
+            .filter(|obj| obj.has_callback_interface())
+            .map(|def| (module_path(def), def.name(), def.vtable_methods()));
+
+        let cbi_callbacks = self
+            .ci
             .callback_interface_definitions()
             .iter()
-            .map(|d| format!("{}_cgo_{}", module_path(d), d.name()))
+            .map(|def| (module_path(def), def.name(), def.vtable_methods()));
+
+        obj_callbacks
+            .chain(cbi_callbacks)
+            .flat_map(|(module, name, vtable)| {
+                let free = free_callback(name, &module);
+                vtable
+                    .into_iter()
+                    .map(move |(ffi_cb, _)| {
+                        (
+                            oracle().cgo_callback_fn_name(&ffi_cb, &module),
+                            ffi_cb.return_type().cloned(),
+                            ffi_cb.arguments().into_iter().cloned().collect(),
+                            ffi_cb.has_rust_call_status_arg(),
+                        )
+                    })
+                    .chain([free])
+            })
             .collect()
     }
 }
@@ -205,11 +239,11 @@ impl<'config, 'ci> BridgingCFile<'config, 'ci> {
     }
 }
 
-fn module_path(cbi: &CallbackInterface) -> String {
-    if let Type::CallbackInterface { module_path, .. } = cbi.as_type() {
-        module_path
-    } else {
-        unreachable!()
+fn module_path(type_: &impl AsType) -> String {
+    match type_.as_type() {
+        Type::CallbackInterface { module_path, .. } => module_path,
+        Type::Object { module_path, .. } => module_path,
+        _ => unreachable!(),
     }
 }
 
@@ -244,7 +278,11 @@ impl GoCodeOracle {
                 key_type,
                 value_type,
             } => Box::new(compounds::MapCodeType::new(*key_type, *value_type)),
-            Type::Object { name, .. } => Box::new(object::ObjectCodeType::new(name)),
+            Type::Object {
+                name,
+                module_path: _,
+                imp,
+            } => Box::new(object::ObjectCodeType::new(name, imp)),
             Type::Optional { inner_type } => {
                 Box::new(compounds::OptionalCodeType::new(*inner_type))
             }
@@ -259,7 +297,6 @@ impl GoCodeOracle {
             Type::CallbackInterface { name, .. } => {
                 Box::new(callback_interface::CallbackInterfaceCodeType::new(name))
             }
-            Type::ForeignExecutor => Box::new(executor::ForeignExecutorCodeType),
             Type::External {
                 name,
                 module_path,
@@ -282,7 +319,25 @@ impl GoCodeOracle {
 
     /// Get the idiomatic Go rendering of a class name (for enums, records, errors, etc).
     fn class_name(&self, nm: &str) -> String {
-        nm.to_string().to_upper_camel_case()
+        nm.to_upper_camel_case()
+    }
+
+    fn interface_name(&self, nm: &str) -> String {
+        nm.to_string() + "Interface"
+    }
+
+    fn impl_name(&self, nm: &str) -> String {
+        nm.to_string() + "Impl"
+    }
+
+    fn object_names(&self, obj: &Object) -> (String, String) {
+        let class_name = self.class_name(obj.name());
+        if obj.has_callback_interface() {
+            let imp = self.impl_name(&class_name);
+            (class_name, imp)
+        } else {
+            (self.interface_name(&class_name), class_name)
+        }
     }
 
     /// Get the idiomatic Go rendering of a function name.
@@ -343,6 +398,16 @@ impl GoCodeOracle {
         nm.to_snake_case()
     }
 
+    /// Get cgo symbol name for a callback function
+    fn cgo_callback_fn_name(&self, f: &FfiCallbackFunction, module_path: &str) -> String {
+        format!("{module_path}_cgo_dispatch{}", f.name())
+    }
+
+    /// Get cgo symbol name for a vtable free function
+    fn cgo_vtable_free_fn_name(&self, nm: &str, module_path: &str) -> String {
+        format!("{module_path}_cgo_dispatchCallbackInterface{nm}Free")
+    }
+
     fn ffi_type_label(&self, ffi_type: &FfiType) -> String {
         match ffi_type {
             FfiType::Int8 => "int8_t".into(),
@@ -356,18 +421,34 @@ impl GoCodeOracle {
             FfiType::Float32 => "float".into(),
             FfiType::Float64 => "double".into(),
             FfiType::RustArcPtr(_) => "void*".into(),
+            FfiType::Handle => "uint64_t".into(),
+            FfiType::VoidPointer => "void*".into(),
             FfiType::RustBuffer(_) => "RustBuffer".into(),
             FfiType::ForeignBytes => "ForeignBytes".into(),
-            FfiType::ForeignCallback => "ForeignCallback".to_string(),
-            FfiType::ForeignExecutorHandle => "int".into(),
-            FfiType::ForeignExecutorCallback => "ForeignExecutorCallback".into(),
-            FfiType::RustFutureHandle | FfiType::RustFutureContinuationData => "void*".into(),
-            FfiType::RustFutureContinuationCallback => "RustFutureContinuation".into(),
+            FfiType::RustCallStatus => "RustCallStatus".into(),
+
+            FfiType::Callback(nm) => self.ffi_callback_name(nm),
+            FfiType::Struct(nm) => self.ffi_struct_name(nm),
+            FfiType::Reference(_ffi_type) => {
+                panic!("Cannot be constructed at this level, ffi_type_name_cgo_safe should be used")
+            }
         }
+    }
+
+    /// Get the idiomatic C rendering of an FFI callback function name
+    fn ffi_callback_name(&self, nm: &str) -> String {
+        format!("Uniffi{}", nm.to_upper_camel_case())
+    }
+
+    /// Get the idiomatic C rendering of an FFI struct name
+    fn ffi_struct_name(&self, nm: &str) -> String {
+        format!("Uniffi{}", nm.to_upper_camel_case())
     }
 }
 
 pub mod filters {
+    use heck::ToShoutySnakeCase;
+
     use super::*;
 
     pub fn oracle() -> &'static GoCodeOracle {
@@ -456,15 +537,34 @@ pub mod filters {
         Ok(oracle().class_name(nm))
     }
 
+    pub fn object_names(obj: &Object) -> Result<(String, String), askama::Error> {
+        Ok(oracle().object_names(obj))
+    }
+
     pub fn into_ffi_type(type_: &Type) -> Result<FfiType, askama::Error> {
         Ok(type_.into())
     }
 
+    /// FFI type representation in C code
     pub fn cgo_ffi_type(type_: &FfiType) -> Result<String, askama::Error> {
-        Ok(oracle().ffi_type_label(&type_))
+        let result = match type_ {
+            FfiType::Reference(inner) => format!("{}*", cgo_ffi_type(inner)?),
+            other => oracle().ffi_type_label(other),
+        };
+
+        Ok(result)
+    }
+
+    /// FFI function name to be used in as C to Go callback
+    pub fn cgo_callback_fn_name(
+        f: &FfiCallbackFunction,
+        module_path: &str,
+    ) -> Result<String, askama::Error> {
+        Ok(oracle().cgo_callback_fn_name(f, module_path))
     }
 
     /// FFI type name to be used to reference cgo types
+    /// NOTE(pna): used for CustomType template, need to understand this better
     pub fn ffi_type_name(type_: &Type) -> Result<String, askama::Error> {
         let ffi_type: FfiType = type_.clone().into();
         let result = match ffi_type {
@@ -473,6 +573,8 @@ pub mod filters {
                 Type::External { namespace, .. } => format!("{}.RustBufferI", namespace),
                 _ => "RustBufferI".into(),
             },
+            FfiType::VoidPointer => "*void".into(),
+            FfiType::Reference(inner) => format!("*{}", ffi_type_name_cgo_safe(&*inner)?),
             _ => format!("C.{}", oracle().ffi_type_label(&ffi_type)),
         };
         Ok(result)
@@ -486,6 +588,8 @@ pub mod filters {
         let result = match ffi_type {
             FfiType::RustArcPtr(_) => "unsafe.Pointer".into(),
             FfiType::RustBuffer(_) => "RustBuffer".into(),
+            FfiType::VoidPointer => "*C.void".into(),
+            FfiType::Reference(inner) => format!("*{}", ffi_type_name_cgo_safe(&*inner)?),
             _ => format!("C.{}", oracle().ffi_type_label(&ffi_type)),
         };
         Ok(result)
@@ -507,6 +611,21 @@ pub mod filters {
 
         let tabs = usize::try_from(*tabs).unwrap_or_default();
         Ok(textwrap::indent(&docstring, &"\t".repeat(tabs)))
+    }
+
+    /// Get the idiomatic C rendering of an if guard name
+    pub fn if_guard_name(nm: &str) -> Result<String, askama::Error> {
+        Ok(format!("UNIFFI_FFIDEF_{}", nm.to_shouty_snake_case()))
+    }
+
+    /// Get the idiomatic C rendering of an FFI callback function name
+    pub fn ffi_callback_name(nm: &str) -> Result<String, askama::Error> {
+        Ok(oracle().ffi_callback_name(nm))
+    }
+
+    /// Get the idiomatic C rendering of an FFI struct name
+    pub fn ffi_struct_name(nm: &str) -> Result<String, askama::Error> {
+        Ok(oracle().ffi_struct_name(nm))
     }
 }
 
@@ -573,10 +692,6 @@ impl<'a> TypeRenderer<'a> {
             .borrow_mut()
             .insert(ImportRequirement::Module { mod_name });
         ""
-    }
-
-    pub fn cgo_callback_fn(&self, name: &str, module_path: &str) -> String {
-        format!("{module_path}_cgo_{name}")
     }
 
     pub fn field_type_name(&self, field: &Field) -> String {

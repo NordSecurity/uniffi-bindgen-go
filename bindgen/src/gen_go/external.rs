@@ -38,6 +38,7 @@ impl CodeType for ExternalCodeType {
         match self.kind {
             ExternalKind::DataClass => format!("{}.{}", self.namespace, self.name),
             ExternalKind::Interface => format!("*{}.{}", self.namespace, self.name),
+            ExternalKind::Trait => todo!("trait"),
         }
     }
 
@@ -45,6 +46,7 @@ impl CodeType for ExternalCodeType {
         match self.kind {
             ExternalKind::DataClass => format!("Type{}", self.name),
             ExternalKind::Interface => self.name.clone(),
+            ExternalKind::Trait => todo!("trait"),
         }
     }
 

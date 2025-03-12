@@ -3,22 +3,31 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 use uniffi_bindgen::backend::{CodeType, Literal};
+use uniffi_meta::ObjectImpl;
+
+use super::filters::oracle;
 
 #[derive(Debug)]
 pub struct ObjectCodeType {
     id: String,
+    imp: ObjectImpl,
 }
 
 impl ObjectCodeType {
-    pub fn new(id: String) -> Self {
-        Self { id }
+    pub fn new(id: String, imp: ObjectImpl) -> Self {
+        Self { id, imp }
     }
 }
 
 impl CodeType for ObjectCodeType {
     fn type_label(&self) -> String {
-        let name = super::GoCodeOracle.class_name(&self.id);
-        format!("*{}", name)
+        if self.imp.has_callback_interface() {
+            // When object has callback interface, it is represented
+            // as interface, that is already a fat pointer
+            oracle().class_name(&self.id)
+        } else {
+            format!("*{}", super::GoCodeOracle.class_name(&self.id))
+        }
     }
 
     fn canonical_name(&self) -> String {
@@ -27,5 +36,11 @@ impl CodeType for ObjectCodeType {
 
     fn literal(&self, _literal: &Literal) -> String {
         unreachable!();
+    }
+
+    fn initialization_fn(&self) -> Option<String> {
+        self.imp
+            .has_callback_interface()
+            .then(|| format!("{}INSTANCE.register", self.ffi_converter_name()))
     }
 }
