@@ -41,7 +41,7 @@ func (sim *GoSim) Name() string {
 func TestCallbackWorks(t *testing.T) {
 	cases := []struct {
 		name  string
-		phone callbacks.TelephoneIterface
+		phone callbacks.TelephoneInterface
 	}{
 		{"simple", callbacks.NewTelephone()},
 		{"fancy", callbacks.NewFancyTelephone()},
