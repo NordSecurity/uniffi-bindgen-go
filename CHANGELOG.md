@@ -1,3 +1,12 @@
+### UNRELEASED
+
+- **BREAKING** Upgrade to v0.28.3
+- **BREAKING** Error's are now returned as concreate types,
+not an error interface. For convience all error types have AsError
+to simplify convertion, avoiding footgun of treating nil pointer as non nil
+error interface
+
+
 ----
 
 ### v0.2.2+v0.25.0
