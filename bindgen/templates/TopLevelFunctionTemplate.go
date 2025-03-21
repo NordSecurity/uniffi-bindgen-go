@@ -3,6 +3,9 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */#}
 
 {%- call go::docstring(func, 0) %}
+{#- TODO(pna): impl async -#}
+{%- if !func.is_async() %}
+
 func {{ func.name()|fn_name}}({%- call go::arg_list_decl(func) -%}) {% call go::return_type_decl(func) %} {
 {%- if func.is_async() %}
 	{% call go::async_ffi_call_binding(func, "") %}
@@ -10,3 +13,5 @@ func {{ func.name()|fn_name}}({%- call go::arg_list_decl(func) -%}) {% call go::
 	{% call go::ffi_call_binding(func, "") %}
 {%- endif %}
 }
+
+{% endif %}

@@ -2,7 +2,9 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-use uniffi_bindgen::{backend::CodeType, interface::ExternalKind};
+use uniffi_bindgen::{interface::ExternalKind, ComponentInterface};
+
+use super::CodeType;
 
 #[derive(Debug)]
 pub struct ExternalCodeType {
@@ -34,23 +36,23 @@ impl ExternalCodeType {
 }
 
 impl CodeType for ExternalCodeType {
-    fn type_label(&self) -> String {
+    fn type_label(&self, _ci: &ComponentInterface) -> String {
         match self.kind {
             ExternalKind::DataClass => format!("{}.{}", self.namespace, self.name),
             ExternalKind::Interface => format!("*{}.{}", self.namespace, self.name),
-            ExternalKind::Trait => todo!("trait"),
+            ExternalKind::Trait => format!("{}.{}", self.namespace, self.name),
         }
     }
 
     fn canonical_name(&self) -> String {
-        match self.kind {
-            ExternalKind::DataClass => format!("Type{}", self.name),
-            ExternalKind::Interface => self.name.clone(),
-            ExternalKind::Trait => todo!("trait"),
-        }
+        self.name.clone()
     }
 
     fn ffi_converter_name(&self) -> String {
         format!("{}.FfiConverter{}", self.namespace, self.canonical_name())
+    }
+
+    fn ffi_destroyer_name(&self) -> String {
+        format!("{}.FfiDestroyer{}", self.namespace, self.canonical_name())
     }
 }

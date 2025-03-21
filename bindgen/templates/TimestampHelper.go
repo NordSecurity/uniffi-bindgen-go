@@ -40,6 +40,6 @@ func (c FfiConverterTimestamp) Write(writer io.Writer, value time.Time) {
 	writeUint32(writer, nsec)
 }
 
-type {{ type_|ffi_destroyer_name }} struct {}
+type {{ ffi_destroyer_name }} struct {}
 
-func ({{ type_|ffi_destroyer_name }}) Destroy(_ {{ type_name }}) {}
+func ({{ ffi_destroyer_name }}) Destroy(_ {{ type_name }}) {}

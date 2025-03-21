@@ -2,8 +2,10 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */#}
 
-// TODO(pna): fix this
-{# {%- call go::docstring(ci.namespace_docstring(), 0) %} #}
+{%- if let Some(docstring) = ci.namespace_docstring() %}
+{%- let indent = 0 %}
+{{- docstring|docstring(indent) }}
+{% endif %}
 package {{ ci.namespace() }}
 
 // #include <{{ config.header_filename() }}>
@@ -15,9 +17,12 @@ import (
 	"io"
 	"unsafe"
 	"encoding/binary"
+	{#
+	TODO(pna): impl async
 	{%- if ci.has_async_fns() %}
 	"runtime/cgo"
 	{%- endif %}
+	#}
 	{%- for imported_package in self.imports() %}
 	{{ imported_package.render() }}
 	{%- endfor %}
@@ -33,9 +38,13 @@ import (
 
 {{ type_helper_code }}
 
+
+{#
+TODO(pna): impl async
 {%- if ci.has_async_fns() %}
 {% include "Async.go" %}
 {%- endif %}
+#}
 
 {%- for func in ci.function_definitions() %}
 {% include "TopLevelFunctionTemplate.go" %}

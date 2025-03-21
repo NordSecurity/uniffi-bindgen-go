@@ -15,7 +15,7 @@ func {{ callback_name }}(
 	    {%- endif -%}	
 	) {
 	handle := uint64(uniffiHandle)
-	uniffiObj, ok := {{ ffi_converter_var }}.handleMap.tryGet(handle)
+	uniffiObj, ok := {{ ffi_converter_instance }}.handleMap.tryGet(handle)
 	if !ok {
 		panic(fmt.Errorf("no callback in handle map: %d", handle))
 	}
@@ -92,10 +92,10 @@ var {{ vtable_name }} = {{ vtable|ffi_type_name_cgo_safe }} {
 
 //export {{ free_callback }}
 func {{ free_callback }}(handle C.uint64_t) {
-	{{ ffi_converter_var }}.handleMap.remove(uint64(handle))
+	{{ ffi_converter_instance }}.handleMap.remove(uint64(handle))
 }
 
-func (c {{ ffi_converter_type }}) register() {
+func (c {{ ffi_converter_name }}) register() {
 	C.{{ ffi_init_callback.name() }}(&{{ vtable_name }})
 }
 

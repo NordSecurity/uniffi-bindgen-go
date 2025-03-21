@@ -13,12 +13,12 @@ import (
 
 func TestArithmetic(t *testing.T) {
 	value, err := arithmetic.Add(2, 4)
-	if assert.NoError(t, err) {
+	if assert.Nil(t, err) {
 		assert.Equal(t, uint64(6), value)
 	}
 
 	value, err = arithmetic.Add(4, 8)
-	if assert.NoError(t, err) {
+	if assert.Nil(t, err) {
 		assert.Equal(t, uint64(12), value)
 	}
 
@@ -26,12 +26,12 @@ func TestArithmetic(t *testing.T) {
 	assert.ErrorIs(t, err, arithmetic.ErrArithmeticErrorIntegerOverflow)
 
 	value, err = arithmetic.Sub(4, 2)
-	if assert.NoError(t, err) {
+	if assert.Nil(t, err) {
 		assert.Equal(t, uint64(2), value)
 	}
 
 	value, err = arithmetic.Sub(8, 4)
-	if assert.NoError(t, err) {
+	if assert.Nil(t, err) {
 		assert.Equal(t, uint64(4), value)
 	}
 

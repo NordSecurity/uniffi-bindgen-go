@@ -23,13 +23,13 @@ func TestTodolistWorks(t *testing.T) {
 
 	todo.AddItem("Write strings support")
 	last, err := todo.GetLast()
-	if assert.NoError(t, err) {
+	if assert.Nil(t, err) {
 		assert.Equal(t, "Write strings support", last)
 	}
 
 	todo.AddItem("Write tests for strings support")
 	last, err = todo.GetLast()
-	if assert.NoError(t, err) {
+	if assert.Nil(t, err) {
 		assert.Equal(t, "Write tests for strings support", last)
 	}
 
@@ -37,25 +37,25 @@ func TestTodolistWorks(t *testing.T) {
 	todo.AddEntry(entry)
 
 	last, err = todo.GetLast()
-	if assert.NoError(t, err) {
+	if assert.Nil(t, err) {
 		assert.Equal(t, "Write bindings for strings as record members", last)
 	}
 
 	last_entry, err := todo.GetLastEntry()
-	if assert.NoError(t, err) {
+	if assert.Nil(t, err) {
 		assert.Equal(t, "Write bindings for strings as record members", last_entry.Text)
 	}
 
 	todo.AddItem("Test Ünicode hàndling without an entry 🤣")
 	last, err = todo.GetLast()
-	if assert.NoError(t, err) {
+	if assert.Nil(t, err) {
 		assert.Equal(t, "Test Ünicode hàndling without an entry 🤣", last)
 	}
 
 	entry2 := todolist.TodoEntry{"Test Ünicode hàndling in an entry 🤣"}
 	todo.AddEntry(entry2)
 	last, err = todo.GetLast()
-	if assert.NoError(t, err) {
+	if assert.Nil(t, err) {
 		assert.Equal(t, "Test Ünicode hàndling in an entry 🤣", last)
 	}
 
@@ -64,14 +64,14 @@ func TestTodolistWorks(t *testing.T) {
 	todo.AddEntries([]todolist.TodoEntry{todolist.TodoEntry{"foo"}, todolist.TodoEntry{"bar"}})
 	assert.Equal(t, 7, len(todo.GetEntries()))
 	last, err = todo.GetLast()
-	if assert.NoError(t, err) {
+	if assert.Nil(t, err) {
 		assert.Equal(t, "bar", last)
 	}
 
 	todo.AddItems([]string{"bobo", "fofo"})
 	assert.Equal(t, 9, len(todo.GetEntries()))
 	last, err = todo.GetLast()
-	if assert.NoError(t, err) {
+	if assert.Nil(t, err) {
 		assert.Equal(t, "fofo", last)
 	}
 }
@@ -104,7 +104,7 @@ func TestTodolistDefault(t *testing.T) {
 
 	todo.AddItem("Test liveness after being demoted from default")
 	last, err := todo.GetLast()
-	if assert.NoError(t, err) {
+	if assert.Nil(t, err) {
 		assert.Equal(t, "Test liveness after being demoted from default", last)
 	}
 
@@ -113,7 +113,7 @@ func TestTodolistDefault(t *testing.T) {
 		defaultList := *todolist.GetDefaultList()
 		defer defaultList.Destroy()
 		last, err = defaultList.GetLast()
-		if assert.NoError(t, err) {
+		if assert.Nil(t, err) {
 			assert.Equal(t, "Test shared state through local vs default reference", last)
 		}
 	}

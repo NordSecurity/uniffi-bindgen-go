@@ -10,10 +10,10 @@
  * is needed because the UDL type name is used in function/method signatures.
  * It's also what we have an external type that references a custom type.
  */
-type {{ name }} = {{ builtin|type_name }}
+type {{ name }} = {{ builtin|type_name(ci) }}
 type {{ ffi_converter_name }} = {{ builtin|ffi_converter_name }}
 type {{ ffi_destroyer_name }} = {{ builtin|ffi_destroyer_name }}
-var {{ ffi_converter_name }}INSTANCE = {{ builtin|ffi_converter_name }}{}
+var {{ ffi_converter_instance }} = {{ builtin|ffi_converter_name }}{}
 
 {%- when Some with (config) %}
 
@@ -41,7 +41,7 @@ type {{ name }} = {{ concrete_type_name }}
 
 type {{ ffi_converter_name }} struct{}
 
-var {{ ffi_converter_name }}INSTANCE = {{ ffi_converter_name }}{}
+var {{ ffi_converter_instance }} = {{ ffi_converter_name }}{}
 
 func ({{ ffi_converter_name }}) Lower(value {{ name }}) {{ ffi_type_name }} {
     builtinValue := {{ config.from_custom.render("value") }}
@@ -63,9 +63,9 @@ func ({{ ffi_converter_name }}) Read(reader io.Reader) {{ name }} {
     {{ config.into_custom.render("builtinValue") }}
 }
 
-type {{ type_|ffi_destroyer_name }} struct {}
+type {{ ffi_destroyer_name }} struct {}
 
-func ({{ type_|ffi_destroyer_name }}) Destroy(value {{ name }}) {
+func ({{ ffi_destroyer_name }}) Destroy(value {{ name }}) {
 	builtinValue := {{ config.from_custom.render("value") }}
 	{{ builtin|destroy_fn }}(builtinValue)
 }

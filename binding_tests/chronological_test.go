@@ -24,13 +24,13 @@ func parseDuration(s string) time.Duration {
 func TestTimestampMinMax(t *testing.T) {
 	min := time.Unix(math.MinInt64, math.MinInt32)
 	value, err := chronological.ReturnTimestamp(min)
-	if assert.NoError(t, err) {
+	if assert.Nil(t, err) {
 		assert.Equal(t, min, value)
 	}
 
 	max := time.Unix(math.MaxInt64, math.MaxInt32)
 	value, err = chronological.ReturnTimestamp(max)
-	if assert.NoError(t, err) {
+	if assert.Nil(t, err) {
 		assert.Equal(t, max, value)
 	}
 }
@@ -40,7 +40,7 @@ func TestDurationMax(t *testing.T) {
 
 	max := time.Duration(math.MaxInt64)
 	value, err := chronological.ReturnDuration(max)
-	if assert.NoError(t, err) {
+	if assert.Nil(t, err) {
 		assert.Equal(t, max, value)
 	}
 }
@@ -55,13 +55,13 @@ func TestChronologicalWorks(t *testing.T) {
 
 	// Test passing timestamp and duration while returning timestamp
 	value1, err := chronological.Add(time.Unix(100, 1), parseDuration("1s1ns"))
-	if assert.NoError(t, err) {
+	if assert.Nil(t, err) {
 		assert.Equal(t, time.Unix(101, 2), value1)
 	}
 
 	// Test passing timestamp while returning duration
 	value2, err := chronological.Diff(time.Unix(101, 2), time.Unix(100, 1))
-	if assert.NoError(t, err) {
+	if assert.Nil(t, err) {
 		assert.Equal(t, parseDuration("1s1ns"), value2)
 	}
 
@@ -96,7 +96,7 @@ func TestPreEpochTimestampsSerializesCorrectly(t *testing.T) {
 		chronological.GetPreEpochTimestamp().UTC())
 
 	value, err := chronological.Add(time.Date(1955, 11, 5, 0, 6, 0, 283000001, time.UTC), parseDuration("1s1ns"))
-	if assert.NoError(t, err) {
+	if assert.Nil(t, err) {
 		assert.Equal(t, time.Date(1955, 11, 5, 0, 6, 1, 283000002, time.UTC), value.UTC())
 	}
 }

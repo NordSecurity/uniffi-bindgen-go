@@ -4,6 +4,7 @@
 
 pub mod gen_go;
 
+use anyhow::Context;
 use camino::{Utf8Path, Utf8PathBuf};
 use clap::Parser;
 use fs_err::{self as fs};
@@ -68,8 +69,8 @@ struct InnerConfig {
 impl uniffi_bindgen::BindingGenerator for BindingGeneratorGo {
     type Config = Config;
 
-    fn new_config(&self, _root_toml: &toml::Value) -> anyhow::Result<Self::Config> {
-        Ok(Config::default())
+    fn new_config(&self, root_toml: &toml::Value) -> anyhow::Result<Self::Config> {
+        Config::deserialize(root_toml.clone()).context("parse bindgen.go config")
     }
 
     fn update_component_configs(
@@ -91,12 +92,7 @@ impl uniffi_bindgen::BindingGenerator for BindingGeneratorGo {
         settings: &GenerationSettings,
         components: &[Component<Self::Config>],
     ) -> anyhow::Result<()> {
-        for Component {
-            ci,
-            config,
-            package_name: _package_name,
-        } in components
-        {
+        for Component { ci, config } in components {
             let config = &config.bindings.go;
 
             let bindings_path = full_bindings_path(config, &settings.out_dir);
@@ -156,6 +152,12 @@ pub fn main() -> anyhow::Result<()> {
         source,
     } = Cli::parse();
 
+    let config_supplier = {
+        use uniffi_bindgen::cargo_metadata::CrateConfigSupplier;
+        let cmd = ::cargo_metadata::MetadataCommand::new();
+        let metadata = cmd.exec().context("error running cargo metadata").unwrap();
+        CrateConfigSupplier::from(metadata)
+    };
     let binding_gen = BindingGeneratorGo;
 
     if library_mode {
@@ -169,6 +171,7 @@ pub fn main() -> anyhow::Result<()> {
             &library_path,
             crate_name,
             &binding_gen,
+            &config_supplier,
             config.as_deref(),
             &out_dir,
             !no_format,

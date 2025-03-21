@@ -106,11 +106,11 @@ type testGetterInput[T any] struct {
 	expectedError error
 }
 
-func testGetter[T any](t *testing.T, tt testGetterInput[T], getterFn func(callbacks fixture_callbacks.ForeignGetters, value T, flag bool) (T, error)) {
+func testGetter[E fixture_callbacks.NativeError, T any](t *testing.T, tt testGetterInput[T], getterFn func(callbacks fixture_callbacks.ForeignGetters, value T, flag bool) (T, E)) {
 	foreignGetters := getters{}
 	res, err := getterFn(foreignGetters, tt.value, tt.getError)
 	assert.Equal(t, tt.expectedRes, res)
-	assert.ErrorIs(t, err, tt.expectedError)
+	assert.ErrorIs(t, err.AsError(), tt.expectedError)
 }
 
 func TestRustGetters_GetNothing(t *testing.T) {
@@ -121,7 +121,7 @@ func TestRustGetters_GetNothing(t *testing.T) {
 	err = getters.GetNothing(foreignGetters, "unexpected-error")
 	assert.ErrorIs(t, err, fixture_callbacks.ErrSimpleErrorUnexpectedError)
 	err = getters.GetNothing(foreignGetters, "foo")
-	assert.Equal(t, err, nil)
+	assert.Nil(t, err)
 }
 
 func TestRustGetters_GetBool(t *testing.T) {
@@ -333,7 +333,7 @@ func TestRustGetters_GetStringOptionalCallback(t *testing.T) {
 				tt.flag,
 			)
 			assert.Equal(t, tt.expectedRes, res)
-			assert.ErrorIs(t, err, tt.expectedError)
+			assert.ErrorIs(t, err.AsError(), tt.expectedError)
 		})
 	}
 }
