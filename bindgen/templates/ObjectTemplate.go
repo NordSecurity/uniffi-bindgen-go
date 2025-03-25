@@ -40,23 +40,17 @@ func {{ impl_name }}{{ cons.name()|fn_name }}({% call go::arg_list_decl(cons) %}
 {% endfor %}
 
 {% for func in obj.methods() -%}
-{# TODO(pna): impl async #}
-{%- if !func.is_async() %}
 
 {%- call go::docstring(func, 0) %}
 func (_self {{ impl_type_name }}) {{ func.name()|fn_name }}({%- call go::arg_list_decl(func) -%}) {% call go::return_type_decl(func) %} {
 	_pointer := _self.ffiObject.incrementPointer("{{ type_name }}")
 	defer _self.ffiObject.decrementPointer()
-{%- if func.is_async() %}
-	// TODO(pna): impl async
-	{# {% call go::async_ffi_call_binding(func, "_pointer") %} #}
-}
-{%- else %}
+	{%- if func.is_async() %}
+	{% call go::async_ffi_call_binding(func, "_pointer") %}
+	{%- else %}
 	{% call go::ffi_call_binding(func, "_pointer") %}
+	{%- endif %}
 }
-{% endif %}
-
-{% endif %}
 {% endfor %}
 
 {%- for tm in obj.uniffi_traits() -%}
