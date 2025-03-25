@@ -27,7 +27,11 @@ type {{ impl_name }} struct {
 {%- when Some with (cons) %}
 {%- call go::docstring(cons, 0) %}
 func New{{ impl_name }}({% call go::arg_list_decl(cons) -%}) {% call go::return_type_decl(cons) %} {
+	{%- if cons.is_async() %}
+	{% call go::async_ffi_call_binding(cons, "") %}
+	{%- else %}
 	{% call go::ffi_call_binding(cons, "") %}
+	{%- endif %}
 }
 {%- when None %}
 {%- endmatch %}
@@ -35,7 +39,11 @@ func New{{ impl_name }}({% call go::arg_list_decl(cons) -%}) {% call go::return_
 {% for cons in obj.alternate_constructors() -%}
 {%- call go::docstring(cons, 0) %}
 func {{ impl_name }}{{ cons.name()|fn_name }}({% call go::arg_list_decl(cons) %}) {% call go::return_type_decl(cons) %} {
+	{%- if cons.is_async() %}
+	{% call go::async_ffi_call_binding(cons, "") %}
+	{%- else %}
 	{% call go::ffi_call_binding(cons, "") %}
+	{%- endif %}
 }
 {% endfor %}
 
