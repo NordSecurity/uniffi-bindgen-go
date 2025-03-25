@@ -188,3 +188,13 @@ pub fn has_display(obj: &Object) -> Result<bool, askama::Error> {
         .into_iter()
         .any(|t| matches!(t, UniffiTrait::Display { .. })))
 }
+
+pub fn future_continuation_name(config: &Config) -> Result<String, askama::Error> {
+    Ok(format!(
+        "{}_uniffiFutureContinuationCallback",
+        config
+            .package_name
+            .as_ref()
+            .expect("package name must be set")
+    ))
+}

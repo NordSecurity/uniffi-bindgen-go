@@ -238,14 +238,13 @@ pub fn generate_go_bindings(
 #[derive(Template)]
 #[template(syntax = "c", escape = "none", path = "BridgingHeaderTemplate.h")]
 pub struct BridgingHeader<'config, 'ci> {
-    // TODO(pna): verify is this is needed
-    _config: &'config Config,
+    config: &'config Config,
     ci: &'ci ComponentInterface,
 }
 
 impl<'config, 'ci> BridgingHeader<'config, 'ci> {
-    pub fn new(_config: &'config Config, ci: &'ci ComponentInterface) -> Self {
-        Self { _config, ci }
+    pub fn new(config: &'config Config, ci: &'ci ComponentInterface) -> Self {
+        Self { config, ci }
     }
 
     // This represents true callback functions used in CGo layer. This is needed due to

@@ -109,12 +109,14 @@
 		{%- call lower_fn_call(arg) -%}
 		{%- if !loop.last %}, {% endif %}
 	{%- endfor %}
-	{%- if func.arguments().len() > 0 %},{% endif %} _uniffiStatus
+	{%- if func.ffi_func().has_rust_call_status_arg() -%}
+	{%- if func.arguments().len() > 0 %},{% endif -%}
+	_uniffiStatus
+	{%- endif %}
 {%- endmacro -%}
 
 // Arglist as used in the _UniFFILib function declations.
 // Note unfiltered name but ffi_type_name filters.
--#}
 {%- macro arg_list_ffi_decl(args, has_call_status) %}
 	{%- for arg in args %}
 		{{- arg.type_().borrow()|cgo_ffi_type }} {{ arg.name() -}}
@@ -124,61 +126,123 @@
 {%- endmacro -%}
 
 {%- macro async_ffi_call_binding(func, prefix) -%}
-        {% match func.throws_type() %}
-        {%- when Some with (e) -%}
+	{%- if func.return_type().is_some() %}res{% else %}_{% endif -%}
+	, {% if func.throws_type().is_some() %}err := {% else %}_ := {% endif -%}
+	
+    {%- match (func.return_type(), func.throws_type()) %}
+    {%- when (Some(return_type), Some(e)) -%}
+	uniffiRustCallAsync[{{ e|canonical_name }}](
+        {{ e|ffi_converter_instance }},
+		// completeFn
+		func(handle C.uint64_t, status *C.RustCallStatus) {{ return_type|type_name(ci) }} {
+			return {{ return_type|lift_fn }}(
+				C.{{ func.ffi_rust_future_complete(ci) }}(handle, status),
+			)
+		},
+    {%- when (None, Some(e)) -%}
+	uniffiRustCallAsync[{{ e|canonical_name }}](
+        {{ e|ffi_converter_instance }},
+		// completeFn
+		func(handle C.uint64_t, status *C.RustCallStatus) struct{} {
+			C.{{ func.ffi_rust_future_complete(ci) }}(handle, status)
+			return struct{}{}
+		},
+    {%- when (Some(return_type), None) -%}
+	uniffiRustCallAsync[struct{}](
+        nil,
+		// completeFn
+		func(handle C.uint64_t, status *C.RustCallStatus) {{ return_type|type_name(ci) }} {
+			return {{ return_type|lift_fn }}(
+				C.{{ func.ffi_rust_future_complete(ci) }}(handle, status),
+			)
+		},
+    {%- when (None, None) -%}
+	uniffiRustCallAsync[struct{}](
+        nil,
+		// completeFn
+		func(handle C.uint64_t, status *C.RustCallStatus) struct{} {
+			C.{{ func.ffi_rust_future_complete(ci) }}(handle, status)
+			return struct{}{}
+		},
+    {%- endmatch %}
+		C.{{ func.ffi_func().name() }}({% call _arg_list_ffi_call(func, prefix) %}),
+		// pollFn
+		func (handle C.uint64_t, continuation C.UniffiRustFutureContinuationCallback, data C.uint64_t) {
+			C.{{ func.ffi_rust_future_poll(ci) }}(handle, continuation, data)
+		},
+		// freeFn
+		func (handle C.uint64_t) {
+			C.{{ func.ffi_rust_future_free(ci) }}(handle)
+		},
+	)
+
+    {% match (func.return_type(), func.throws_type()) -%}
+    {%- when (Some(_), Some(_)) -%} return res, err
+    {%- when (None, Some(_)) -%} return err
+    {%- when (Some(_), None) -%} return res
+    {%- when (None, None) -%}
+    {%- endmatch -%}
+{%- endmacro -%}
+
+{#
 	  {%- match func.return_type() -%}
-  	  {%- when Some with (return_type) -%}
-        return uniffiRustCallAsyncWithErrorAndResult[{{ e|canonical_name }}](
-	    {{ e|ffi_converter_name }}{},
-	  {%- else -%}
-        return uniffiRustCallAsyncWithError[{{ e|canonical_name }}](
-	    {{ e|ffi_converter_name }}{},
+  	  {%- when Some with (return_type) %}
+    res, err := uniffiRustCallAsync[{{ e|canonical_name }}](
+        {{ e|ffi_converter_instance }},
+		func(handle C.uint64_t, status *C.RustCallStatus) {{ return_type|type_name(ci) }} {
+			return {{ return_type|lift_fn }}(
+				C.{{ func.ffi_rust_future_complete(ci) }}(handle, status)
+			)
+		},
+		C.{{ func.ffi_func().name() }}({% call _arg_list_ffi_call(func, prefix) %}),
+		C.{{ func.ffi_rust_future_poll(ci) }},
+		C.{{ func.ffi_rust_future_free(ci) }},
+	)
+	return res, err
+
+	  {%- else %}
+    _, err := uniffiRustCallAsync[{{ e|canonical_name }}](
+        {{ e|ffi_converter_instance }},
+		C.{{ func.ffi_func().name() }}({% call _arg_list_ffi_call(func, prefix) %}),
+		C.{{ func.ffi_rust_future_poll(ci) }},
+		func(handle C.uint64_t, status *C.RustCallStatus) {
+			C.{{ func.ffi_rust_future_complete(ci) }}(handle, status)
+		},
+		C.{{ func.ffi_rust_future_free(ci) }},
+	)
+	return err
+
 	  {%- endmatch -%}
  	{%- else -%}
 	  {%- match func.return_type() -%}
-	  {%- when Some with (return_type) -%}
-        return uniffiRustCallAsyncWithResult(
+	  {%- when Some with (return_type) %}
+    res, _ := uniffiRustCallAsync[struct{}](
+    	nil,
+		C.{{ func.ffi_func().name() }}({% call _arg_list_ffi_call(func, prefix) %}),
+		C.{{ func.ffi_rust_future_poll(ci) }},
+		func(handle C.uint64_t, status *C.RustCallStatus) {{ return_type|type_name(ci) }} {
+			return {{ return_type|lift_fn }}(
+				C.{{ func.ffi_rust_future_complete(ci) }}(handle, status),
+			)
+		},
+		C.{{ func.ffi_rust_future_free(ci) }},
+	)
+	return res
+
  	  {%- else -%}
-        uniffiRustCallAsync(
+    _, _ := uniffiRustCallAsync[struct{}](
+    	nil,
+		C.{{ func.ffi_func().name() }}({% call _arg_list_ffi_call(func, prefix) %}),
+		C.{{ func.ffi_rust_future_poll(ci) }},
+		func(handle C.uint64_t, status *C.RustCallStatus) {
+			C.{{ func.ffi_rust_future_complete(ci) }}(handle, status),
+		},
+		C.{{ func.ffi_rust_future_free(ci) }},
+	)
+
 	  {%- endmatch -%}
-        {%- endmatch -%}
-	        func(status *C.RustCallStatus) *C.void {
-			// rustFutureFunc
-			return (*C.void)(C.{{ func.ffi_func().name() }}(
-				{%- if !prefix.is_empty() %}
-				{{ prefix }},
-				{%- endif %}
-				{%- for arg in func.arguments() %}
-				{%- call lower_fn_call(arg) -%},
-				{%- endfor %}
-				status,
-			))
-		},
-	        func(handle *C.void, ptr unsafe.Pointer, status *C.RustCallStatus) {
-			// pollFunc
-			C.{{ func.ffi_rust_future_poll(ci) }}(unsafe.Pointer(handle), ptr, status)
-		},
-	        func(handle *C.void, status *C.RustCallStatus) {% call return_type_decl_async(func) %} {
-			// completeFunc
-			{% match func.return_type() %}
-			{%- when Some with (return_type) -%}
-			return C.{{ func.ffi_rust_future_complete(ci) }}(unsafe.Pointer(handle), status)
-			{%- else -%}
-			C.{{ func.ffi_rust_future_complete(ci) }}(unsafe.Pointer(handle), status)
-			{%- endmatch -%}
-			
-		},
-		{% match func.return_type() %}
-		{%- when Some with (return_type) -%}
-		{{ return_type|lift_fn }},
-		{%- else -%}
-		func(bool) {},
-		{%- endmatch -%}
-	        func(rustFuture *C.void, status *C.RustCallStatus) {
-			// freeFunc
-			C.{{ func.ffi_rust_future_free(ci) }}(unsafe.Pointer(rustFuture), status)
-		})
-{%- endmacro -%}
+
+#}
 
 
 {%- macro lower_fn_call(arg) -%}

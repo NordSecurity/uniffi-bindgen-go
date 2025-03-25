@@ -17,12 +17,9 @@ import (
 	"io"
 	"unsafe"
 	"encoding/binary"
-	{#
-	TODO(pna): impl async
 	{%- if ci.has_async_fns() %}
 	"runtime/cgo"
 	{%- endif %}
-	#}
 	{%- for imported_package in self.imports() %}
 	{{ imported_package.render() }}
 	{%- endfor %}
@@ -39,12 +36,9 @@ import (
 {{ type_helper_code }}
 
 
-{#
-TODO(pna): impl async
 {%- if ci.has_async_fns() %}
 {% include "Async.go" %}
 {%- endif %}
-#}
 
 {%- for func in ci.function_definitions() %}
 {% include "TopLevelFunctionTemplate.go" %}
