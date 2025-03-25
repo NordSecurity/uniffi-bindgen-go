@@ -177,6 +177,29 @@ pub fn ffi_callback_name(nm: &str) -> Result<String, askama::Error> {
     Ok(oracle().ffi_callback_name(nm))
 }
 
+/// Get the idiomatic C rendering of an FFI callback function helper name
+/// This is used to call C callbacks from go
+pub fn ffi_callback_helper_name(nm: &str) -> Result<String, askama::Error> {
+    Ok(format!("call_{}", oracle().ffi_callback_name(nm)))
+}
+
+/// Find C callback argument in cb and return name for helper funciton to call it
+pub fn find_ffi_callback_helper(cb: &FfiCallbackFunction) -> Result<String, askama::Error> {
+    Ok(cb
+        .arguments()
+        .iter()
+        .filter_map(|arg| match arg.type_() {
+            FfiType::Callback(name) => {
+                Some(format!("C.{}", ffi_callback_helper_name(&name).unwrap()))
+            }
+            _ => None,
+        })
+        .next()
+        .expect(
+            "Must be called on async trait callback, as it is granteed to have future callback",
+        ))
+}
+
 /// Get the idiomatic C rendering of an FFI struct name
 pub fn ffi_struct_name(nm: &str) -> Result<String, askama::Error> {
     Ok(oracle().ffi_struct_name(nm))
@@ -189,9 +212,21 @@ pub fn has_display(obj: &Object) -> Result<bool, askama::Error> {
         .any(|t| matches!(t, UniffiTrait::Display { .. })))
 }
 
+/// Exported go function consume rust poll continuation
 pub fn future_continuation_name(config: &Config) -> Result<String, askama::Error> {
     Ok(format!(
         "{}_uniffiFutureContinuationCallback",
+        config
+            .package_name
+            .as_ref()
+            .expect("package name must be set")
+    ))
+}
+
+/// Exported go function to "free"/"cancel" async callback
+pub fn free_gorutine_callback(config: &Config) -> Result<String, askama::Error> {
+    Ok(format!(
+        "{}_uniffiFreeGorutine",
         config
             .package_name
             .as_ref()

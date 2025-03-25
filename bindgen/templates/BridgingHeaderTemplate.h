@@ -55,6 +55,25 @@ typedef
         {%- call go::arg_list_ffi_decl(callback.arguments(),
                                        callback.has_rust_call_status_arg()) -%}
     );
+
+// Making function static works arround:
+// https://github.com/golang/go/issues/11263
+static
+    {%- match callback.return_type() %}{% when Some(return_type) %} {{ return_type|cgo_ffi_type }} {% when None %} void {% endmatch -%}
+    {{ callback.name()|ffi_callback_helper_name }}(
+				{{ callback.name()|ffi_callback_name }} cb, {# space #}
+        {%- call go::arg_list_ffi_decl(callback.arguments(),
+                                       callback.has_rust_call_status_arg()) -%}
+    )
+{
+	return cb({%- for arg in callback.arguments() %}
+	   {{- arg.name() -}}
+	   {%- if !loop.last %}, {% endif -%}
+		 {% endfor -%}
+		 {%- if callback.has_rust_call_status_arg() %}, callStatus {% endif -%}
+	);
+}
+
 {% when FfiDefinition::Struct(struct) %}
 typedef struct {{ struct.name()|ffi_struct_name }} {
     {%- for field in struct.fields() %}
@@ -87,6 +106,7 @@ typedef struct {{ struct.name()|ffi_struct_name }} {
 
 {%- if ci.has_async_fns() %}
 void {{ config|future_continuation_name }}(uint64_t, int8_t);
+void {{ config|free_gorutine_callback }}(uint64_t);
 {% endif %}
 
 {#
