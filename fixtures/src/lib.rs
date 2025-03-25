@@ -33,7 +33,7 @@ mod uniffi_fixtures {
     // Can't use, as it results in a duplicate definition
     // uniffi_ext_types_proc_macro_lib::uniffi_reexport_scaffolding!();
     uniffi_fixture_large_enum::uniffi_reexport_scaffolding!();
-    // uniffi_futures::uniffi_reexport_scaffolding!();
+    uniffi_futures::uniffi_reexport_scaffolding!();
 
     uniffi_proc_macro::uniffi_reexport_scaffolding!();
     uniffi_simple_fns::uniffi_reexport_scaffolding!();

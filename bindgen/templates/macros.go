@@ -126,8 +126,12 @@
 {%- endmacro -%}
 
 {%- macro async_ffi_call_binding(func, prefix) -%}
-	{%- if func.return_type().is_some() %}res{% else %}_{% endif -%}
-	, {% if func.throws_type().is_some() %}err := {% else %}_ := {% endif -%}
+    {% match (func.return_type(), func.throws_type()) -%}
+    {%- when (Some(_), Some(_)) -%} res, err :=
+    {%- when (None, Some(_)) -%} _, err :=
+    {%- when (Some(_), None) -%} res, _ :=
+    {%- when (None, None) -%}
+    {%- endmatch -%} {# space -#}
 	
     {%- match (func.return_type(), func.throws_type()) %}
     {%- when (Some(return_type), Some(e)) -%}
@@ -183,67 +187,6 @@
     {%- when (None, None) -%}
     {%- endmatch -%}
 {%- endmacro -%}
-
-{#
-	  {%- match func.return_type() -%}
-  	  {%- when Some with (return_type) %}
-    res, err := uniffiRustCallAsync[{{ e|canonical_name }}](
-        {{ e|ffi_converter_instance }},
-		func(handle C.uint64_t, status *C.RustCallStatus) {{ return_type|type_name(ci) }} {
-			return {{ return_type|lift_fn }}(
-				C.{{ func.ffi_rust_future_complete(ci) }}(handle, status)
-			)
-		},
-		C.{{ func.ffi_func().name() }}({% call _arg_list_ffi_call(func, prefix) %}),
-		C.{{ func.ffi_rust_future_poll(ci) }},
-		C.{{ func.ffi_rust_future_free(ci) }},
-	)
-	return res, err
-
-	  {%- else %}
-    _, err := uniffiRustCallAsync[{{ e|canonical_name }}](
-        {{ e|ffi_converter_instance }},
-		C.{{ func.ffi_func().name() }}({% call _arg_list_ffi_call(func, prefix) %}),
-		C.{{ func.ffi_rust_future_poll(ci) }},
-		func(handle C.uint64_t, status *C.RustCallStatus) {
-			C.{{ func.ffi_rust_future_complete(ci) }}(handle, status)
-		},
-		C.{{ func.ffi_rust_future_free(ci) }},
-	)
-	return err
-
-	  {%- endmatch -%}
- 	{%- else -%}
-	  {%- match func.return_type() -%}
-	  {%- when Some with (return_type) %}
-    res, _ := uniffiRustCallAsync[struct{}](
-    	nil,
-		C.{{ func.ffi_func().name() }}({% call _arg_list_ffi_call(func, prefix) %}),
-		C.{{ func.ffi_rust_future_poll(ci) }},
-		func(handle C.uint64_t, status *C.RustCallStatus) {{ return_type|type_name(ci) }} {
-			return {{ return_type|lift_fn }}(
-				C.{{ func.ffi_rust_future_complete(ci) }}(handle, status),
-			)
-		},
-		C.{{ func.ffi_rust_future_free(ci) }},
-	)
-	return res
-
- 	  {%- else -%}
-    _, _ := uniffiRustCallAsync[struct{}](
-    	nil,
-		C.{{ func.ffi_func().name() }}({% call _arg_list_ffi_call(func, prefix) %}),
-		C.{{ func.ffi_rust_future_poll(ci) }},
-		func(handle C.uint64_t, status *C.RustCallStatus) {
-			C.{{ func.ffi_rust_future_complete(ci) }}(handle, status),
-		},
-		C.{{ func.ffi_rust_future_free(ci) }},
-	)
-
-	  {%- endmatch -%}
-
-#}
-
 
 {%- macro lower_fn_call(arg) -%}
 {%- match arg.as_type() -%}
