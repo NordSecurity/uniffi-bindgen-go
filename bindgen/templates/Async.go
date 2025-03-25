@@ -47,6 +47,15 @@ func uniffiRustCallAsync[E any, T any](
 	})
 }
 
+//export {{ config|free_gorutine_callback }}
+func {{ config|free_gorutine_callback }}(data C.uint64_t) {
+	handle := cgo.Handle(uintptr(data))
+	defer handle.Delete()
+
+	guard := handle.Value().(chan struct{})
+	guard <- struct{}{}
+}
+
 // func uniffiRustCallAsync(
 // 	rustFutureFunc func(*C.RustCallStatus) *C.void,
 // 	pollFunc func(*C.void, unsafe.Pointer, *C.RustCallStatus),
