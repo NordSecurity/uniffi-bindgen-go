@@ -85,6 +85,10 @@ typedef struct {{ struct.name()|ffi_struct_name }} {
 );
 {% endfor %}
 
+{%- if ci.has_async_fns() %}
+void {{ config|future_continuation_name }}(uint64_t, int8_t);
+{% endif %}
+
 {#
 TODO(pna): remove once all test are passing
 
@@ -116,7 +120,6 @@ void cgo_rust_task_callback_bridge_{{ config.package_name.as_ref().unwrap() }}(R
 
 int8_t uniffiForeignExecutorCallback{{ config.package_name.as_ref().unwrap() }}(uint64_t, uint32_t, RustTaskCallback, void*);
 
-void uniffiFutureContinuationCallback{{ config.package_name.as_ref().unwrap() }}(void*, int8_t);
 
 
 {% for func in ci.iter_ffi_function_definitions() -%}
