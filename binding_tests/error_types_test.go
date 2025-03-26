@@ -29,11 +29,10 @@ func TestErrorInterface(t *testing.T) {
 	}
 }
 
-// TODO(pna) enable with async
-// func TestAsyncErrorInterface(t *testing.T) {
-// 	err := error_types.Aoops()
-// 	assert.ErrorContains(t, err, "async-oops")
-// }
+func TestAsyncErrorInterface(t *testing.T) {
+	err := error_types.Aoops()
+	assert.ErrorContains(t, err, "async-oops")
+}
 
 func TestErrorTrait(t *testing.T) {
 	err := error_types.Toops()
@@ -63,9 +62,8 @@ func TestInterfaceErrors(t *testing.T) {
 	err = interfaceish.Oops()
 	assert.ErrorContains(t, err, "because the interface told me so\n\nCaused by:\n    oops")
 
-	// TODO(pna): impl async
-	// err = interfaceish.Aoops()
-	// assert.ErrorContains(t, err, "async-oops")
+	err = interfaceish.Aoops()
+	assert.ErrorContains(t, err, "async-oops")
 }
 
 func TestProcmacroInterfaceErrors(t *testing.T) {
