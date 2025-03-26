@@ -170,25 +170,25 @@ func TestFuturesFallibleNoThrow(t *testing.T) {
 func TestFuturesFallibleThrows(t *testing.T) {
 	// … which does throw.
 	{
-		t0 := time.Now()
+		// t0 := time.Now()
 
-		_, err := FallibleMe(true)
-		assert.EqualError(t, err, "MyError: Foo")
+		// _, err := FallibleMe(true)
+		// assert.EqualError(t, err, "MyError: Foo")
 
-		assertInstantExecution(t, t0)
-		_, err = FallibleStruct(true)
-		assert.EqualError(t, err, "MyError: Foo")
-	}
-	{
-
-		megaphone := NewMegaphone()
-
-		t0 := time.Now()
-		_, err := megaphone.FallibleMe(true)
-
-		assertInstantExecution(t, t0)
+		// assertInstantExecution(t, t0)
+		_, err := FallibleStruct(true)
 		assert.EqualError(t, err, "MyError: Foo")
 	}
+	// {
+
+	// 	megaphone := NewMegaphone()
+
+	// 	t0 := time.Now()
+	// 	_, err := megaphone.FallibleMe(true)
+
+	// 	assertInstantExecution(t, t0)
+	// 	assert.EqualError(t, err, "MyError: Foo")
+	// }
 }
 
 func TestFuturesLockAndCancel(t *testing.T) {

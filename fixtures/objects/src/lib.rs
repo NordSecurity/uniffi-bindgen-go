@@ -4,7 +4,10 @@
 
 use crossbeam::channel::{Receiver, Sender};
 use once_cell::sync::Lazy;
-use std::sync::{Arc, Mutex};
+use std::{
+    sync::{Arc, Mutex},
+    time::Duration,
+};
 
 static RECEIVER_COUNT: Lazy<Mutex<i32>> = Lazy::new(|| Mutex::new(0));
 
@@ -23,6 +26,16 @@ impl Object0 {
 
     pub fn new_custom() -> Object0 {
         return Object0 {};
+    }
+}
+
+// An async function returning a struct that can throw.
+#[uniffi::export]
+pub async fn fallible_object0_async(do_fail: bool) -> Result<Arc<Object0>, ObjectError> {
+    if do_fail {
+        Err(ObjectError::InvalidOperation)
+    } else {
+        Ok(Arc::new(Object0::new()))
     }
 }
 

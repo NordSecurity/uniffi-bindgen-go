@@ -118,17 +118,13 @@ pub fn cgo_callback_fn_name(
 }
 
 /// FFI type name to be used to reference cgo types
-/// NOTE(pna): used for CustomType template, need to understand this better
-pub fn ffi_type_name(type_: &Type) -> Result<String, askama::Error> {
+pub fn ffi_type_name<T: Clone + Into<FfiType>>(type_: &T) -> Result<String, askama::Error> {
     let ffi_type: FfiType = type_.clone().into();
     let result = match ffi_type {
         FfiType::RustArcPtr(_) => "unsafe.Pointer".into(),
-        FfiType::RustBuffer(_) => match type_ {
-            Type::External { namespace, .. } => format!("{}.RustBufferI", namespace),
-            _ => "RustBufferI".into(),
-        },
-        FfiType::VoidPointer => "*void".into(),
-        FfiType::Reference(inner) => format!("*{}", ffi_type_name_cgo_safe(&*inner)?),
+        FfiType::RustBuffer(_) => "RustBufferI".into(),
+        FfiType::VoidPointer => "*C.void".into(),
+        FfiType::Reference(inner) => format!("*{}", ffi_type_name(&*inner)?),
         _ => format!("C.{}", oracle().ffi_type_label(&ffi_type)),
     };
     Ok(result)

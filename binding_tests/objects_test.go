@@ -169,3 +169,15 @@ func TestGcDoesNotDestroyObjectsWithInFlightCalls(t *testing.T) {
 	// at this point the Receiver should have been GC'ed
 	assert.Equal(t, int32(0), objects.GetLiveReceiverCount())
 }
+
+func TestAsyncFailureProperlyCleansFuture(t *testing.T) {
+	_, err := objects.FallibleObject0Async(true)
+
+	// attempt to GC, if async failure is not properly handled, this will panic
+	// in rust side
+	runtime.GC()
+	// a brief moment for the finalizer to run
+	time.Sleep(1 * time.Millisecond)
+
+	assert.EqualError(t, err, "ObjectError: InvalidOperation: InvalidOperation")
+}
