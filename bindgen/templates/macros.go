@@ -150,10 +150,12 @@
 	uniffiRustCallAsync[{{ e|canonical_name }}](
         {{ e|ffi_converter_instance }},
 		// completeFn
-		func(handle C.uint64_t, status *C.RustCallStatus) {{ return_type|type_name(ci) }} {
-			return {{ return_type|lift_fn }}(
-				C.{{ func.ffi_rust_future_complete(ci) }}(handle, status),
-			)
+		func(handle C.uint64_t, status *C.RustCallStatus) {{ return_type|ffi_type_name }} {
+			return C.{{ func.ffi_rust_future_complete(ci) }}(handle, status)
+		},
+		// liftFn
+		func(ffi {{ return_type|ffi_type_name }}) {{ return_type|type_name(ci) }} {
+			return {{ return_type|lift_fn }}(ffi)
 		},
     {%- when (None, Some(e)) -%}
 	uniffiRustCallAsync[{{ e|canonical_name }}](
@@ -163,14 +165,18 @@
 			C.{{ func.ffi_rust_future_complete(ci) }}(handle, status)
 			return struct{}{}
 		},
+		// liftFn
+		func(_ struct{}) struct{} { return struct{}{} },
     {%- when (Some(return_type), None) -%}
 	uniffiRustCallAsync[struct{}](
         nil,
 		// completeFn
-		func(handle C.uint64_t, status *C.RustCallStatus) {{ return_type|type_name(ci) }} {
-			return {{ return_type|lift_fn }}(
-				C.{{ func.ffi_rust_future_complete(ci) }}(handle, status),
-			)
+		func(handle C.uint64_t, status *C.RustCallStatus) {{ return_type|ffi_type_name }} {
+			return C.{{ func.ffi_rust_future_complete(ci) }}(handle, status)
+		},
+		// liftFn
+		func(ffi {{ return_type|ffi_type_name }}) {{ return_type|type_name(ci) }} {
+			return {{ return_type|lift_fn }}(ffi)
 		},
     {%- when (None, None) -%}
 	uniffiRustCallAsync[struct{}](
@@ -180,6 +186,8 @@
 			C.{{ func.ffi_rust_future_complete(ci) }}(handle, status)
 			return struct{}{}
 		},
+		// liftFn
+		func(_ struct{}) struct{} { return struct{}{} },
     {%- endmatch %}
 		C.{{ func.ffi_func().name() }}({% call _arg_list_ffi_call(func, prefix) %}),
 		// pollFn

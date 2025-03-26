@@ -10,22 +10,12 @@ type BufLowerer[GoType any] interface {
 	Lower(value GoType) RustBuffer
 }
 
-type FfiConverter[GoType any, FfiType any] interface {
-	Lift(value FfiType) GoType
-	Lower(value GoType) FfiType
-}
-
 type BufReader[GoType any] interface {
 	Read(reader io.Reader) GoType
 }
 
 type BufWriter[GoType any] interface {
 	Write(writer io.Writer, value GoType)
-}
-
-type FfiRustBufConverter[GoType any, FfiType any] interface {
-	FfiConverter[GoType, FfiType]
-	BufReader[GoType]
 }
 
 func LowerIntoRustBuffer[GoType any](bufWriter BufWriter[GoType], value GoType) RustBuffer {

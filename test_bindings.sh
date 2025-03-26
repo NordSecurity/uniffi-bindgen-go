@@ -8,7 +8,11 @@ BINDINGS_DIR="$ROOT_DIR/binding_tests"
 BINARIES_DIR="$ROOT_DIR/target/debug"
 
 if [ -n "${1:-}" ]; then
-	SELECT="-run ${1}"
+	if [ -f "$BINDINGS_DIR/${1}" ]; then
+		SELECT="$BINDINGS_DIR/${1}"
+	else
+		SELECT="-run ${1}"
+	fi
 else
 	SELECT=""
 fi
