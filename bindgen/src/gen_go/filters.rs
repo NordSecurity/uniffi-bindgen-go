@@ -1,4 +1,5 @@
 use heck::ToShoutySnakeCase;
+use uniffi_meta::LiteralMetadata;
 
 use super::*;
 
@@ -153,6 +154,16 @@ pub fn fn_name(nm: &str) -> Result<String, askama::Error> {
 /// Get the idiomatic Go rendering of a function name.
 pub fn enum_variant_name(nm: &str) -> Result<String, askama::Error> {
     Ok(oracle().enum_variant_name(nm))
+}
+
+// Get the idiomatic Swift rendering of an individual enum variant's discriminant
+pub fn variant_discr_literal(e: &Enum, index: &usize) -> Result<String, askama::Error> {
+    let literal = e.variant_discr(*index).expect("invalid index");
+    match literal {
+        LiteralMetadata::UInt(v, _, _) => Ok(v.to_string()),
+        LiteralMetadata::Int(v, _, _) => Ok(v.to_string()),
+        _ => unreachable!("expected an int or uint!"),
+    }
 }
 
 /// Get the idiomatic Go rendering of docstring
