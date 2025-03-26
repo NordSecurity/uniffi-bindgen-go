@@ -205,11 +205,6 @@ impl<'a> GoWrapper<'a> {
             .iter_types()
             .map(|t| GoCodeOracle.find(t))
             .filter_map(|t| t.initialization_fn())
-            // TODO(pna): impl async
-            // .chain(
-            //     self.has_async_fns
-            //         .then(|| "uniffiInitContinuationCallback".into()),
-            // )
             .collect()
     }
 }

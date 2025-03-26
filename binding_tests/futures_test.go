@@ -6,6 +6,7 @@ package binding_tests
 
 import (
 	"fmt"
+	"strconv"
 	"sync"
 	"testing"
 	"time"
@@ -109,6 +110,112 @@ func TestFuturesAsyncMethods(t *testing.T) {
 	assert.Equal(t, resultAlice, "HELLO, ALICE!")
 }
 
+func TestFuturesAsyncConstructor(t *testing.T) {
+	// Async constructors are supported
+	megaphone := NewMegaphone()
+	assert.NotNil(t, megaphone)
+
+	megaphone = MegaphoneSecondary()
+	t0 := time.Now()
+	msg := megaphone.SayAfter(20, "Alice")
+	assertDelayedExecution(t, t0, 20*time.Millisecond)
+	assert.Equal(t, "HELLO, ALICE!", msg)
+
+	udl_megaphone := MegaphoneSecondary()
+	t0 = time.Now()
+	msg = udl_megaphone.SayAfter(25, "udl")
+	assertDelayedExecution(t, t0, 25*time.Millisecond)
+	assert.Equal(t, "HELLO, UDL!", msg)
+}
+
+func TestFuturesAsyncTraitMethods(t *testing.T) {
+	traits := GetSayAfterTraits()
+	t0 := time.Now()
+
+	res1 := traits[0].SayAfter(100, "Alice")
+	res2 := traits[1].SayAfter(100, "Bob")
+
+	assertDelayedExecution(t, t0, 200*time.Millisecond)
+	assert.Equal(t, "Hello, Alice!", res1)
+	assert.Equal(t, "Hello, Bob!", res2)
+}
+
+func TestFuturesAsyncUdlTraitMethods(t *testing.T) {
+	traits := GetSayAfterUdlTraits()
+	t0 := time.Now()
+
+	res1 := traits[0].SayAfter(100, "Alice")
+	res2 := traits[1].SayAfter(100, "Bob")
+
+	assertDelayedExecution(t, t0, 200*time.Millisecond)
+	assert.Equal(t, "Hello, Alice!", res1)
+	assert.Equal(t, "Hello, Bob!", res2)
+}
+
+type goAsyncParser struct {
+	completedDelays uint
+}
+
+func (gap *goAsyncParser) AsString(delayMs int32, value int32) string {
+	time.Sleep(time.Duration(delayMs) * time.Millisecond)
+	return fmt.Sprintf("%d", value)
+}
+
+func (gap *goAsyncParser) TryFromString(delayMs int32, value string) (int32, *ParserError) {
+	time.Sleep(time.Duration(delayMs) * time.Millisecond)
+	if value == "force-unexpected-exception" {
+		return 0, NewParserErrorUnexpectedError()
+	}
+	val, err := strconv.ParseInt(value, 10, 32)
+	if err != nil {
+		return int32(val), NewParserErrorNotAnInt()
+	}
+	return int32(val), nil
+}
+
+func (gap *goAsyncParser) Delay(delayMs int32) {
+	time.Sleep(time.Duration(delayMs) * time.Millisecond)
+	gap.completedDelays += 1
+}
+
+func (gap *goAsyncParser) TryDelay(delayMs string) *ParserError {
+	ms, err := strconv.ParseInt(delayMs, 10, 32)
+	if err != nil {
+		return NewParserErrorNotAnInt()
+	}
+
+	time.Sleep(time.Duration(ms) * time.Millisecond)
+	gap.completedDelays += 1
+	return nil
+}
+
+func TestFuturesForeignAsyncTraitMethods(t *testing.T) {
+	traitObj := &goAsyncParser{}
+
+	t0 := time.Now()
+	assert.Equal(t, "42", AsStringUsingTrait(traitObj, 10, 42))
+	val, err := TryFromStringUsingTrait(traitObj, 10, "42")
+	if assert.Nil(t, err) {
+		assert.Equal(t, int32(42), val)
+	}
+	assertDelayedExecution(t, t0, 20*time.Millisecond)
+	val, err = TryFromStringUsingTrait(traitObj, 0, "fourty-two")
+	assert.ErrorIs(t, err, ErrParserErrorNotAnInt)
+	val, err = TryFromStringUsingTrait(traitObj, 0, "force-unexpected-exception")
+	assert.ErrorIs(t, err, ErrParserErrorUnexpectedError)
+
+	t0 = time.Now()
+	DelayUsingTrait(traitObj, 15)
+	TryDelayUsingTrait(traitObj, "15")
+	assertDelayedExecution(t, t0, 30*time.Millisecond)
+	assert.Equal(t, uint(2), traitObj.completedDelays)
+
+	CancelDelayUsingTrait(traitObj, 10)
+	// Sleep a bit longer then a delay to confirm that task was acutaly cancled
+	time.Sleep(20)
+	assert.Equal(t, uint(2), traitObj.completedDelays)
+}
+
 func TestFuturesAsyncObjectParam(t *testing.T) {
 	megaphone := NewMegaphone()
 	t0 := time.Now()
@@ -170,25 +277,24 @@ func TestFuturesFallibleNoThrow(t *testing.T) {
 func TestFuturesFallibleThrows(t *testing.T) {
 	// … which does throw.
 	{
-		// t0 := time.Now()
+		t0 := time.Now()
 
-		// _, err := FallibleMe(true)
-		// assert.EqualError(t, err, "MyError: Foo")
+		_, err := FallibleMe(true)
+		assert.EqualError(t, err, "MyError: Foo")
+		assertInstantExecution(t, t0)
 
-		// assertInstantExecution(t, t0)
-		_, err := FallibleStruct(true)
+		_, err = FallibleStruct(true)
 		assert.EqualError(t, err, "MyError: Foo")
 	}
-	// {
+	{
+		megaphone := NewMegaphone()
 
-	// 	megaphone := NewMegaphone()
+		t0 := time.Now()
+		_, err := megaphone.FallibleMe(true)
 
-	// 	t0 := time.Now()
-	// 	_, err := megaphone.FallibleMe(true)
-
-	// 	assertInstantExecution(t, t0)
-	// 	assert.EqualError(t, err, "MyError: Foo")
-	// }
+		assertInstantExecution(t, t0)
+		assert.EqualError(t, err, "MyError: Foo")
+	}
 }
 
 func TestFuturesLockAndCancel(t *testing.T) {
