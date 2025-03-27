@@ -64,15 +64,36 @@
 	{%- match func.return_type() -%}
 	{%- when Some with (return_type) -%}
 	func(_uniffiStatus *C.RustCallStatus) {{ return_type|ffi_type_name }} {
-		return C.{{ func.ffi_func().name() }}({% call _arg_list_ffi_call(func, prefix) -%})
+		return {% call ffi_invoke(func, prefix) %}
 	})
 	{%- else -%}
 	func(_uniffiStatus *C.RustCallStatus) bool {
-		C.{{ func.ffi_func().name() }}({% call _arg_list_ffi_call(func, prefix) -%})
+		{% call ffi_invoke(func, prefix) %}
 		return false
 	})
 	{%- endmatch %}
 {%- endmacro -%}
+
+{%- macro ffi_invoke(func, prefix) -%}
+	{%- if let Some(FfiType::RustBuffer(_)) = func.ffi_func().return_type() -%}
+	GoRustBuffer {
+		inner: C.{{ func.ffi_func().name() }}({% call _arg_list_ffi_call(func, prefix) -%}),
+	}
+	{%- else -%}
+	C.{{ func.ffi_func().name() }}({% call _arg_list_ffi_call(func, prefix) -%})
+	{%- endif -%}
+{%- endmacro -%}
+
+{%- macro remap_ffi_val(type_, val) -%}
+	{%- if let FfiType::RustBuffer(_) = type_|into_ffi_type -%}
+	GoRustBuffer {
+		inner: {{ val }},
+	}
+	{%- else -%}
+	{{ val }}
+	{%- endif -%}
+{%- endmacro -%}
+
 
 {%- macro _arg_list_ffi_call(func, prefix) %}
 	{%- if !prefix.is_empty() %}
@@ -125,7 +146,8 @@
         {{ e|ffi_converter_instance }},
 		// completeFn
 		func(handle C.uint64_t, status *C.RustCallStatus) {{ return_type|ffi_type_name }} {
-			return C.{{ func.ffi_rust_future_complete(ci) }}(handle, status)
+			res := C.{{ func.ffi_rust_future_complete(ci) }}(handle, status)
+			return {% call remap_ffi_val(return_type, "res") %}
 		},
 		// liftFn
 		func(ffi {{ return_type|ffi_type_name }}) {{ return_type|type_name(ci) }} {
@@ -146,7 +168,8 @@
         nil,
 		// completeFn
 		func(handle C.uint64_t, status *C.RustCallStatus) {{ return_type|ffi_type_name }} {
-			return C.{{ func.ffi_rust_future_complete(ci) }}(handle, status)
+			res := C.{{ func.ffi_rust_future_complete(ci) }}(handle, status)
+			return {% call remap_ffi_val(return_type, "res") %}
 		},
 		// liftFn
 		func(ffi {{ return_type|ffi_type_name }}) {{ return_type|type_name(ci) }} {
@@ -163,7 +186,7 @@
 		// liftFn
 		func(_ struct{}) struct{} { return struct{}{} },
     {%- endmatch %}
-		C.{{ func.ffi_func().name() }}({% call _arg_list_ffi_call(func, prefix) %}),
+		{% call ffi_invoke(func, prefix) %},
 		// pollFn
 		func (handle C.uint64_t, continuation C.UniffiRustFutureContinuationCallback, data C.uint64_t) {
 			C.{{ func.ffi_rust_future_poll(ci) }}(handle, continuation, data)

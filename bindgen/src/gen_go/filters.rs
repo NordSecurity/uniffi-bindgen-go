@@ -138,7 +138,7 @@ pub fn ffi_type_name_cgo_safe<T: Clone + Into<FfiType>>(
     let ffi_type: FfiType = type_.clone().into();
     let result = match ffi_type {
         FfiType::RustArcPtr(_) => "unsafe.Pointer".into(),
-        FfiType::RustBuffer(_) => "RustBuffer".into(),
+        FfiType::RustBuffer(_) => "C.RustBuffer".into(),
         FfiType::VoidPointer => "*C.void".into(),
         FfiType::Reference(inner) => format!("*{}", ffi_type_name_cgo_safe(&*inner)?),
         _ => format!("C.{}", oracle().ffi_type_label(&ffi_type)),

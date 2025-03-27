@@ -24,7 +24,7 @@ func (c FfiConverterTimestamp) Read(reader io.Reader) time.Time {
 	return time.Unix(sec, int64(nsec) * sign)
 }
 
-func (c FfiConverterTimestamp) Lower(value time.Time) RustBuffer {
+func (c FfiConverterTimestamp) Lower(value time.Time)C.RustBuffer {
 	return LowerIntoRustBuffer[time.Time](c, value)
 }
 
