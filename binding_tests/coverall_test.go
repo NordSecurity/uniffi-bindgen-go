@@ -1,7 +1,3 @@
-//go:build ignore
-
-// TODO(pna): fix
-
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -123,7 +119,7 @@ func TestCoverallComplexErrors(t *testing.T) {
 
 	{
 		v, err := coveralls.MaybeThrowComplex(0)
-		if assert.NoError(t, err) {
+		if assert.Nil(t, err) {
 			assert.True(t, v)
 		}
 	}
