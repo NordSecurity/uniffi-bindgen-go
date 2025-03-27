@@ -13,8 +13,31 @@ import (
 )
 
 func TestTraitMethods(t *testing.T) {
-	m := NewTraitMethods("yo")
-	assert.Equal(t, m.String(), "TraitMethods(yo)")
+	m1 := NewTraitMethods("yo")
+	m2 := NewTraitMethods("yo")
+	m3 := NewTraitMethods("yah")
 
-	// Not implemented yet are Debug, Eq, Hash
+	assert.Equal(t, "TraitMethods(yo)", m1.String())
+	assert.Equal(t, "TraitMethods(yah)", m3.String())
+
+	assert.Equal(t, "TraitMethods { val: \"yo\" }", m1.DebugString())
+	assert.Equal(t, "TraitMethods { val: \"yah\" }", m3.DebugString())
+
+	assert.Equal(t, uint64(0x90dbae7908cd1bd), m1.Hash())
+	assert.Equal(t, uint64(0x90dbae7908cd1bd), m2.Hash())
+	assert.Equal(t, uint64(0x40fb01c5911b5fe1), m3.Hash())
+
+	assert.True(t, m1.Eq(m1))
+	assert.True(t, m1.Eq(m2))
+	assert.False(t, m1.Eq(m3))
+	assert.False(t, m1.Ne(m1))
+	assert.False(t, m1.Ne(m2))
+	assert.True(t, m1.Ne(m3))
+
+	assert.False(t, m3.Eq(m1))
+	assert.False(t, m3.Eq(m2))
+	assert.True(t, m3.Eq(m3))
+	assert.True(t, m3.Ne(m1))
+	assert.True(t, m3.Ne(m2))
+	assert.False(t, m3.Ne(m3))
 }

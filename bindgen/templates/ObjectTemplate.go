@@ -69,7 +69,30 @@ func (_self {{ impl_type_name }}) String() string {
 	defer _self.ffiObject.decrementPointer()
 	{% call go::ffi_call_binding(fmt, "_pointer") %}
 }
-{% else %}
+{%- when UniffiTrait::Debug { fmt } %}
+func (_self {{ impl_type_name }}) DebugString() string {
+	_pointer := _self.ffiObject.incrementPointer("{{ type_name }}")
+	defer _self.ffiObject.decrementPointer()
+	{% call go::ffi_call_binding(fmt, "_pointer") %}
+}
+{%- when UniffiTrait::Eq { eq, ne } %}
+func (_self {{ impl_type_name }}) Eq(other {{ type_name }}) bool {
+	_pointer := _self.ffiObject.incrementPointer("{{ type_name }}")
+	defer _self.ffiObject.decrementPointer()
+	{% call go::ffi_call_binding(eq, "_pointer") %}
+}
+
+func (_self {{ impl_type_name }}) Ne(other {{ type_name }}) bool {
+	_pointer := _self.ffiObject.incrementPointer("{{ type_name }}")
+	defer _self.ffiObject.decrementPointer()
+	{% call go::ffi_call_binding(ne, "_pointer") %}
+}
+{%- when UniffiTrait::Hash { hash } %}
+func (_self {{ impl_type_name }}) Hash() uint64 {
+	_pointer := _self.ffiObject.incrementPointer("{{ type_name }}")
+	defer _self.ffiObject.decrementPointer()
+	{% call go::ffi_call_binding(hash, "_pointer") %}
+}
 {% endmatch %}
 {% endfor %}
 

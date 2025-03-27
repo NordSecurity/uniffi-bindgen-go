@@ -68,8 +68,6 @@ func TestProcMacro(t *testing.T) {
 	// # udl exposed functions with procmacro types.
 	assert.Equal(t, GetOne(nil).Inner, int32(0))
 	assert.Equal(t, GetBool(nil), MaybeBoolUncertain)
-
-	// TODO(gemma)
 	assert.Equal(t, GetObject(nil).IsHeavy(), MaybeBoolUncertain)
 	assert.Equal(t, GetTraitWithForeign(nil).Name(), "RustTraitImpl")
 	assert.Nil(t, GetExternals(nil).One)
@@ -78,7 +76,6 @@ func TestProcMacro(t *testing.T) {
 	assert.Equal(t, uint(MaybeBoolFalse), uint(2))
 	assert.Equal(t, uint(MaybeBoolUncertain), uint(3))
 
-	// Asse
 	assert.Equal(t, uint8(ReprU8One), uint8(1))
 	assert.Equal(t, uint8(ReprU8Three), uint8(3))
 
