@@ -28,51 +28,7 @@
 	{%- endmatch %}
 {%- endmacro %}
 
-{% macro return_type_decl_cb(func) %}
-	{%- match func.return_type() -%}
-	{%- when Some with (return_type) -%}
-		{%- match func.throws_type() -%}
-		{%- when Some with (throws_type) -%}
-		({{ return_type|type_name(ci) }}, {{ throws_type|type_name(ci) }})
-		{%- when None -%}
-		{{ return_type|type_name(ci) }}
-		{%- endmatch %}
-	{%- when None -%}
-		{%- match func.throws_type() -%}
-		{%- when Some with (throws_type) -%}
-		{{ throws_type|type_name(ci) }}
-		{%- when None -%}
-		{%- endmatch %}
-	{%- endmatch %}
-{%- endmacro %}
-
-{% macro return_type_decl_async(func) %}
-	{%- match func.return_type() -%}
-	{%- when Some with (return_type) -%}
-		{{ return_type|ffi_type_name }}
-        {%- when None -%}
-	{%- endmatch %}
-{%- endmacro %}
-
-{%- macro func_return_vars(func) -%}
-    {%- match (func.return_type(), func.throws_type()) -%}
-    {%- when (Some(_), Some(_)) -%} res, err :=
-    {%- when (None, Some(_)) -%} _, err :=
-    {%- when (Some(_), None) -%} res, _ :=
-    {%- when (None, None) -%}
-    {%- endmatch -%} {# space -#}
-{%- endmacro -%}
-
-{%- macro func_return(func) -%}
-    {% match (func.return_type(), func.throws_type()) -%}
-    {%- when (Some(_), Some(_)) -%} return res, err
-    {%- when (None, Some(_)) -%} return err
-    {%- when (Some(_), None) -%} return res
-    {%- when (None, None) -%}
-    {%- endmatch -%}
-{%- endmacro -%}
-
-{% macro ffi_call_binding(func, prefix) %}
+{% macro ffi_call_binding(func, prefix) %}	
 	{%- match func.return_type() -%}
 	{%- when Some with (return_type) -%}
 		{%- match func.throws_type() -%}
@@ -142,8 +98,26 @@
 	{%- if has_call_status %}, RustCallStatus* callStatus {% endif -%}
 {%- endmacro -%}
 
+{%- macro _func_return_vars(func) -%}
+    {%- match (func.return_type(), func.throws_type()) -%}
+    {%- when (Some(_), Some(_)) -%} res, err :=
+    {%- when (None, Some(_)) -%} _, err :=
+    {%- when (Some(_), None) -%} res, _ :=
+    {%- when (None, None) -%}
+    {%- endmatch -%} {# space -#}
+{%- endmacro -%}
+
+{%- macro _func_return(func) -%}
+    {% match (func.return_type(), func.throws_type()) -%}
+    {%- when (Some(_), Some(_)) -%} return res, err
+    {%- when (None, Some(_)) -%} return err
+    {%- when (Some(_), None) -%} return res
+    {%- when (None, None) -%}
+    {%- endmatch -%}
+{%- endmacro -%}
+
 {%- macro async_ffi_call_binding(func, prefix) -%}
-	{%- call func_return_vars(func) -%}
+	{%- call _func_return_vars(func) -%}
 	
     {%- match (func.return_type(), func.throws_type()) %}
     {%- when (Some(return_type), Some(e)) -%}
@@ -200,12 +174,7 @@
 		},
 	)
 
-    {% match (func.return_type(), func.throws_type()) -%}
-    {%- when (Some(_), Some(_)) -%} return res, err
-    {%- when (None, Some(_)) -%} return err
-    {%- when (Some(_), None) -%} return res
-    {%- when (None, None) -%}
-    {%- endmatch -%}
+	{% call _func_return(func) %}
 {%- endmacro -%}
 
 {%- macro lower_fn_call(arg) -%}
