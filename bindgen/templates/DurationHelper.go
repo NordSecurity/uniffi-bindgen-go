@@ -19,7 +19,7 @@ func (c FfiConverterDuration) Read(reader io.Reader) time.Duration {
 	return time.Duration(sec*1_000_000_000 + uint64(nsec))
 }
 
-func (c FfiConverterDuration) Lower(value time.Duration) RustBuffer {
+func (c FfiConverterDuration) Lower(value time.Duration)C.RustBuffer {
 	return LowerIntoRustBuffer[time.Duration](c, value)
 }
 

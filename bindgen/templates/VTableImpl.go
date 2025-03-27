@@ -62,7 +62,8 @@ func {{ callback_name }}(
     {%- endmatch -%} {# space -#}
     uniffiObj.{{ meth.name()|fn_name }}(
         {%- for arg in meth.arguments() %}
-        {{ arg|lift_fn }}({{ arg.name()|var_name }}),
+        {%- let var = arg.name()|var_name %}
+        {{ arg|lift_fn }}({% call go::remap_ffi_val(arg.as_type(), var) %}),
         {%- endfor %}
     )
 	

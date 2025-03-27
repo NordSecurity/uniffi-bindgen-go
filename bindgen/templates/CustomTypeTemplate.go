@@ -45,7 +45,8 @@ var {{ ffi_converter_instance }} = {{ ffi_converter_name }}{}
 
 func ({{ ffi_converter_name }}) Lower(value {{ name }}) {{ ffi_type_name }} {
     builtinValue := {{ config.from_custom.render("value") }}
-    return {{ builtin|lower_fn }}(builtinValue)
+	ffiValue := {{ builtin|lower_fn }}(builtinValue)
+    return {% call go::remap_ffi_val(builtin, "ffiValue") %}
 }
 
 func ({{ ffi_converter_name }}) Write(writer io.Writer, value {{ name }}) {

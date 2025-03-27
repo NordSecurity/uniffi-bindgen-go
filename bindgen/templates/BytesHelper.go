@@ -8,7 +8,7 @@ type FfiConverterBytes struct{}
 
 var FfiConverterBytesINSTANCE = FfiConverterBytes{}
 
-func (c FfiConverterBytes) Lower(value []byte) RustBuffer {
+func (c FfiConverterBytes) Lower(value []byte)C.RustBuffer {
 	return LowerIntoRustBuffer[[]byte](c, value)
 }
 
