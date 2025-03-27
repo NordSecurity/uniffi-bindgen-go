@@ -98,14 +98,11 @@ impl uniffi_bindgen::BindingGenerator for BindingGeneratorGo {
             let bindings_path = full_bindings_path(config, &settings.out_dir);
             fs::create_dir_all(&bindings_path)?;
             let go_file = bindings_path.join(format!("{}.go", ci.namespace()));
-            let (header, c_file_content, wrapper) = generate_go_bindings(&config, &ci)?;
+            let (header, wrapper) = generate_go_bindings(&config, &ci)?;
             fs::write(&go_file, wrapper)?;
 
             let header_file = bindings_path.join(config.header_filename());
             fs::write(header_file, header)?;
-
-            let c_file = bindings_path.join(config.c_filename());
-            fs::write(c_file, c_file_content)?;
 
             if settings.try_format_code {
                 match Command::new("go").arg("fmt").arg(&go_file).output() {

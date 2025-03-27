@@ -1643,7 +1643,6 @@ dependencies = [
  "crossbeam",
  "once_cell",
  "thiserror",
- "tokio",
  "uniffi 0.28.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "uniffi_build 0.28.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "uniffi_macros 0.28.3 (registry+https://github.com/rust-lang/crates.io-index)",
