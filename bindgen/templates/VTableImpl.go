@@ -54,12 +54,7 @@ func {{ callback_name }}(
     	}()
 	{% endif %}
 
-    {%- match (meth.return_type(), meth.throws_type()) -%}
-    {%- when (Some(_), Some(_)) -%} res, err :=
-    {%- when (None, Some(_)) -%} err :=
-    {%- when (Some(_), None) -%} res :=
-    {%- when (None, None) -%}
-    {%- endmatch -%} {# space -#}
+	{% call go::func_return_vars(meth, suffix = ":=") %}
     uniffiObj.{{ meth.name()|fn_name }}(
         {%- for arg in meth.arguments() %}
         {%- let var = arg.name()|var_name %}
