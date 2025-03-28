@@ -34,7 +34,7 @@ func (c {{ rec|ffi_converter_name }}) Read(reader io.Reader) {{ type_name }} {
 	}
 }
 
-func (c {{ rec|ffi_converter_name }}) Lower(value {{ type_name }})C.RustBuffer {
+func (c {{ rec|ffi_converter_name }}) Lower(value {{ type_name }}) C.RustBuffer {
 	return LowerIntoRustBuffer[{{ type_name }}](c, value)
 }
 
