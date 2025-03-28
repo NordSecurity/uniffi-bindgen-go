@@ -119,26 +119,26 @@
 	{%- if has_call_status %}, RustCallStatus* callStatus {% endif -%}
 {%- endmacro -%}
 
-{%- macro _func_return_vars(func) -%}
+{%- macro func_return_vars_pairs(func, prefix = "", suffix = "") -%}
     {%- match (func.return_type(), func.throws_type()) -%}
-    {%- when (Some(_), Some(_)) -%} res, err :=
-    {%- when (None, Some(_)) -%} _, err :=
-    {%- when (Some(_), None) -%} res, _ :=
+    {%- when (Some(_), Some(_)) -%} {{ prefix }} res, err {{ suffix }}
+    {%- when (None, Some(_)) -%} {{ prefix }} _, err {{ suffix }}
+    {%- when (Some(_), None) -%} {{ prefix }} res, _ {{ suffix }}
     {%- when (None, None) -%}
     {%- endmatch -%} {# space -#}
 {%- endmacro -%}
 
-{%- macro _func_return(func) -%}
+{%- macro func_return_vars(func, prefix = "", suffix = "") -%}
     {% match (func.return_type(), func.throws_type()) -%}
-    {%- when (Some(_), Some(_)) -%} return res, err
-    {%- when (None, Some(_)) -%} return err
-    {%- when (Some(_), None) -%} return res
+    {%- when (Some(_), Some(_)) -%} {{ prefix }} res, err {{ suffix }}
+    {%- when (None, Some(_)) -%} {{ prefix }} err {{ suffix }}
+    {%- when (Some(_), None) -%} {{ prefix }} res {{ suffix }}
     {%- when (None, None) -%}
     {%- endmatch -%}
 {%- endmacro -%}
 
 {%- macro async_ffi_call_binding(func, prefix) -%}
-	{%- call _func_return_vars(func) -%}
+	{%- call func_return_vars_pairs(func, suffix = ":=") -%}
 	
     {%- match (func.return_type(), func.throws_type()) %}
     {%- when (Some(return_type), Some(e)) -%}
@@ -197,7 +197,7 @@
 		},
 	)
 
-	{% call _func_return(func) %}
+	{% call func_return_vars(func, prefix = "return") %}
 {%- endmacro -%}
 
 {%- macro lower_fn_call(arg) -%}

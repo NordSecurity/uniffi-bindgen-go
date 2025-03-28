@@ -74,12 +74,12 @@ static
 	);
 }
 
-{% when FfiDefinition::Struct(struct) %}
-typedef struct {{ struct.name()|ffi_struct_name }} {
-    {%- for field in struct.fields() %}
+{% when FfiDefinition::Struct(struct_) %}
+typedef struct {{ struct_.name()|ffi_struct_name }} {
+    {%- for field in struct_.fields() %}
     {{ field.type_().borrow()|cgo_ffi_type }} {{ field.name()|var_name }};
     {%- endfor %}
-} {{ struct.name()|ffi_struct_name }};
+} {{ struct_.name()|ffi_struct_name }};
 {% when FfiDefinition::Function(func) %}
 {% match func.return_type() -%}{%- when Some with (type_) %}{{ type_|cgo_ffi_type }}{% when None %}void{% endmatch %} {{ func.name() }}(
     {%- if func.arguments().len() > 0 %}

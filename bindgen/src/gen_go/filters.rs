@@ -44,11 +44,11 @@ pub fn var_name(nm: &str) -> Result<String, askama::Error> {
 }
 
 /// If name is empty create one based on position of a variable
-pub fn or_pos_var(nm: &str, pos: &usize) -> Result<String, askama::Error> {
+pub fn or_pos_var(nm: String, pos: &usize) -> Result<String, askama::Error> {
     if nm.is_empty() {
         Ok(format!("var{pos}"))
     } else {
-        Ok(nm.to_string())
+        Ok(nm)
     }
 }
 
@@ -72,11 +72,11 @@ pub fn error_field_name(nm: &str) -> Result<String, askama::Error> {
 }
 
 /// If name is empty create one based on position of a field
-pub fn or_pos_field(nm: &str, pos: &usize) -> Result<String, askama::Error> {
+pub fn or_pos_field(nm: String, pos: &usize) -> Result<String, askama::Error> {
     if nm.is_empty() {
         Ok(format!("Field{pos}"))
     } else {
-        Ok(nm.to_string())
+        Ok(nm)
     }
 }
 

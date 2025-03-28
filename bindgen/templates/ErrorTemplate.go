@@ -3,7 +3,6 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */#}
 
 {%- call go::docstring(e, 0) %}
-
 type {{ canonical_type_name }} struct {
 	err error
 }
