@@ -16,7 +16,7 @@ func checkCallStatus[E any](converter BufReader[*E], status C.RustCallStatus) *E
 	case 1:
 		return LiftFromRustBuffer(converter, GoRustBuffer { inner: status.errorBuf })
 	case 2:
-		// when the rust code sees a panic, it tries to construct aC.RustBuffer
+		// when the rust code sees a panic, it tries to construct a rustBuffer
 		// with the message.  but if that code panics, then it just sends back
 		// an empty buffer.
 		if status.errorBuf.len > 0 {

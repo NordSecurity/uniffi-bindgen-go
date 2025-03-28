@@ -3,8 +3,8 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */#}
 
 // This is needed, because as of go 1.24
-// type RustBuffer C.RustBuffer
-// Cannot have methods, RustBuffer is treated as non-local type
+// type RustBuffer C.RustBuffer cannot have methods,
+// RustBuffer is treated as non-local type
 {#- See go::remap_ffi_val and go::ffi_invoke, these places
 	handle all of the wrapping logic
 #}

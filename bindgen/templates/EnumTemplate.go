@@ -58,7 +58,7 @@ func (c {{ ffi_converter_name }}) Lift(rb RustBufferI) {{ type_name }} {
 	return LiftFromRustBuffer[{{ type_name }}](c, rb)
 }
 
-func (c {{ ffi_converter_name }}) Lower(value {{ type_name }})C.RustBuffer {
+func (c {{ ffi_converter_name }}) Lower(value {{ type_name }}) C.RustBuffer {
 	return LowerIntoRustBuffer[{{ type_name }}](c, value)
 }
 

@@ -18,7 +18,7 @@ type BufWriter[GoType any] interface {
 	Write(writer io.Writer, value GoType)
 }
 
-func LowerIntoRustBuffer[GoType any](bufWriter BufWriter[GoType], value GoType)C.RustBuffer {
+func LowerIntoRustBuffer[GoType any](bufWriter BufWriter[GoType], value GoType) C.RustBuffer {
 	// This might be not the most efficient way but it does not require knowing allocation size
 	// beforehand
 	var buffer bytes.Buffer

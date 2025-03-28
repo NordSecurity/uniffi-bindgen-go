@@ -2,9 +2,9 @@
 
 - **BREAKING** Upgrade to v0.28.3
   - Support for new WithForeign Traits
-  - Support for object's as Error
-  - Support for Async traits
-  - All uniffi trait's get generated methods (String, DebugString, Hash, Eq, Ne)
+  - Support for objects as Error
+  - Support for Async Traits
+  - All uniffi traits for objects get generated methods (String, DebugString, Hash, Eq, Ne)
   - #[repr(x)] Now represented more closely to underlying data
   - Support for Tuple Enums and Erros added
 - **BREAKING** Error's are now returned as concreate types,
