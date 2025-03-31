@@ -7,7 +7,7 @@ type BufLifter[GoType any] interface {
 }
 
 type BufLowerer[GoType any] interface {
-	Lower(value GoType)C.RustBuffer
+	Lower(value GoType) C.RustBuffer
 }
 
 type BufReader[GoType any] interface {
