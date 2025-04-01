@@ -156,7 +156,7 @@ pub fn enum_variant_name(nm: &str) -> Result<String, askama::Error> {
     Ok(oracle().enum_variant_name(nm))
 }
 
-// Get the idiomatic Swift rendering of an individual enum variant's discriminant
+// Get the idiomatic Go rendering of an individual enum variant's discriminant
 pub fn variant_discr_literal(e: &Enum, index: &usize) -> Result<String, askama::Error> {
     let literal = e.variant_discr(*index).expect("invalid index");
     match literal {
