@@ -27,7 +27,11 @@ type {{ impl_name }} struct {
 {%- when Some with (cons) %}
 {%- call go::docstring(cons, 0) %}
 func New{{ impl_name }}({% call go::arg_list_decl(cons) -%}) {% call go::return_type_decl(cons) %} {
+	{%- if cons.is_async() %}
+	{% call go::async_ffi_call_binding(cons, "") %}
+	{%- else %}
 	{% call go::ffi_call_binding(cons, "") %}
+	{%- endif %}
 }
 {%- when None %}
 {%- endmatch %}
@@ -35,28 +39,26 @@ func New{{ impl_name }}({% call go::arg_list_decl(cons) -%}) {% call go::return_
 {% for cons in obj.alternate_constructors() -%}
 {%- call go::docstring(cons, 0) %}
 func {{ impl_name }}{{ cons.name()|fn_name }}({% call go::arg_list_decl(cons) %}) {% call go::return_type_decl(cons) %} {
+	{%- if cons.is_async() %}
+	{% call go::async_ffi_call_binding(cons, "") %}
+	{%- else %}
 	{% call go::ffi_call_binding(cons, "") %}
+	{%- endif %}
 }
 {% endfor %}
 
 {% for func in obj.methods() -%}
-{# TODO(pna): impl async #}
-{%- if !func.is_async() %}
 
 {%- call go::docstring(func, 0) %}
 func (_self {{ impl_type_name }}) {{ func.name()|fn_name }}({%- call go::arg_list_decl(func) -%}) {% call go::return_type_decl(func) %} {
 	_pointer := _self.ffiObject.incrementPointer("{{ type_name }}")
 	defer _self.ffiObject.decrementPointer()
-{%- if func.is_async() %}
-	// TODO(pna): impl async
-	{# {% call go::async_ffi_call_binding(func, "_pointer") %} #}
-}
-{%- else %}
+	{%- if func.is_async() %}
+	{% call go::async_ffi_call_binding(func, "_pointer") %}
+	{%- else %}
 	{% call go::ffi_call_binding(func, "_pointer") %}
+	{%- endif %}
 }
-{% endif %}
-
-{% endif %}
 {% endfor %}
 
 {%- for tm in obj.uniffi_traits() -%}
@@ -67,9 +69,36 @@ func (_self {{ impl_type_name }}) String() string {
 	defer _self.ffiObject.decrementPointer()
 	{% call go::ffi_call_binding(fmt, "_pointer") %}
 }
-{% else %}
+
+{% when UniffiTrait::Debug { fmt } %}
+func (_self {{ impl_type_name }}) DebugString() string {
+	_pointer := _self.ffiObject.incrementPointer("{{ type_name }}")
+	defer _self.ffiObject.decrementPointer()
+	{% call go::ffi_call_binding(fmt, "_pointer") %}
+}
+
+{% when UniffiTrait::Eq { eq, ne } %}
+func (_self {{ impl_type_name }}) Eq(other {{ type_name }}) bool {
+	_pointer := _self.ffiObject.incrementPointer("{{ type_name }}")
+	defer _self.ffiObject.decrementPointer()
+	{% call go::ffi_call_binding(eq, "_pointer") %}
+}
+
+func (_self {{ impl_type_name }}) Ne(other {{ type_name }}) bool {
+	_pointer := _self.ffiObject.incrementPointer("{{ type_name }}")
+	defer _self.ffiObject.decrementPointer()
+	{% call go::ffi_call_binding(ne, "_pointer") %}
+}
+
+{% when UniffiTrait::Hash { hash } %}
+func (_self {{ impl_type_name }}) Hash() uint64 {
+	_pointer := _self.ffiObject.incrementPointer("{{ type_name }}")
+	defer _self.ffiObject.decrementPointer()
+	{% call go::ffi_call_binding(hash, "_pointer") %}
+}
+
 {% endmatch %}
-{% endfor %}
+{% endfor -%}
 
 func (object {{ impl_type_name }}) Destroy() {
 	runtime.SetFinalizer(object, nil)

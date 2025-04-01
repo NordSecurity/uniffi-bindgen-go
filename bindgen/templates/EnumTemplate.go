@@ -6,6 +6,16 @@
 {%- if e.is_flat() -%}
 
 {%- call go::docstring(e, 0) %}
+{%- if let Some(variant_discr_type) = e.variant_discr_type() %}
+type {{ type_name }} {{ variant_discr_type|type_name(ci) }}
+
+const (
+	{%- for variant in e.variants() %}
+	{%- call go::docstring(variant, 1) %}
+	{{ type_name }}{{ variant.name()|enum_variant_name }} {{ type_name }} = {{ e|variant_discr_literal(loop.index0) }}
+	{%- endfor %}
+)
+{%- else %}
 type {{ type_name }} uint
 
 const (
@@ -14,6 +24,8 @@ const (
 	{{ type_name }}{{ variant.name()|enum_variant_name }} {{ type_name }} = {{ loop.index }}
 	{%- endfor %}
 )
+{%- endif %}
+
 {%- else %}
 
 {%- call go::docstring(e, 0) %}
@@ -46,7 +58,7 @@ func (c {{ ffi_converter_name }}) Lift(rb RustBufferI) {{ type_name }} {
 	return LiftFromRustBuffer[{{ type_name }}](c, rb)
 }
 
-func (c {{ ffi_converter_name }}) Lower(value {{ type_name }}) RustBuffer {
+func (c {{ ffi_converter_name }}) Lower(value {{ type_name }}) C.RustBuffer {
 	return LowerIntoRustBuffer[{{ type_name }}](c, value)
 }
 

@@ -179,7 +179,6 @@ pub struct GoWrapper<'a> {
     ci: &'a ComponentInterface,
     type_helper_code: String,
     type_imports: BTreeSet<ImportRequirement>,
-    has_async_fns: bool,
 }
 
 impl<'a> GoWrapper<'a> {
@@ -192,7 +191,6 @@ impl<'a> GoWrapper<'a> {
             ci,
             type_helper_code,
             type_imports,
-            has_async_fns: ci.has_async_fns(),
         }
     }
 
@@ -205,29 +203,18 @@ impl<'a> GoWrapper<'a> {
             .iter_types()
             .map(|t| GoCodeOracle.find(t))
             .filter_map(|t| t.initialization_fn())
-            // TODO(pna): impl async
-            // .chain(
-            //     self.has_async_fns
-            //         .then(|| "uniffiInitContinuationCallback".into()),
-            // )
             .collect()
     }
 }
 
-pub fn generate_go_bindings(
-    config: &Config,
-    ci: &ComponentInterface,
-) -> Result<(String, String, String)> {
+pub fn generate_go_bindings(config: &Config, ci: &ComponentInterface) -> Result<(String, String)> {
     let header = BridgingHeader::new(config, ci)
         .render()
         .context("failed to render Go bridging header")?;
-    let c_content = BridgingCFile::new(config, ci)
-        .render()
-        .context("failed to render Go bridging file")?;
     let wrapper = GoWrapper::new(config.clone(), ci)
         .render()
         .context("failed to render go bindings")?;
-    Ok((header, c_content, wrapper))
+    Ok((header, wrapper))
 }
 
 /// Template for generating the `.h` file that defines the low-level C FFI.
@@ -238,14 +225,13 @@ pub fn generate_go_bindings(
 #[derive(Template)]
 #[template(syntax = "c", escape = "none", path = "BridgingHeaderTemplate.h")]
 pub struct BridgingHeader<'config, 'ci> {
-    // TODO(pna): verify is this is needed
-    _config: &'config Config,
+    config: &'config Config,
     ci: &'ci ComponentInterface,
 }
 
 impl<'config, 'ci> BridgingHeader<'config, 'ci> {
-    pub fn new(_config: &'config Config, ci: &'ci ComponentInterface) -> Self {
-        Self { _config, ci }
+    pub fn new(config: &'config Config, ci: &'ci ComponentInterface) -> Self {
+        Self { config, ci }
     }
 
     // This represents true callback functions used in CGo layer. This is needed due to
@@ -293,24 +279,6 @@ impl<'config, 'ci> BridgingHeader<'config, 'ci> {
                     .chain([free])
             })
             .collect()
-    }
-}
-
-/// Template for generating the `.c` file that defines the low-level C FFI.
-///
-/// This file defines only the low-level structs and functions that are exposed
-/// by the compiled Rust code. It gets wrapped into a higher-level API by the
-/// code from [`GoWrapper`].
-#[derive(Template)]
-#[template(syntax = "c", escape = "none", path = "BridgingCTemplate.c")]
-pub struct BridgingCFile<'config, 'ci> {
-    config: &'config Config,
-    _ci: &'ci ComponentInterface,
-}
-
-impl<'config, 'ci> BridgingCFile<'config, 'ci> {
-    pub fn new(config: &'config Config, ci: &'ci ComponentInterface) -> Self {
-        Self { config, _ci: ci }
     }
 }
 

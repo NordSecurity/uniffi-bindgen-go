@@ -3,7 +3,6 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */#}
 
 {%- call go::docstring(e, 0) %}
-
 type {{ canonical_type_name }} struct {
 	err error
 }
@@ -101,7 +100,7 @@ func (c {{ ffi_converter_name }}) Lift(eb RustBufferI) {{ type_name }} {
 	return LiftFromRustBuffer[{{ type_name }}](c, eb)
 }
 
-func (c {{ ffi_converter_name }}) Lower(value {{ type_name }}) RustBuffer {
+func (c {{ ffi_converter_name }}) Lower(value {{ type_name }}) C.RustBuffer {
 	return LowerIntoRustBuffer[{{ type_name }}](c, value)
 }
 

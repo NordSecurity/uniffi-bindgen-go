@@ -1,10 +1,17 @@
-### UNRELEASED
+### v0.3.0+v0.28.3
 
 - **BREAKING** Upgrade to v0.28.3
+  - Support for new WithForeign Traits
+  - Support for objects as Error
+  - Support for Async Traits
+  - All uniffi traits for objects get generated methods (String, DebugString, Hash, Eq, Ne)
+  - #[repr(x)] Now represented more closely to underlying data
+  - Support for Tuple Enums and Erros added
 - **BREAKING** Error's are now returned as concreate types,
 not an error interface. For convience all error types have AsError
 to simplify convertion, avoiding footgun of treating nil pointer as non nil
 error interface
+- **BREAKING** Dropped support for ExternalTypes
 
 
 ----

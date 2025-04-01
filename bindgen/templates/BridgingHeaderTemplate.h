@@ -55,12 +55,31 @@ typedef
         {%- call go::arg_list_ffi_decl(callback.arguments(),
                                        callback.has_rust_call_status_arg()) -%}
     );
-{% when FfiDefinition::Struct(struct) %}
-typedef struct {{ struct.name()|ffi_struct_name }} {
-    {%- for field in struct.fields() %}
+
+// Making function static works arround:
+// https://github.com/golang/go/issues/11263
+static
+    {%- match callback.return_type() %}{% when Some(return_type) %} {{ return_type|cgo_ffi_type }} {% when None %} void {% endmatch -%}
+    {{ callback.name()|ffi_callback_helper_name }}(
+				{{ callback.name()|ffi_callback_name }} cb, {# space #}
+        {%- call go::arg_list_ffi_decl(callback.arguments(),
+                                       callback.has_rust_call_status_arg()) -%}
+    )
+{
+	return cb({%- for arg in callback.arguments() %}
+	   {{- arg.name() -}}
+	   {%- if !loop.last %}, {% endif -%}
+		 {% endfor -%}
+		 {%- if callback.has_rust_call_status_arg() %}, callStatus {% endif -%}
+	);
+}
+
+{% when FfiDefinition::Struct(struct_) %}
+typedef struct {{ struct_.name()|ffi_struct_name }} {
+    {%- for field in struct_.fields() %}
     {{ field.type_().borrow()|cgo_ffi_type }} {{ field.name()|var_name }};
     {%- endfor %}
-} {{ struct.name()|ffi_struct_name }};
+} {{ struct_.name()|ffi_struct_name }};
 {% when FfiDefinition::Function(func) %}
 {% match func.return_type() -%}{%- when Some with (type_) %}{{ type_|cgo_ffi_type }}{% when None %}void{% endmatch %} {{ func.name() }}(
     {%- if func.arguments().len() > 0 %}
@@ -85,46 +104,7 @@ typedef struct {{ struct.name()|ffi_struct_name }} {
 );
 {% endfor %}
 
-{#
-TODO(pna): remove once all test are passing
-
-Old concretezied function
-
-typedef int32_t (*ForeignCallback)(uint64_t, int32_t, uint8_t *, int32_t, RustBuffer *);
-
-// Task defined in Rust that Go executes
-typedef void (*RustTaskCallback)(const void *, int8_t);
-
-// Callback to execute Rust tasks using a Go routine
-//
-// Args:
-//   executor: ForeignExecutor lowered into a uint64_t value
-//   delay: Delay in MS
-//   task: RustTaskCallback to call
-//   task_data: data to pass the task callback
-typedef int8_t (*ForeignExecutorCallback)(uint64_t, uint32_t, RustTaskCallback, void *);
-
-// Continuation callback for UniFFI Futures
-typedef void (*RustFutureContinuation)(void * , int8_t);
-
-// ⚠️ Attention: If you change this #else block (ending in `#endif // def UNIFFI_SHARED_H`) you *must* ⚠️
-// ⚠️ increment the version suffix in all instances of UNIFFI_SHARED_HEADER_V6 in this file.           ⚠️
-#endif // def UNIFFI_SHARED_H
-
-// Needed because we can't execute the callback directly from go.
-void cgo_rust_task_callback_bridge_{{ config.package_name.as_ref().unwrap() }}(RustTaskCallback, const void *, int8_t);
-
-int8_t uniffiForeignExecutorCallback{{ config.package_name.as_ref().unwrap() }}(uint64_t, uint32_t, RustTaskCallback, void*);
-
-void uniffiFutureContinuationCallback{{ config.package_name.as_ref().unwrap() }}(void*, int8_t);
-
-
-{% for func in ci.iter_ffi_function_definitions() -%}
-	{%- match func.return_type() -%}{%- when Some with (type_) %}{{ type_|cgo_ffi_type }}{% when None %}void{% endmatch %} {{ func.name() }}(
-	{% call go::arg_list_ffi_decl(func) %}
-);
-
-{% endfor -%}
-
-#}
-
+{%- if ci.has_async_fns() %}
+void {{ config|future_continuation_name }}(uint64_t, int8_t);
+void {{ config|free_gorutine_callback }}(uint64_t);
+{% endif %}

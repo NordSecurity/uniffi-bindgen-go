@@ -14,13 +14,13 @@ func checkCallStatus[E any](converter BufReader[*E], status C.RustCallStatus) *E
 	case 0:
 		return nil
 	case 1:
-		return LiftFromRustBuffer(converter, status.errorBuf)
+		return LiftFromRustBuffer(converter, GoRustBuffer { inner: status.errorBuf })
 	case 2:
-		// when the rust code sees a panic, it tries to construct a rustbuffer
+		// when the rust code sees a panic, it tries to construct a rustBuffer
 		// with the message.  but if that code panics, then it just sends back
 		// an empty buffer.
 		if status.errorBuf.len > 0 {
-			panic(fmt.Errorf("%s", {{ Type::String.borrow()|lift_fn }}(status.errorBuf)))
+			panic(fmt.Errorf("%s", {{ Type::String.borrow()|lift_fn }}(GoRustBuffer { inner: status.errorBuf })))
 		} else {
 			panic(fmt.Errorf("Rust panicked while handling Rust panic"))
 		}
@@ -36,11 +36,13 @@ func checkCallStatusUnknown(status C.RustCallStatus) error {
 	case 1:
 		panic(fmt.Errorf("function not returning an error returned an error"))
 	case 2:
-		// when the rust code sees a panic, it tries to construct a rustbuffer
+		// when the rust code sees a panic, it tries to construct a C.RustBuffer
 		// with the message.  but if that code panics, then it just sends back
 		// an empty buffer.
 		if status.errorBuf.len > 0 {
-			panic(fmt.Errorf("%s", {{ Type::String.borrow()|lift_fn }}(status.errorBuf)))
+			panic(fmt.Errorf("%s", {{ Type::String.borrow()|lift_fn }}(GoRustBuffer {
+				inner: status.errorBuf,
+			})))
 		} else {
 			panic(fmt.Errorf("Rust panicked while handling Rust panic"))
 		}

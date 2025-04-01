@@ -20,29 +20,49 @@ func {{ callback_name }}(
 		panic(fmt.Errorf("no callback in handle map: %d", handle))
 	}
 	
-	{% match meth.return_type() -%}
-	{%- when Some with (return_type) -%}
-        {%- match meth.throws_type() -%}
-        {%- when Some(error_type) -%}
-	result, err :=
-        {%- when None -%}
-	result :=
-        {%- endmatch -%}
-	{%- when None -%}
-	{%- match meth.throws_type() -%}
-        {%- when Some(error_type) -%}
-	err :=
-        {%- when None -%}
-        {%- endmatch -%}
-	{%- endmatch -%}
+	{% if meth.is_async() %}
+	{%- let result_struct = meth.foreign_future_ffi_result_struct().name()|ffi_struct_name %}
+	result := make(chan C.{{ result_struct }}, 1)
+	cancel := make(chan struct{}, 1)
+	guardHandle := cgo.NewHandle(cancel)
+	*uniffiOutReturn = C.UniffiForeignFuture {
+		handle: C.uint64_t(guardHandle),
+		free: C.UniffiForeignFutureFree(C.{{ config|free_gorutine_callback }}),
+	}
+	
+	// Wait for compleation or cancel
+	go func() {
+		select {
+			case <-cancel:
+			case res := <-result:
+				{{ ffi_callback|find_ffi_callback_helper -}}
+					(uniffiFutureCallback, uniffiCallbackData, res)
+		}
+	}()
+
+	// Eval callback asynchroniously
+	go func() {
+        asyncResult := &C.{{ result_struct }}{};
+    	{%- if meth.return_type().is_some() %}
+    	uniffiOutReturn := &asyncResult.returnValue
+    	{%- endif %}
+    	{%- if meth.throws_type().is_some() %}
+    	callStatus := &asyncResult.callStatus
+    	{%- endif %}
+    	defer func() {
+    		result <- *asyncResult
+    	}()
+	{% endif %}
+
+	{% call go::func_return_vars(meth, suffix = ":=") %}
     uniffiObj.{{ meth.name()|fn_name }}(
         {%- for arg in meth.arguments() %}
-        {{ arg|lift_fn }}({{ arg.name()|var_name }}),
+        {%- let var = arg.name()|var_name %}
+        {{ arg|lift_fn }}({% call go::remap_ffi_val(arg.as_type(), var) %}),
         {%- endfor %}
     )
 	
-    {% match meth.throws_type() -%}
-    {%- when Some(error_type) -%}
+    {% if let Some(error_type) = meth.throws_type() -%}
 	if err != nil {
 		// The only way to bypass an unexpected error is to bypass pointer to an empty
 		// instance of the error
@@ -59,15 +79,15 @@ func {{ callback_name }}(
 		}
 		return
 	}
-    {%- when None -%}
-    {%- endmatch %}
+    {%- endif %}
 
-	{% match meth.return_type() -%}
-	{%- when Some(return_type) -%}
-	*uniffiOutReturn = {{ return_type|lower_fn }}(result)
-	{%- when None -%}
-	{%- endmatch %}
-	return
+	{% if let Some(return_type) = meth.return_type() -%}
+	*uniffiOutReturn = {{ return_type|lower_fn }}(res)
+	{%- endif %}
+
+	{%- if meth.is_async() %}
+	}()
+	{%- endif %}
 }
 
 {% endfor %}

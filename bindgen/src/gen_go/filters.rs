@@ -1,4 +1,5 @@
 use heck::ToShoutySnakeCase;
+use uniffi_meta::LiteralMetadata;
 
 use super::*;
 
@@ -43,11 +44,11 @@ pub fn var_name(nm: &str) -> Result<String, askama::Error> {
 }
 
 /// If name is empty create one based on position of a variable
-pub fn or_pos_var(nm: &str, pos: &usize) -> Result<String, askama::Error> {
+pub fn or_pos_var(nm: String, pos: &usize) -> Result<String, askama::Error> {
     if nm.is_empty() {
         Ok(format!("var{pos}"))
     } else {
-        Ok(nm.to_string())
+        Ok(nm)
     }
 }
 
@@ -71,11 +72,11 @@ pub fn error_field_name(nm: &str) -> Result<String, askama::Error> {
 }
 
 /// If name is empty create one based on position of a field
-pub fn or_pos_field(nm: &str, pos: &usize) -> Result<String, askama::Error> {
+pub fn or_pos_field(nm: String, pos: &usize) -> Result<String, askama::Error> {
     if nm.is_empty() {
         Ok(format!("Field{pos}"))
     } else {
-        Ok(nm.to_string())
+        Ok(nm)
     }
 }
 
@@ -118,17 +119,13 @@ pub fn cgo_callback_fn_name(
 }
 
 /// FFI type name to be used to reference cgo types
-/// NOTE(pna): used for CustomType template, need to understand this better
-pub fn ffi_type_name(type_: &Type) -> Result<String, askama::Error> {
+pub fn ffi_type_name<T: Clone + Into<FfiType>>(type_: &T) -> Result<String, askama::Error> {
     let ffi_type: FfiType = type_.clone().into();
     let result = match ffi_type {
         FfiType::RustArcPtr(_) => "unsafe.Pointer".into(),
-        FfiType::RustBuffer(_) => match type_ {
-            Type::External { namespace, .. } => format!("{}.RustBufferI", namespace),
-            _ => "RustBufferI".into(),
-        },
-        FfiType::VoidPointer => "*void".into(),
-        FfiType::Reference(inner) => format!("*{}", ffi_type_name_cgo_safe(&*inner)?),
+        FfiType::RustBuffer(_) => "RustBufferI".into(),
+        FfiType::VoidPointer => "*C.void".into(),
+        FfiType::Reference(inner) => format!("*{}", ffi_type_name(&*inner)?),
         _ => format!("C.{}", oracle().ffi_type_label(&ffi_type)),
     };
     Ok(result)
@@ -141,7 +138,7 @@ pub fn ffi_type_name_cgo_safe<T: Clone + Into<FfiType>>(
     let ffi_type: FfiType = type_.clone().into();
     let result = match ffi_type {
         FfiType::RustArcPtr(_) => "unsafe.Pointer".into(),
-        FfiType::RustBuffer(_) => "RustBuffer".into(),
+        FfiType::RustBuffer(_) => "C.RustBuffer".into(),
         FfiType::VoidPointer => "*C.void".into(),
         FfiType::Reference(inner) => format!("*{}", ffi_type_name_cgo_safe(&*inner)?),
         _ => format!("C.{}", oracle().ffi_type_label(&ffi_type)),
@@ -157,6 +154,16 @@ pub fn fn_name(nm: &str) -> Result<String, askama::Error> {
 /// Get the idiomatic Go rendering of a function name.
 pub fn enum_variant_name(nm: &str) -> Result<String, askama::Error> {
     Ok(oracle().enum_variant_name(nm))
+}
+
+// Get the idiomatic Go rendering of an individual enum variant's discriminant
+pub fn variant_discr_literal(e: &Enum, index: &usize) -> Result<String, askama::Error> {
+    let literal = e.variant_discr(*index).expect("invalid index");
+    match literal {
+        LiteralMetadata::UInt(v, _, _) => Ok(v.to_string()),
+        LiteralMetadata::Int(v, _, _) => Ok(v.to_string()),
+        _ => unreachable!("expected an int or uint!"),
+    }
 }
 
 /// Get the idiomatic Go rendering of docstring
@@ -177,6 +184,29 @@ pub fn ffi_callback_name(nm: &str) -> Result<String, askama::Error> {
     Ok(oracle().ffi_callback_name(nm))
 }
 
+/// Get the idiomatic C rendering of an FFI callback function helper name
+/// This is used to call C callbacks from go
+pub fn ffi_callback_helper_name(nm: &str) -> Result<String, askama::Error> {
+    Ok(format!("call_{}", oracle().ffi_callback_name(nm)))
+}
+
+/// Find C callback argument in cb and return name for helper funciton to call it
+pub fn find_ffi_callback_helper(cb: &FfiCallbackFunction) -> Result<String, askama::Error> {
+    Ok(cb
+        .arguments()
+        .iter()
+        .filter_map(|arg| match arg.type_() {
+            FfiType::Callback(name) => {
+                Some(format!("C.{}", ffi_callback_helper_name(&name).unwrap()))
+            }
+            _ => None,
+        })
+        .next()
+        .expect(
+            "Must be called on async trait callback, as it is granteed to have future callback",
+        ))
+}
+
 /// Get the idiomatic C rendering of an FFI struct name
 pub fn ffi_struct_name(nm: &str) -> Result<String, askama::Error> {
     Ok(oracle().ffi_struct_name(nm))
@@ -187,4 +217,26 @@ pub fn has_display(obj: &Object) -> Result<bool, askama::Error> {
         .uniffi_traits()
         .into_iter()
         .any(|t| matches!(t, UniffiTrait::Display { .. })))
+}
+
+/// Exported go function consume rust poll continuation
+pub fn future_continuation_name(config: &Config) -> Result<String, askama::Error> {
+    Ok(format!(
+        "{}_uniffiFutureContinuationCallback",
+        config
+            .package_name
+            .as_ref()
+            .expect("package name must be set")
+    ))
+}
+
+/// Exported go function to "free"/"cancel" async callback
+pub fn free_gorutine_callback(config: &Config) -> Result<String, askama::Error> {
+    Ok(format!(
+        "{}_uniffiFreeGorutine",
+        config
+            .package_name
+            .as_ref()
+            .expect("package name must be set")
+    ))
 }

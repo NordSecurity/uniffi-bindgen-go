@@ -24,7 +24,7 @@ func (_ {{ ffi_converter_name }}) Read(reader io.Reader) {{ type_name }} {
 	return result
 }
 
-func (c {{ ffi_converter_name }}) Lower(value {{ type_name }}) RustBuffer {
+func (c {{ ffi_converter_name }}) Lower(value {{ type_name }}) C.RustBuffer {
 	return LowerIntoRustBuffer[{{ type_name }}](c, value)
 }
 

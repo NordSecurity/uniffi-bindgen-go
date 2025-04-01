@@ -6,7 +6,7 @@
 type {{ type_name }} interface {
 	{% for meth in cbi.methods() -%}
 	{%- call go::docstring(meth, 1) %}
-	{{ meth.name()|fn_name }}({% call go::arg_list_decl(meth) %}) {% call go::return_type_decl_cb(meth) %}
+	{{ meth.name()|fn_name }}({% call go::arg_list_decl(meth) %}) {% call go::return_type_decl(meth) %}
 	{% endfor %}
 }
 

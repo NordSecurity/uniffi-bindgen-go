@@ -26,6 +26,16 @@ impl Object0 {
     }
 }
 
+// An async function returning a struct that can throw.
+#[uniffi::export]
+pub async fn fallible_object0_async(do_fail: bool) -> Result<Arc<Object0>, ObjectError> {
+    if do_fail {
+        Err(ObjectError::InvalidOperation)
+    } else {
+        Ok(Arc::new(Object0::new()))
+    }
+}
+
 pub struct Object1 {
     message: String,
 }
