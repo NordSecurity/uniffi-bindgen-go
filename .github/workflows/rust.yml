@@ -13,20 +13,20 @@ jobs:
   build:
     runs-on: ubuntu-latest
     container:
-      image: rust:1.70
+      image: rust:1.81
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
       with:
         submodules: 'true'
     - name: Build Bindgen
       run: ./build.sh
     - name: Generate Test Bindings
       run: ./build_bindings.sh
-    - uses: actions/upload-artifact@v4
+    - uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
       with:
         name: lib
         path: target/debug/libuniffi_fixtures.so
-    - uses: actions/upload-artifact@v4
+    - uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
       with:
         name: bindings
         path: binding_tests/generated/
@@ -34,17 +34,17 @@ jobs:
   test-bindings:
     runs-on: ubuntu-latest
     container:
-      image: golang:1.20
+      image: golang:1.24
     needs: build
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
       with:
         submodules: 'true'
-    - uses: actions/download-artifact@v3
+    - uses: actions/download-artifact@95815c38cf2ff2164869cbab79da8d1f422bc89e # v4.2.1
       with:
         name: lib
         path: target/debug
-    - uses: actions/download-artifact@v3
+    - uses: actions/download-artifact@95815c38cf2ff2164869cbab79da8d1f422bc89e # v4.2.1
       with:
         name: bindings
         path: binding_tests/generated
