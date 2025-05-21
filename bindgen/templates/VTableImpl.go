@@ -63,23 +63,23 @@ func {{ callback_name }}(
     )
 	
     {% if let Some(error_type) = meth.throws_type() -%}
+	{{- self.add_import("errors") }}
 	if err != nil {
-		// The only way to bypass an unexpected error is to bypass pointer to an empty
-		// instance of the error
-		if err.err == nil {
+		var actualError {{ error_type|type_name(ci) }}
+		if errors.As(err, &actualError) {
+			*callStatus = C.RustCallStatus {
+				code: C.int8_t(uniffiCallbackResultError),
+				errorBuf: {{ error_type|lower_fn }}(actualError),
+			}
+		} else {
 			*callStatus = C.RustCallStatus {
 				code: C.int8_t(uniffiCallbackUnexpectedResultError),
 			}
-			return
-		}
-		
-		*callStatus = C.RustCallStatus {
-			code: C.int8_t(uniffiCallbackResultError),
-			errorBuf: {{ error_type|lower_fn }}(err),
 		}
 		return
 	}
     {%- endif %}
+
 
 	{% if let Some(return_type) = meth.return_type() -%}
 	*uniffiOutReturn = {{ return_type|lower_fn }}(res)

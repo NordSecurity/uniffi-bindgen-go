@@ -254,7 +254,7 @@ func (g *GoGetters) GetBool(v bool, arg2 bool) bool {
 	return v != arg2
 }
 
-func (g *GoGetters) GetString(v string, arg2 bool) (string, *coverall.CoverallError) {
+func (g *GoGetters) GetString(v string, arg2 bool) (string, error) {
 	switch v {
 	case "too-many-holes":
 		return "", coverall.NewCoverallErrorTooManyHoles()
@@ -268,7 +268,7 @@ func (g *GoGetters) GetString(v string, arg2 bool) (string, *coverall.CoverallEr
 	return v, nil
 }
 
-func (g *GoGetters) GetOption(v string, arg2 bool) (*string, *coverall.ComplexError) {
+func (g *GoGetters) GetOption(v string, arg2 bool) (*string, error) {
 	switch v {
 	case "os-error":
 		return nil, coverall.NewComplexErrorOsError(100, 200)

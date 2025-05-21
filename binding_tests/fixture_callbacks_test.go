@@ -12,20 +12,20 @@ import (
 
 type getters struct{}
 
-func (getters) GetBool(v bool, arg2 bool) (bool, *fixture_callbacks.SimpleError) {
+func (getters) GetBool(v bool, arg2 bool) (bool, error) {
 	if arg2 {
 		return false, fixture_callbacks.NewSimpleErrorBadArgument()
 	}
 	return v, nil
 }
-func (getters) GetString(v string, arg2 bool) (string, *fixture_callbacks.SimpleError) {
+func (getters) GetString(v string, arg2 bool) (string, error) {
 	if arg2 {
 		return "", fixture_callbacks.NewSimpleErrorUnexpectedError()
 	}
 	return v, nil
 }
 
-func (getters) GetOption(v *string, arg2 bool) (*string, *fixture_callbacks.ComplexError) {
+func (getters) GetOption(v *string, arg2 bool) (*string, error) {
 	if arg2 {
 		errMsg := "nil input"
 		if v != nil {
@@ -36,14 +36,14 @@ func (getters) GetOption(v *string, arg2 bool) (*string, *fixture_callbacks.Comp
 	return v, nil
 }
 
-func (getters) GetList(v []int32, arg2 bool) ([]int32, *fixture_callbacks.SimpleError) {
+func (getters) GetList(v []int32, arg2 bool) ([]int32, error) {
 	if arg2 {
 		return nil, fixture_callbacks.NewSimpleErrorBadArgument()
 	}
 	return v, nil
 }
 
-func (getters) GetNothing(v string) *fixture_callbacks.SimpleError {
+func (getters) GetNothing(v string) error {
 	if v == "bad-argument" {
 		return fixture_callbacks.NewSimpleErrorBadArgument()
 	}
@@ -55,23 +55,23 @@ func (getters) GetNothing(v string) *fixture_callbacks.SimpleError {
 
 type invalidGetters struct{}
 
-func (invalidGetters) GetBool(v bool, arg2 bool) (bool, *fixture_callbacks.SimpleError) {
-	return false, &fixture_callbacks.SimpleError{}
+func (invalidGetters) GetBool(v bool, arg2 bool) (bool, error) {
+	return false, fixture_callbacks.NewSimpleErrorUnexpectedError()
 }
 
-func (invalidGetters) GetString(v string, arg2 bool) (string, *fixture_callbacks.SimpleError) {
-	return "", &fixture_callbacks.SimpleError{}
+func (invalidGetters) GetString(v string, arg2 bool) (string, error) {
+	return "", fixture_callbacks.NewSimpleErrorUnexpectedError()
 }
 
-func (invalidGetters) GetOption(v *string, arg2 bool) (*string, *fixture_callbacks.ComplexError) {
+func (invalidGetters) GetOption(v *string, arg2 bool) (*string, error) {
 	return nil, &fixture_callbacks.ComplexError{}
 }
 
-func (invalidGetters) GetList(v []int32, arg2 bool) ([]int32, *fixture_callbacks.SimpleError) {
-	return nil, &fixture_callbacks.SimpleError{}
+func (invalidGetters) GetList(v []int32, arg2 bool) ([]int32, error) {
+	return nil, fixture_callbacks.NewSimpleErrorUnexpectedError()
 }
 
-func (invalidGetters) GetNothing(v string) *fixture_callbacks.SimpleError {
+func (invalidGetters) GetNothing(v string) error {
 	return fixture_callbacks.NewSimpleErrorBadArgument()
 }
 
@@ -106,11 +106,11 @@ type testGetterInput[T any] struct {
 	expectedError error
 }
 
-func testGetter[E fixture_callbacks.NativeError, T any](t *testing.T, tt testGetterInput[T], getterFn func(callbacks fixture_callbacks.ForeignGetters, value T, flag bool) (T, E)) {
+func testGetter[T any](t *testing.T, tt testGetterInput[T], getterFn func(callbacks fixture_callbacks.ForeignGetters, value T, flag bool) (T, error)) {
 	foreignGetters := getters{}
 	res, err := getterFn(foreignGetters, tt.value, tt.getError)
 	assert.Equal(t, tt.expectedRes, res)
-	assert.ErrorIs(t, err.AsError(), tt.expectedError)
+	assert.ErrorIs(t, err, tt.expectedError)
 }
 
 func TestRustGetters_GetNothing(t *testing.T) {
@@ -333,7 +333,7 @@ func TestRustGetters_GetStringOptionalCallback(t *testing.T) {
 				tt.flag,
 			)
 			assert.Equal(t, tt.expectedRes, res)
-			assert.ErrorIs(t, err.AsError(), tt.expectedError)
+			assert.ErrorIs(t, err, tt.expectedError)
 		})
 	}
 }

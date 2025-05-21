@@ -1,6 +1,7 @@
 package binding_tests
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/NordSecurity/uniffi-bindgen-go/binding_tests/generated/error_types"
@@ -20,13 +21,13 @@ func TestNormalCatchWithImplitArcWrapping(t *testing.T) {
 
 func TestErrorInterface(t *testing.T) {
 	err := error_types.Oops()
-	if assert.NotNil(t, err) {
-		assert.Equal(t, []string{"because uniffi told me so", "oops"}, err.Chain())
-		link := err.Link(0)
-		if assert.NotNil(t, link) {
-			assert.Equal(t, "because uniffi told me so", *link)
-		}
-	}
+	var expectedError *error_types.ErrorInterface
+	assert.ErrorAs(t, err, &expectedError)
+	assert.Equal(t, []string{"because uniffi told me so", "oops"}, expectedError.Chain())
+
+	link := expectedError.Link(0)
+	assert.NotNil(t, link)
+	assert.Equal(t, "because uniffi told me so", *link)
 }
 
 func TestAsyncErrorInterface(t *testing.T) {
@@ -36,17 +37,16 @@ func TestAsyncErrorInterface(t *testing.T) {
 
 func TestErrorTrait(t *testing.T) {
 	err := error_types.Toops()
-	if assert.NotNil(t, err) {
-		assert.Equal(t, "trait-oops", err.Msg())
-	}
+	var expectedError *error_types.ErrorTrait
+	assert.ErrorAs(t, err, &expectedError)
+	assert.Equal(t, "trait-oops", expectedError.Msg())
 }
 
 func TestErrorReturn(t *testing.T) {
 	err := error_types.GetError("the error")
-	if assert.NotNil(t, err) {
-		assert.Equal(t, []string{"the error"}, err.Chain())
-		assert.Equal(t, "the error", err.Error())
-	}
+	assert.NotNil(t, err)
+	assert.Equal(t, []string{"the error"}, err.Chain())
+	assert.Equal(t, "the error", err.Error())
 }
 
 func TestRichError(t *testing.T) {
@@ -68,10 +68,10 @@ func TestInterfaceErrors(t *testing.T) {
 
 func TestProcmacroInterfaceErrors(t *testing.T) {
 	err := error_types.ThrowProcError("eek")
-	if assert.NotNil(t, err) {
-		assert.Equal(t, "eek", err.Message())
-		assert.Equal(t, "ProcErrorInterface(eek)", err.Error())
-	}
+	var expectedError *error_types.ProcErrorInterface
+	assert.ErrorAs(t, err, &expectedError)
+	assert.Equal(t, "eek", expectedError.Message())
+	assert.Equal(t, "ProcErrorInterface(eek)", expectedError.Error())
 }
 
 func TestEnumError(t *testing.T) {
@@ -109,12 +109,16 @@ func TestEnumErrorFlatInner(t *testing.T) {
 }
 
 func TestTupleError(t *testing.T) {
-	err := error_types.GetTuple(nil)
-	assert.ErrorContains(t, err, "oops")
+	terr := error_types.GetTuple(nil)
+	assert.ErrorContains(t, terr, "oops")
 
-	err = error_types.OopsTuple(0)
-	assert.Equal(t, error_types.NewTupleErrorOops("oops"), err)
+	err1 := error_types.OopsTuple(0)
+	if errors.As(err1, &terr) {
+		assert.Equal(t, error_types.NewTupleErrorOops("oops"), terr)
+	}
 
-	err = error_types.OopsTuple(1)
-	assert.Equal(t, error_types.NewTupleErrorValue(1), err)
+	err2 := error_types.OopsTuple(1)
+	if errors.As(err2, &terr) {
+		assert.Equal(t, error_types.NewTupleErrorValue(1), terr)
+	}
 }
