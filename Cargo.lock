@@ -1355,6 +1355,7 @@ dependencies = [
  "uniffi-fixture-trait-methods",
  "uniffi-fixture-type-limits",
  "uniffi-go-fixture-destroy",
+ "uniffi-go-fixture-empty-string-and-bytes",
  "uniffi-go-fixture-errors",
  "uniffi-go-fixture-issue43",
  "uniffi-go-fixture-issue45",
@@ -1631,6 +1632,15 @@ version = "1.0.0"
 dependencies = [
  "once_cell",
  "thiserror",
+ "uniffi 0.28.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "uniffi_build 0.28.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "uniffi_macros 0.28.3 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "uniffi-go-fixture-empty-string-and-bytes"
+version = "1.0.0"
+dependencies = [
  "uniffi 0.28.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "uniffi_build 0.28.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "uniffi_macros 0.28.3 (registry+https://github.com/rust-lang/crates.io-index)",

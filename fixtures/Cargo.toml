@@ -51,3 +51,4 @@ uniffi-go-fixture-issue43 = { path = "regressions/issue43" }
 uniffi-go-fixture-issue45 = { path = "regressions/issue45" }
 uniffi-go-fixture-name-case = { path = "name-case" }
 uniffi-go-fixture-objects = { path = "objects" }
+uniffi-go-fixture-empty-string-and-bytes = { path = "empty_string_and_bytes"}
