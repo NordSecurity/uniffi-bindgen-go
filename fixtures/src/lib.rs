@@ -40,4 +40,5 @@ mod uniffi_fixtures {
     uniffi_go_issue45::uniffi_reexport_scaffolding!();
     uniffi_go_name_case::uniffi_reexport_scaffolding!();
     uniffi_go_objects::uniffi_reexport_scaffolding!();
+    uniffi_go_empty_string_and_bytes::uniffi_reexport_scaffolding!();
 }

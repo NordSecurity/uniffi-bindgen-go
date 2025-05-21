@@ -1,0 +1,16 @@
+[package]
+name = "uniffi-go-fixture-empty-string-and-bytes"
+version = "1.0.0"
+edition = "2021"
+publish = false
+
+[lib]
+crate-type = ["lib", "cdylib"]
+name = "uniffi_go_empty_string_and_bytes"
+
+[dependencies]
+uniffi.workspace = true
+uniffi_macros.workspace = true
+
+[build-dependencies]
+uniffi_build.workspace = true
