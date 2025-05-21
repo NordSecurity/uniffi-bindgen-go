@@ -1,3 +1,8 @@
+### v0.4.0+v0.28.3
+- **BREAKING** Rework errors to avoid interface nil trap
+  - Errors are now returned as generic error
+- Fix panic when reading empty string or bytes
+
 ### v0.3.0+v0.28.3
 
 - **BREAKING** Upgrade to v0.28.3
