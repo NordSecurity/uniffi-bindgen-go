@@ -21,14 +21,14 @@ type OnCallAnswerImpl struct {
 	ignored string
 }
 
-func (c *OnCallAnswerImpl) Answer() (string, *callbacks.TelephoneError) {
+func (c *OnCallAnswerImpl) Answer() (string, error) {
 	c.answerCount += 1
 	return fmt.Sprintf("hello, %d", c.answerCount), nil
 }
 
 type OnCallAnswerBusyImpl struct{}
 
-func (OnCallAnswerBusyImpl) Answer() (string, *callbacks.TelephoneError) {
+func (OnCallAnswerBusyImpl) Answer() (string, error) {
 	return "", callbacks.NewTelephoneErrorBusy()
 }
 

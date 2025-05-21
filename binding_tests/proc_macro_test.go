@@ -110,7 +110,7 @@ func (c GoTestCallbackInterface) WithBytes(rwb RecordWithBytes) []byte {
 	return rwb.SomeBytes
 }
 
-func (c GoTestCallbackInterface) TryParseInt(value string) (uint32, *BasicError) {
+func (c GoTestCallbackInterface) TryParseInt(value string) (uint32, error) {
 	if value == "force-unexpected-error" {
 		// raise an error that's not expected
 		return 0, NewBasicErrorUnexpectedError("some other error")

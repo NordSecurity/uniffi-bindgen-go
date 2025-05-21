@@ -161,7 +161,7 @@ func (gap *goAsyncParser) AsString(delayMs int32, value int32) string {
 	return fmt.Sprintf("%d", value)
 }
 
-func (gap *goAsyncParser) TryFromString(delayMs int32, value string) (int32, *ParserError) {
+func (gap *goAsyncParser) TryFromString(delayMs int32, value string) (int32, error) {
 	time.Sleep(time.Duration(delayMs) * time.Millisecond)
 	if value == "force-unexpected-exception" {
 		return 0, NewParserErrorUnexpectedError()
@@ -178,7 +178,7 @@ func (gap *goAsyncParser) Delay(delayMs int32) {
 	gap.completedDelays += 1
 }
 
-func (gap *goAsyncParser) TryDelay(delayMs string) *ParserError {
+func (gap *goAsyncParser) TryDelay(delayMs string) error {
 	ms, err := strconv.ParseInt(delayMs, 10, 32)
 	if err != nil {
 		return NewParserErrorNotAnInt()

@@ -15,14 +15,14 @@
 	{%- when Some with (return_type) -%}
 		{%- match func.throws_type() -%}
 		{%- when Some with (throws_type) -%}
-		({{ return_type|type_name(ci) }}, {{ throws_type|type_name(ci) }})
+		({{ return_type|type_name(ci) }}, error)
 		{%- when None -%}
 		{{ return_type|type_name(ci) }}
 		{%- endmatch %}
 	{%- when None -%}
 		{%- match func.throws_type() -%}
 		{%- when Some with (throws_type) -%}
-		{{ throws_type|type_name(ci) }}
+		error
 		{%- when None -%}
 		{%- endmatch %}
 	{%- endmatch %}
@@ -38,7 +38,7 @@
 			var _uniffiDefaultValue {{ return_type|type_name(ci) }}
 			return _uniffiDefaultValue, _uniffiErr
 		} else {
-			return {{ return_type|lift_fn }}(_uniffiRV), _uniffiErr
+			return {{ return_type|lift_fn }}(_uniffiRV), nil
 		}
 		{%- when None -%}
 		return {{ return_type|lift_fn }}({% call to_ffi_call(func, prefix) %})
@@ -47,7 +47,7 @@
 		{%- match func.throws_type() -%}
 		{%- when Some with (throws_type) -%}
 		_, _uniffiErr := {% call to_ffi_call(func, prefix) %}
-		return _uniffiErr
+		return _uniffiErr.AsError()
 		{%- when None -%}
 		{% call to_ffi_call(func, prefix) %}
 		{%- endmatch -%}
@@ -164,7 +164,7 @@
 		// liftFn
 		func(_ struct{}) struct{} { return struct{}{} },
     {%- when (Some(return_type), None) -%}
-	uniffiRustCallAsync[struct{}](
+	uniffiRustCallAsync[error](
         nil,
 		// completeFn
 		func(handle C.uint64_t, status *C.RustCallStatus) {{ return_type|ffi_type_name }} {
@@ -176,7 +176,7 @@
 			return {{ return_type|lift_fn }}(ffi)
 		},
     {%- when (None, None) -%}
-	uniffiRustCallAsync[struct{}](
+	uniffiRustCallAsync[error](
         nil,
 		// completeFn
 		func(handle C.uint64_t, status *C.RustCallStatus) struct{} {
