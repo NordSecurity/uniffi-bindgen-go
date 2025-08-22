@@ -45,6 +45,6 @@ type {{ ffi_destroyer_name }} struct {}
 
 func ({{ ffi_destroyer_name }}) Destroy(sequence {{ type_name }}) {
 	for _, value := range sequence {
-		{{ inner_type|destroy_fn }}(value)	
+		{{ inner_type|destroy_fn }}(value)
 	}
 }

@@ -27,7 +27,7 @@ func uniffiRustCallAsync[E any, T any, F any](
 	freeFunc rustFutureFreeFunc,
 ) (T, *E) {
 	defer freeFunc(rustFuture)
-	
+
 	pollResult := int8(-1)
 	waiter := make(chan int8, 1)
 
@@ -46,9 +46,9 @@ func uniffiRustCallAsync[E any, T any, F any](
 	var goValue T
 	var ffiValue F
 	var err *E
-	
+
 	ffiValue, err = rustCallWithError(errConverter, func(status *C.RustCallStatus) F {
-		return completeFunc(rustFuture, status)	
+		return completeFunc(rustFuture, status)
 	})
 	if err != nil {
 		return goValue, err

@@ -168,7 +168,7 @@ func (c {{ ffi_converter_name }}) Lower(value {{ type_name }}) unsafe.Pointer {
 	defer value.ffiObject.decrementPointer()
 	{%- endif %}
 	return pointer
-	
+
 }
 
 func (c {{ ffi_converter_name }}) Write(writer io.Writer, value {{ type_name }}) {

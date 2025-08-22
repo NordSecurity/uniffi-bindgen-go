@@ -6,6 +6,7 @@ pub mod gen_go;
 
 use anyhow::Context;
 use camino::{Utf8Path, Utf8PathBuf};
+use cargo_metadata::MetadataCommand;
 use clap::Parser;
 use fs_err::{self as fs};
 use gen_go::generate_go_bindings;
@@ -98,7 +99,7 @@ impl uniffi_bindgen::BindingGenerator for BindingGeneratorGo {
             let bindings_path = full_bindings_path(config, &settings.out_dir);
             fs::create_dir_all(&bindings_path)?;
             let go_file = bindings_path.join(format!("{}.go", ci.namespace()));
-            let (header, wrapper) = generate_go_bindings(&config, &ci)?;
+            let (header, wrapper) = generate_go_bindings(config, ci)?;
             fs::write(&go_file, wrapper)?;
 
             let header_file = bindings_path.join(config.header_filename());
@@ -151,7 +152,7 @@ pub fn main() -> anyhow::Result<()> {
 
     let config_supplier = {
         use uniffi_bindgen::cargo_metadata::CrateConfigSupplier;
-        let cmd = ::cargo_metadata::MetadataCommand::new();
+        let cmd = MetadataCommand::new();
         let metadata = cmd.exec().context("error running cargo metadata").unwrap();
         CrateConfigSupplier::from(metadata)
     };

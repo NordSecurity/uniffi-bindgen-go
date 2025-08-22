@@ -45,6 +45,6 @@ type {{ ffi_destroyer_name }} struct {}
 func (_ {{ ffi_destroyer_name }}) Destroy(mapValue {{ type_name }}) {
 	for key, value := range mapValue {
 		{{ key_type|destroy_fn }}(key)
-		{{ value_type|destroy_fn }}(value)	
+		{{ value_type|destroy_fn }}(value)
 	}
 }

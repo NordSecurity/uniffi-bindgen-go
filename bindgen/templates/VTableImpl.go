@@ -12,14 +12,14 @@ func {{ callback_name }}(
 	    {%- endfor -%}
 	    {%- if ffi_callback.has_rust_call_status_arg() -%}
 	    callStatus *C.RustCallStatus,
-	    {%- endif -%}	
+	    {%- endif -%}
 	) {
 	handle := uint64(uniffiHandle)
 	uniffiObj, ok := {{ ffi_converter_instance }}.handleMap.tryGet(handle)
 	if !ok {
 		panic(fmt.Errorf("no callback in handle map: %d", handle))
 	}
-	
+
 	{% if meth.is_async() %}
 	{%- let result_struct = meth.foreign_future_ffi_result_struct().name()|ffi_struct_name %}
 	result := make(chan C.{{ result_struct }}, 1)
@@ -29,7 +29,7 @@ func {{ callback_name }}(
 		handle: C.uint64_t(guardHandle),
 		free: C.UniffiForeignFutureFree(C.{{ config|free_gorutine_callback }}),
 	}
-	
+
 	// Wait for compleation or cancel
 	go func() {
 		select {
@@ -61,7 +61,7 @@ func {{ callback_name }}(
         {{ arg|lift_fn }}({% call go::remap_ffi_val(arg.as_type(), var) %}),
         {%- endfor %}
     )
-	
+
     {% if let Some(error_type) = meth.throws_type() -%}
 	{{- self.add_import("errors") }}
 	if err != nil {
@@ -102,9 +102,9 @@ var {{ vtable_name }} = {{ vtable|ffi_type_name_cgo_safe }} {
 	{%- for (ffi_callback, meth) in vtable_methods.iter() %}
 	{% let callback_name = ffi_callback|cgo_callback_fn_name(module_path) -%}
 	{% let callback_type = ffi_callback.name()|ffi_callback_name -%}
-	
+
 	{{ meth.name()|var_name }}: (C.{{ callback_type }})(C.{{ callback_name }}),
-	
+
 	{%- endfor %}
 
 	uniffiFree: (C.{{ free_type }})(C.{{ free_callback }}),

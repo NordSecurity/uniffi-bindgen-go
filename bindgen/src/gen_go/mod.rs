@@ -9,7 +9,8 @@ use serde::{Deserialize, Serialize};
 use std::borrow::Borrow;
 use std::cell::RefCell;
 use std::collections::{BTreeSet, HashMap, HashSet};
-use uniffi_bindgen::backend::TemplateExpression;
+// TemplateExpression moved or changed in 0.29.2
+// use uniffi_bindgen::backend::TemplateExpression;
 use uniffi_bindgen::interface::*;
 
 use self::filters::oracle;
@@ -21,6 +22,7 @@ mod compounds;
 mod custom;
 mod enum_;
 mod external;
+// use external::ExternalKind; // Unused after removing External type support
 mod miscellany;
 mod object;
 mod primitives;
@@ -128,8 +130,18 @@ impl Config {
 pub struct CustomTypeConfig {
     imports: Option<Vec<String>>,
     type_name: Option<String>,
-    into_custom: TemplateExpression,
-    from_custom: TemplateExpression,
+    into_custom: String, // Template string with {} placeholder
+    from_custom: String, // Template string with {} placeholder
+}
+
+impl CustomTypeConfig {
+    fn lift(&self, name: &str) -> String {
+        self.into_custom.replace("{}", name)
+    }
+
+    fn lower(&self, name: &str) -> String {
+        self.from_custom.replace("{}", name)
+    }
 }
 
 /// A struct to record a go import statement.
@@ -199,8 +211,10 @@ impl<'a> GoWrapper<'a> {
     }
 
     pub fn initialization_fns(&self) -> Vec<String> {
+        // Use both local and external types in 0.29.2
         self.ci
-            .iter_types()
+            .iter_local_types()
+            .chain(self.ci.iter_external_types())
             .map(|t| GoCodeOracle.find(t))
             .filter_map(|t| t.initialization_fn())
             .collect()
@@ -340,23 +354,31 @@ impl GoCodeOracle {
             Type::CallbackInterface { name, .. } => {
                 Box::new(callback_interface::CallbackInterfaceCodeType::new(name))
             }
-            Type::External {
-                name,
-                module_path,
-                kind,
-                namespace,
-                tagged,
-            } => Box::new(external::ExternalCodeType::new(
-                name,
-                module_path,
-                kind,
-                namespace,
-                tagged,
-            )),
         }
     }
 
     fn find(&self, type_: &impl AsType) -> Box<dyn CodeType> {
+        self.create_code_type(type_.as_type())
+    }
+
+    fn find_with_ci(&self, type_: &impl AsType, ci: &ComponentInterface) -> Box<dyn CodeType> {
+        // Check if this is an external type first
+        for ext_type in ci.iter_external_types() {
+            if *ext_type == type_.as_type() {
+                let namespace = ci
+                    .namespace_for_type(ext_type)
+                    .expect("external type should have namespace");
+                let code_type = self.create_code_type(ext_type.clone());
+                return Box::new(external::ExternalCodeType::new(
+                    code_type.canonical_name(),
+                    String::new(),                     // module_path is not used
+                    external::ExternalKind::DataClass, // default to DataClass
+                    self.import_name(namespace),
+                    false, // tagged is not used
+                ));
+            }
+        }
+
         self.create_code_type(type_.as_type())
     }
 
@@ -475,6 +497,9 @@ impl GoCodeOracle {
             FfiType::Reference(_ffi_type) => {
                 panic!("Cannot be constructed at this level, ffi_type_name_cgo_safe should be used")
             }
+            FfiType::MutReference(_ffi_type) => {
+                panic!("Cannot be constructed at this level, ffi_type_name_cgo_safe should be used")
+            }
         }
     }
 
@@ -545,7 +570,7 @@ impl<'a> TypeRenderer<'a> {
             let go_mod = go_mod.trim_end_matches("/");
             format!("{go_mod}/{mod_name}")
         } else {
-            format!("{mod_name}")
+            mod_name.to_string()
         };
 
         self.imports

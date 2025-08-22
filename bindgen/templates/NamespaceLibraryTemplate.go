@@ -19,7 +19,7 @@ func uniffiCheckChecksums() {
 		// If this happens try cleaning and rebuilding your project
 		panic("{{ ci.namespace() }}: UniFFI contract version mismatch")
 	}
-	
+
 	{%- for (name, expected_checksum) in ci.iter_checksums() %}
 	{
 	checksum := rustCall(func(_uniffiStatus *C.RustCallStatus) C.uint16_t {

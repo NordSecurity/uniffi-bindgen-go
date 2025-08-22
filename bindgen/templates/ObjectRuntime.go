@@ -17,13 +17,13 @@ type FfiObject struct {
 }
 
 func newFfiObject(
-	pointer unsafe.Pointer, 
-	cloneFunction func(unsafe.Pointer, *C.RustCallStatus) unsafe.Pointer, 
+	pointer unsafe.Pointer,
+	cloneFunction func(unsafe.Pointer, *C.RustCallStatus) unsafe.Pointer,
 	freeFunction func(unsafe.Pointer, *C.RustCallStatus),
 ) FfiObject {
 	return FfiObject {
 		pointer: pointer,
-		cloneFunction: cloneFunction, 
+		cloneFunction: cloneFunction,
 		freeFunction: freeFunction,
 	}
 }

@@ -11,12 +11,33 @@ pub fn ffi_converter_name(type_: &impl AsType) -> Result<String, askama::Error> 
     Ok(oracle().find(type_).ffi_converter_name())
 }
 
+pub fn ffi_converter_name_with_ci(
+    type_: &impl AsType,
+    ci: &ComponentInterface,
+) -> Result<String, askama::Error> {
+    Ok(oracle().find_with_ci(type_, ci).ffi_converter_name())
+}
+
 pub fn ffi_converter_instance(type_: &impl AsType) -> Result<String, askama::Error> {
     Ok(oracle().find(type_).ffi_converter_instance())
 }
 
+pub fn ffi_converter_instance_with_ci(
+    type_: &impl AsType,
+    ci: &ComponentInterface,
+) -> Result<String, askama::Error> {
+    Ok(oracle().find_with_ci(type_, ci).ffi_converter_instance())
+}
+
 pub fn ffi_destroyer_name(type_: &impl AsType) -> Result<String, askama::Error> {
     Ok(oracle().find(type_).ffi_destroyer_name())
+}
+
+pub fn ffi_destroyer_name_with_ci(
+    type_: &impl AsType,
+    ci: &ComponentInterface,
+) -> Result<String, askama::Error> {
+    Ok(oracle().find_with_ci(type_, ci).ffi_destroyer_name())
 }
 
 pub fn read_fn(type_: &impl AsType) -> Result<String, askama::Error> {
@@ -25,6 +46,13 @@ pub fn read_fn(type_: &impl AsType) -> Result<String, askama::Error> {
 
 pub fn lift_fn(type_: &impl AsType) -> Result<String, askama::Error> {
     Ok(oracle().find(type_).lift())
+}
+
+pub fn lift_fn_with_ci(
+    type_: &impl AsType,
+    ci: &ComponentInterface,
+) -> Result<String, askama::Error> {
+    Ok(oracle().find_with_ci(type_, ci).lift())
 }
 
 pub fn write_fn(type_: &impl AsType) -> Result<String, askama::Error> {
@@ -81,7 +109,7 @@ pub fn or_pos_field(nm: String, pos: &usize) -> Result<String, askama::Error> {
 }
 
 pub fn type_name(type_: &impl AsType, ci: &ComponentInterface) -> Result<String, askama::Error> {
-    Ok(oracle().find(type_).type_label(ci))
+    Ok(oracle().find_with_ci(type_, ci).type_label(ci))
 }
 
 pub fn canonical_name(type_: &impl AsType) -> Result<String, askama::Error> {
@@ -104,6 +132,7 @@ pub fn into_ffi_type(type_: &Type) -> Result<FfiType, askama::Error> {
 pub fn cgo_ffi_type(type_: &FfiType) -> Result<String, askama::Error> {
     let result = match type_ {
         FfiType::Reference(inner) => format!("{}*", cgo_ffi_type(inner)?),
+        FfiType::MutReference(inner) => format!("{}*", cgo_ffi_type(inner)?),
         other => oracle().ffi_type_label(other),
     };
 
@@ -126,6 +155,7 @@ pub fn ffi_type_name<T: Clone + Into<FfiType>>(type_: &T) -> Result<String, aska
         FfiType::RustBuffer(_) => "RustBufferI".into(),
         FfiType::VoidPointer => "*C.void".into(),
         FfiType::Reference(inner) => format!("*{}", ffi_type_name(&*inner)?),
+        FfiType::MutReference(inner) => format!("*{}", ffi_type_name(&*inner)?),
         _ => format!("C.{}", oracle().ffi_type_label(&ffi_type)),
     };
     Ok(result)
@@ -141,6 +171,7 @@ pub fn ffi_type_name_cgo_safe<T: Clone + Into<FfiType>>(
         FfiType::RustBuffer(_) => "C.RustBuffer".into(),
         FfiType::VoidPointer => "*C.void".into(),
         FfiType::Reference(inner) => format!("*{}", ffi_type_name_cgo_safe(&*inner)?),
+        FfiType::MutReference(inner) => format!("*{}", ffi_type_name_cgo_safe(&*inner)?),
         _ => format!("C.{}", oracle().ffi_type_label(&ffi_type)),
     };
     Ok(result)

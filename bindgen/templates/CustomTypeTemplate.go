@@ -44,30 +44,30 @@ type {{ ffi_converter_name }} struct{}
 var {{ ffi_converter_instance }} = {{ ffi_converter_name }}{}
 
 func ({{ ffi_converter_name }}) Lower(value {{ name }}) {{ ffi_type_name }} {
-	builtinValue := {{ config.from_custom.render("value") }}
+	builtinValue := {{ config.lower("value") }}
 	ffiValue := {{ builtin|lower_fn }}(builtinValue)
 	return {% call go::remap_ffi_val(builtin, "ffiValue") %}
 }
 
 func ({{ ffi_converter_name }}) Write(writer io.Writer, value {{ name }}) {
-	builtinValue := {{ config.from_custom.render("value") }}
+	builtinValue := {{ config.lower("value") }}
 	{{ builtin|write_fn }}(writer, builtinValue)
 }
 
 func ({{ ffi_converter_name }}) Lift(value {{ ffi_type_name }}) {{ name }} {
 	builtinValue := {{ builtin|lift_fn }}(value)
-	{{ config.into_custom.render("builtinValue") }}
+	{{ config.lift("builtinValue") }}
 }
 
 func ({{ ffi_converter_name }}) Read(reader io.Reader) {{ name }} {
 	builtinValue := {{ builtin|read_fn }}(reader)
-	{{ config.into_custom.render("builtinValue") }}
+	{{ config.lift("builtinValue") }}
 }
 
 type {{ ffi_destroyer_name }} struct {}
 
 func ({{ ffi_destroyer_name }}) Destroy(value {{ name }}) {
-	builtinValue := {{ config.from_custom.render("value") }}
+	builtinValue := {{ config.lower("value") }}
 	{{ builtin|destroy_fn }}(builtinValue)
 }
 

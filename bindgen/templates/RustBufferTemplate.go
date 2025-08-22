@@ -74,7 +74,7 @@ func bytesToRustBuffer(b []byte) C.RustBuffer {
 		len: C.int(len(b)),
 		data: (*C.uchar)(unsafe.Pointer(&b[0])),
 	}
-	
+
 	return rustCall(func( status *C.RustCallStatus) C.RustBuffer {
 		return C.{{ ci.ffi_rustbuffer_from_bytes().name() }}(foreign, status)
 	})

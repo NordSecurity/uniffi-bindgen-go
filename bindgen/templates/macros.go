@@ -28,7 +28,7 @@
 	{%- endmatch %}
 {%- endmacro %}
 
-{% macro ffi_call_binding(func, prefix) %}	
+{% macro ffi_call_binding(func, prefix) %}
 	{%- match func.return_type() -%}
 	{%- when Some with (return_type) -%}
 		{%- match func.throws_type() -%}
@@ -139,7 +139,7 @@
 
 {%- macro async_ffi_call_binding(func, prefix) -%}
 	{%- call func_return_vars_pairs(func, suffix = ":=") -%}
-	
+
     {%- match (func.return_type(), func.throws_type()) %}
     {%- when (Some(return_type), Some(e)) -%}
 	uniffiRustCallAsync[{{ e|canonical_name }}](
@@ -151,7 +151,7 @@
 		},
 		// liftFn
 		func(ffi {{ return_type|ffi_type_name }}) {{ return_type|type_name(ci) }} {
-			return {{ return_type|lift_fn }}(ffi)
+			return {{ return_type|lift_fn_with_ci(ci) }}(ffi)
 		},
     {%- when (None, Some(e)) -%}
 	uniffiRustCallAsync[{{ e|canonical_name }}](
@@ -173,7 +173,7 @@
 		},
 		// liftFn
 		func(ffi {{ return_type|ffi_type_name }}) {{ return_type|type_name(ci) }} {
-			return {{ return_type|lift_fn }}(ffi)
+			return {{ return_type|lift_fn_with_ci(ci) }}(ffi)
 		},
     {%- when (None, None) -%}
 	uniffiRustCallAsync[error](
@@ -201,17 +201,7 @@
 {%- endmacro -%}
 
 {%- macro lower_fn_call(arg) -%}
-{%- match arg.as_type() -%}
-{%- when Type::External with { kind, module_path, name, namespace, tagged } -%}
-{%- match kind -%}
-{%- when ExternalKind::DataClass -%}
-RustBufferFromExternal({{ arg|lower_fn }}({{ arg.name()|var_name }}))
-{%- else -%}
 {{ arg|lower_fn }}({{ arg.name()|var_name }})
-{%- endmatch -%}
-{%- else -%}
-{{ arg|lower_fn }}({{ arg.name()|var_name }})
-{%- endmatch -%}
 {%- endmacro -%}
 
 {%- macro docstring(defn, indent_tabs) %}
