@@ -137,6 +137,21 @@
     {%- endmatch -%}
 {%- endmacro -%}
 
+{%- macro func_nil_err_check(func) -%}
+    {% match (func.return_type(), func.throws_type()) -%}
+    {%- when (Some(_), Some(_)) -%}
+	if err == nil {
+		return res, nil
+	}
+    {%- when (None, Some(_)) -%}
+	if err == nil {
+		return nil
+	}
+    {%- when (Some(_), None) -%}
+    {%- when (None, None) -%}
+    {%- endmatch -%}
+{%- endmacro -%}
+
 {%- macro async_ffi_call_binding(func, prefix) -%}
 	{%- call func_return_vars_pairs(func, suffix = ":=") -%}
 	
@@ -196,6 +211,8 @@
 			C.{{ func.ffi_rust_future_free(ci) }}(handle)
 		},
 	)
+
+	{% call func_nil_err_check(func) %}
 
 	{% call func_return_vars(func, prefix = "return") %}
 {%- endmacro -%}
