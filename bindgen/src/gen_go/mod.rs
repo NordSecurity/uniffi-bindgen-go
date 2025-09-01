@@ -67,6 +67,12 @@ pub trait CodeType: std::fmt::Debug {
         format!("{}.Lower", self.ffi_converter_instance())
     }
 
+    /// An expression for lowering a value into something we can pass over the FFI,
+    /// when the type is external
+    fn lower_external(&self) -> String {
+        format!("{}.LowerExternal", self.ffi_converter_instance())
+    }
+
     /// An expression for writing a value into a byte buffer.
     fn write(&self) -> String {
         format!("{}.Write", self.ffi_converter_instance())

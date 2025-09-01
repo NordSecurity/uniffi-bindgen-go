@@ -30,6 +30,10 @@ func (c {{ ffi_converter_name }}) Lower(value {{ type_name }}) C.RustBuffer {
 	return LowerIntoRustBuffer[{{ type_name }}](c, value)
 }
 
+func (c {{ ffi_converter_name }}) LowerExternal(value {{ type_name }}) ExternalCRustBuffer {
+	return RustBufferFromC(LowerIntoRustBuffer[{{ type_name }}](c, value))
+}
+
 func (c {{ ffi_converter_name }}) Write(writer io.Writer, value {{ type_name }}) {
 	if len(value) > math.MaxInt32 {
 		panic("{{ type_name }} is too large to fit into Int32")

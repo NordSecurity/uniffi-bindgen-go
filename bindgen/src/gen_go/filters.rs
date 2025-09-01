@@ -35,6 +35,10 @@ pub fn lower_fn(type_: &impl AsType) -> Result<String, askama::Error> {
     Ok(oracle().find(type_).lower())
 }
 
+pub fn lower_external_fn(type_: &impl AsType) -> Result<String, askama::Error> {
+    Ok(oracle().find(type_).lower_external())
+}
+
 pub fn destroy_fn(type_: &impl AsType) -> Result<String, askama::Error> {
     Ok(oracle().find(type_).destroy())
 }

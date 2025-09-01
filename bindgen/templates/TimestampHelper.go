@@ -28,6 +28,10 @@ func (c FfiConverterTimestamp) Lower(value time.Time) C.RustBuffer {
 	return LowerIntoRustBuffer[time.Time](c, value)
 }
 
+func (c FfiConverterTimestamp) LowerExternal(value  time.Time) ExternalCRustBuffer {
+	return RustBufferFromC(c.Lower(value))
+}
+
 func (c FfiConverterTimestamp) Write(writer io.Writer, value time.Time) {
 	sec := value.Unix()
 	nsec := uint32(value.Nanosecond())

@@ -222,7 +222,7 @@
 {%- when Type::External with { kind, module_path, name, namespace, tagged } -%}
 {%- match kind -%}
 {%- when ExternalKind::DataClass -%}
-RustBufferFromExternal({{ arg|lower_fn }}({{ arg.name()|var_name }}))
+CFromRustBuffer({{ arg|lower_external_fn }}({{ arg.name()|var_name }}))
 {%- else -%}
 {{ arg|lower_fn }}({{ arg.name()|var_name }})
 {%- endmatch -%}

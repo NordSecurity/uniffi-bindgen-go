@@ -21,7 +21,29 @@ type RustBufferI interface {
 	Capacity() uint64
 }
 
-func RustBufferFromExternal(b RustBufferI) GoRustBuffer {
+// C.RustBuffer fields exposed as an interface so they can be accessed in different Go packages.
+// See https://github.com/golang/go/issues/13467
+type ExternalCRustBuffer interface {
+	Data() unsafe.Pointer
+	Len() uint64
+	Capacity() uint64
+}
+
+func RustBufferFromC(b C.RustBuffer) ExternalCRustBuffer {
+	return GoRustBuffer {
+		inner: b,
+	}
+}
+
+func CFromRustBuffer(b ExternalCRustBuffer) C.RustBuffer {
+	return C.RustBuffer {
+		capacity: C.uint64_t(b.Capacity()),
+		len: C.uint64_t(b.Len()),
+		data: (*C.uchar)(b.Data()),
+	}
+}
+
+func RustBufferFromExternal(b ExternalCRustBuffer) GoRustBuffer {
 	return GoRustBuffer {
 		inner: C.RustBuffer {
 			capacity: C.uint64_t(b.Capacity()),

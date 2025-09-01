@@ -23,6 +23,10 @@ func (c FfiConverterDuration) Lower(value time.Duration) C.RustBuffer {
 	return LowerIntoRustBuffer[time.Duration](c, value)
 }
 
+func (c FfiConverterDuration) LowerExternal(value time.Duration) ExternalCRustBuffer {
+	return RustBufferFromC(c.Lower(value))
+}
+
 func (c FfiConverterDuration) Write(writer io.Writer, value time.Duration) {
 	if value.Nanoseconds() < 0 {
 		// Rust does not support negative durations:

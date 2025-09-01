@@ -22,6 +22,10 @@ func (c {{ ffi_converter_name }}) Lower(value {{ type_name }}) C.RustBuffer {
 	return LowerIntoRustBuffer[{{ type_name }}](c, value)
 }
 
+func (c {{ ffi_converter_name }}) LowerExternal(value {{ type_name }}) ExternalCRustBuffer {
+	return RustBufferFromC(LowerIntoRustBuffer[{{ type_name }}](c, value))
+}
+
 func (_ {{ ffi_converter_name }}) Write(writer io.Writer, value {{ type_name }}) {
 	if value == nil {
 		writeInt8(writer, 0)

@@ -38,6 +38,10 @@ func (c {{ rec|ffi_converter_name }}) Lower(value {{ type_name }}) C.RustBuffer 
 	return LowerIntoRustBuffer[{{ type_name }}](c, value)
 }
 
+func (c {{ rec|ffi_converter_name }}) LowerExternal(value {{ type_name }}) ExternalCRustBuffer {
+	return RustBufferFromC(LowerIntoRustBuffer[{{ type_name }}](c, value))
+}
+
 func (c {{ rec|ffi_converter_name }}) Write(writer io.Writer, value {{ type_name }}) {
 	{%- for field in rec.fields() %}
 		{{ field|write_fn }}(writer, value.{{ field.name()|field_name }});

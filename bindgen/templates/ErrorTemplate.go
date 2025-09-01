@@ -104,6 +104,10 @@ func (c {{ ffi_converter_name }}) Lower(value {{ type_name }}) C.RustBuffer {
 	return LowerIntoRustBuffer[{{ type_name }}](c, value)
 }
 
+func (c {{ ffi_converter_name }}) LowerExternal(value {{ type_name }}) ExternalCRustBuffer {
+	return RustBufferFromC(LowerIntoRustBuffer[{{ type_name }}](c, value))
+}
+
 func (c {{ ffi_converter_name }}) Read(reader io.Reader) {{ type_name }} {
 	errorID := readUint32(reader)
 
