@@ -1,3 +1,6 @@
+### v0.5.0+v0.30.0
+- **BREAKING** TODO: fill in
+
 ### v0.4.0+v0.28.3
 - **BREAKING** Rework errors to avoid interface nil trap
   - Errors are now returned as generic error

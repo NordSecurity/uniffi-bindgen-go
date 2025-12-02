@@ -3,15 +3,15 @@
 Generate [UniFFI](https://github.com/mozilla/uniffi-rs) bindings for Go. `uniffi-bindgen-go` lives
 as a separate project from `uniffi-go`, as per
 [uniffi-rs #1355](https://github.com/mozilla/uniffi-rs/issues/1355). Currently, `uniffi-bindgen-go`
-uses `uniffi-rs` version `0.28.3`.
+uses `uniffi-rs` version `0.30.0`.
 
 # How to install
 
-Minimum Rust version required to install `uniffi-bindgen-go` is `1.81`.
+Minimum Rust version required to install `uniffi-bindgen-go` is `1.85`.
 Newer Rust versions should also work fine.
 
 ```
-cargo install uniffi-bindgen-go --git https://github.com/NordSecurity/uniffi-bindgen-go --tag v0.4.0+v0.28.3
+cargo install uniffi-bindgen-go --git https://github.com/NordSecurity/uniffi-bindgen-go --tag v0.5.0+v0.30.0
 ```
 
 # How to generate bindings
@@ -67,6 +67,8 @@ The table shows `uniffi-rs` version history for tags that were published before 
 
 | uniffi-bindgen-go version                | uniffi-rs version                                |
 |------------------------------------------|--------------------------------------------------|
+| v0.5.0                                   | v0.30.0                                          |
+| v0.4.0                                   | v0.28.3                                          |
 | v0.3.0                                   | v0.28.3                                          |
 | v0.2.0                                   | v0.25.0                                          |
 | v0.1.0                                   | v0.23.0                                          |
