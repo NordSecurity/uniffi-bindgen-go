@@ -4,12 +4,12 @@
 
 use anyhow::{Context, Result};
 use askama::Template;
+use external::ExternalCodeType;
 use heck::{ToLowerCamelCase, ToSnakeCase, ToUpperCamelCase};
 use serde::{Deserialize, Serialize};
 use std::borrow::Borrow;
 use std::cell::RefCell;
 use std::collections::{BTreeSet, HashMap, HashSet};
-use uniffi_bindgen::backend::TemplateExpression;
 use uniffi_bindgen::interface::*;
 
 use self::filters::oracle;
@@ -134,8 +134,18 @@ impl Config {
 pub struct CustomTypeConfig {
     imports: Option<Vec<String>>,
     type_name: Option<String>,
-    into_custom: TemplateExpression,
-    from_custom: TemplateExpression,
+    into_custom: String,
+    from_custom: String,
+}
+
+impl CustomTypeConfig {
+    fn lift(&self, name: &str) -> String {
+        self.into_custom.replace("{}", name)
+    }
+
+    fn lower(&self, name: &str) -> String {
+        self.from_custom.replace("{}", name)
+    }
 }
 
 /// A struct to record a go import statement.
@@ -206,9 +216,15 @@ impl<'a> GoWrapper<'a> {
 
     pub fn initialization_fns(&self) -> Vec<String> {
         self.ci
-            .iter_types()
-            .map(|t| GoCodeOracle.find(t))
+            .iter_local_types()
+            .map(|t| GoCodeOracle.find(t, &self.ci))
             .filter_map(|t| t.initialization_fn())
+            .chain(
+                self.ci
+                    .iter_external_types()
+                    .map(|t| GoCodeOracle.find(t, &self.ci))
+                    .filter_map(|t| t.initialization_fn()),
+            )
             .collect()
     }
 }
@@ -307,7 +323,21 @@ impl GoCodeOracle {
     //
     //   - When adding additional types here, make sure to also add a match arm to the `Types.go` template.
     //   - To keep things managable, let's try to limit ourselves to these 2 mega-matches
-    fn create_code_type(&self, type_: Type) -> Box<dyn CodeType> {
+    fn create_code_type<'a>(
+        &self,
+        type_: Type,
+        ci: &'a ComponentInterface,
+    ) -> Box<dyn CodeType + 'a> {
+        if ci.is_external(&type_) {
+            let name = type_.name().unwrap().to_string();
+            let module_path = type_.module_path().unwrap();
+            let namespace = ci
+                .namespace_for_module_path(&module_path)
+                .unwrap()
+                .to_string();
+            return Box::new(ExternalCodeType::new(name, namespace));
+        }
+
         match type_ {
             Type::UInt8 => Box::new(primitives::UInt8CodeType),
             Type::Int8 => Box::new(primitives::Int8CodeType),
@@ -326,18 +356,18 @@ impl GoCodeOracle {
             Type::Map {
                 key_type,
                 value_type,
-            } => Box::new(compounds::MapCodeType::new(*key_type, *value_type)),
+            } => Box::new(compounds::MapCodeType::new(*key_type, *value_type, ci)),
             Type::Object {
                 name,
                 module_path: _,
                 imp,
             } => Box::new(object::ObjectCodeType::new(name, imp)),
             Type::Optional { inner_type } => {
-                Box::new(compounds::OptionalCodeType::new(*inner_type))
+                Box::new(compounds::OptionalCodeType::new(*inner_type, ci))
             }
             Type::Record { name, .. } => Box::new(record::RecordCodeType::new(name)),
             Type::Sequence { inner_type } => {
-                Box::new(compounds::SequenceCodeType::new(*inner_type))
+                Box::new(compounds::SequenceCodeType::new(*inner_type, ci))
             }
             Type::Timestamp => Box::new(miscellany::TimestampCodeType),
             Type::Custom { name, .. } => Box::new(custom::CustomCodeType::new(name)),
@@ -346,24 +376,11 @@ impl GoCodeOracle {
             Type::CallbackInterface { name, .. } => {
                 Box::new(callback_interface::CallbackInterfaceCodeType::new(name))
             }
-            Type::External {
-                name,
-                module_path,
-                kind,
-                namespace,
-                tagged,
-            } => Box::new(external::ExternalCodeType::new(
-                name,
-                module_path,
-                kind,
-                namespace,
-                tagged,
-            )),
         }
     }
 
-    fn find(&self, type_: &impl AsType) -> Box<dyn CodeType> {
-        self.create_code_type(type_.as_type())
+    fn find<'a>(&self, type_: &impl AsType, ci: &'a ComponentInterface) -> Box<dyn CodeType + 'a> {
+        self.create_code_type(type_.as_type(), ci)
     }
 
     /// Get the idiomatic Go rendering of a class name (for enums, records, errors, etc).
@@ -481,6 +498,9 @@ impl GoCodeOracle {
             FfiType::Reference(_ffi_type) => {
                 panic!("Cannot be constructed at this level, ffi_type_name_cgo_safe should be used")
             }
+            FfiType::MutReference(_ffi_type) => {
+                panic!("Cannot be constructed at this level, ffi_type_name_cgo_safe should be used")
+            }
         }
     }
 
@@ -561,7 +581,7 @@ impl<'a> TypeRenderer<'a> {
     }
 
     pub fn field_type_name(&self, field: &Field, ci: &ComponentInterface) -> String {
-        let name = oracle().find(&field.as_type()).type_label(ci);
+        let name = oracle().find(&field.as_type(), ci).type_label(ci);
         match self.ci.is_name_used_as_error(&name) {
             true => format!("*{name}"),
             false => name.to_string(),

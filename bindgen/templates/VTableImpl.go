@@ -58,7 +58,7 @@ func {{ callback_name }}(
     uniffiObj.{{ meth.name()|fn_name }}(
         {%- for arg in meth.arguments() %}
         {%- let var = arg.name()|var_name %}
-        {{ arg|lift_fn }}({% call go::remap_ffi_val(arg.as_type(), var) %}),
+        {{ arg|lift_fn(ci) }}({% call go::remap_ffi_val(arg.as_type(), var) %}),
         {%- endfor %}
     )
 	
@@ -69,7 +69,7 @@ func {{ callback_name }}(
 		if errors.As(err, &actualError) {
 			*callStatus = C.RustCallStatus {
 				code: C.int8_t(uniffiCallbackResultError),
-				errorBuf: {{ error_type|lower_fn }}(actualError),
+				errorBuf: {{ error_type|lower_fn(ci) }}(actualError),
 			}
 		} else {
 			*callStatus = C.RustCallStatus {
@@ -82,7 +82,7 @@ func {{ callback_name }}(
 
 
 	{% if let Some(return_type) = meth.return_type() -%}
-	*uniffiOutReturn = {{ return_type|lower_fn }}(res)
+	*uniffiOutReturn = {{ return_type|lower_fn(ci) }}(res)
 	{%- endif %}
 
 	{%- if meth.is_async() %}

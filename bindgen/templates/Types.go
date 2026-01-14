@@ -4,21 +4,13 @@
 
 {%- import "macros.go" as go %}
 
-{%- for type_ in ci.iter_types() %}
+{%- for type_ in ci.iter_local_types() %}
 {%- let type_name = type_|type_name(ci) %}
-{%- let ffi_converter_name = type_|ffi_converter_name %}
-{%- let ffi_converter_instance = type_|ffi_converter_instance %}
-{%- let ffi_destroyer_name = type_|ffi_destroyer_name %}
-{%- let canonical_type_name = type_|canonical_name %}
-{#
- # Map `Type` instances to an include statement for that type.
- #
- # There is a companion match in `KotlinCodeOracle::create_code_type()` which performs a similar function for the
- # Rust code.
- #
- #   - When adding additional types here, make sure to also add a match arm to that function.
- #   - To keep things managable, let's try to limit ourselves to these 2 mega-matches
- #}
+{%- let ffi_converter_name = type_|ffi_converter_name(ci) %}
+{%- let ffi_converter_instance = type_|ffi_converter_instance(ci) %}
+{%- let ffi_destroyer_name = type_|ffi_destroyer_name(ci) %}
+{%- let canonical_type_name = type_|canonical_name(ci) %}
+
 {%- match type_ %}
 
 {%- when Type::Boolean %}
@@ -95,9 +87,16 @@
 {%- when Type::Custom { name, builtin, module_path } %}
 {% include "CustomTypeTemplate.go" %}
 
-{%- when Type::External { name, module_path, kind, namespace, tagged } %}
-{%- include "ExternalTemplate.go" %}
-
 {%- else %}
 {%- endmatch %}
+{%- endfor %}
+
+{%- for type_ in ci.iter_external_types() %}
+{%- let type_name = type_|type_name(ci) %}
+{%- let ffi_converter_name = type_|ffi_converter_name(ci) %}
+{%- let ffi_converter_instance = type_|ffi_converter_instance(ci) %}
+{%- let ffi_destroyer_name = type_|ffi_destroyer_name(ci) %}
+{%- let canonical_type_name = type_|canonical_name(ci) %}
+
+{%- include "ExternalTemplate.go" %}
 {%- endfor %}

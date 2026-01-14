@@ -17,8 +17,8 @@ func (_ {{ ffi_converter_name }}) Read(reader io.Reader) {{ type_name }} {
 	result := make({{ type_name }})
 	length := readInt32(reader)
 	for i := int32(0); i < length; i++ {
-		key := {{ key_type|read_fn }}(reader)
-		value := {{ value_type|read_fn }}(reader)
+		key := {{ key_type|read_fn(ci) }}(reader)
+		value := {{ value_type|read_fn(ci) }}(reader)
 		result[key] = value
 	}
 	return result
@@ -39,8 +39,8 @@ func (_ {{ ffi_converter_name }}) Write(writer io.Writer, mapValue {{ type_name 
 
 	writeInt32(writer, int32(len(mapValue)))
 	for key, value := range mapValue {
-		{{ key_type|write_fn }}(writer, key)
-		{{ value_type|write_fn }}(writer, value)
+		{{ key_type|write_fn(ci) }}(writer, key)
+		{{ value_type|write_fn(ci) }}(writer, value)
 	}
 }
 
@@ -48,7 +48,7 @@ type {{ ffi_destroyer_name }} struct {}
 
 func (_ {{ ffi_destroyer_name }}) Destroy(mapValue {{ type_name }}) {
 	for key, value := range mapValue {
-		{{ key_type|destroy_fn }}(key)
-		{{ value_type|destroy_fn }}(value)	
+		{{ key_type|destroy_fn(ci) }}(key)
+		{{ value_type|destroy_fn(ci) }}(value)	
 	}
 }
