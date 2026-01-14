@@ -1,5 +1,6 @@
 [workspace]
 resolver = "2"
+rust-version = "1.85"
 members = [
     "bindgen",
     "fixtures",

@@ -7,7 +7,7 @@ uses `uniffi-rs` version `0.28.3`.
 
 # How to install
 
-Minimum Rust version required to install `uniffi-bindgen-go` is `1.81`.
+Minimum Rust version required to install `uniffi-bindgen-go` is `1.85`.
 Newer Rust versions should also work fine.
 
 ```
