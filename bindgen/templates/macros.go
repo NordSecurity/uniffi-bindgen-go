@@ -218,7 +218,7 @@
 {%- endmacro -%}
 
 {%- macro lower_fn_call(arg) -%}
-{%- if ci.is_external(&arg.as_type()) %}
+{%- if arg|requires_lower_external(ci) %}
 CFromRustBuffer({{ arg|lower_external_fn(ci) }}({{ arg.name()|var_name }}))
 {%- else -%}
 {{ arg|lower_fn(ci) }}({{ arg.name()|var_name }})

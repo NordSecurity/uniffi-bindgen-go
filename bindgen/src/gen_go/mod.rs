@@ -68,9 +68,15 @@ pub trait CodeType: std::fmt::Debug {
     }
 
     /// An expression for lowering a value into something we can pass over the FFI,
-    /// when the type is external
+    /// when the type is external and needs to be passed as Rust buffer.
     fn lower_external(&self) -> String {
         format!("{}.LowerExternal", self.ffi_converter_instance())
+    }
+
+    /// Whether the type needs to be lowered via `lower_external`. External
+    /// object types are not lowered via Rust buffers and can use `lower` instead.
+    fn requires_lower_external(&self) -> bool {
+        false
     }
 
     /// An expression for writing a value into a byte buffer.
@@ -335,7 +341,8 @@ impl GoCodeOracle {
                 .namespace_for_module_path(&module_path)
                 .unwrap()
                 .to_string();
-            return Box::new(ExternalCodeType::new(name, namespace));
+            let is_object = matches!(type_, Type::Object { .. });
+            return Box::new(ExternalCodeType::new(name, namespace, is_object));
         }
 
         match type_ {

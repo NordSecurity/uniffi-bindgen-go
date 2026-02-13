@@ -10,17 +10,23 @@ use super::CodeType;
 pub struct ExternalCodeType {
     name: String,
     namespace: String,
+    is_object: bool,
 }
 
 impl ExternalCodeType {
-    pub fn new(name: String, namespace: String) -> Self {
-        ExternalCodeType { name, namespace }
+    pub fn new(name: String, namespace: String, is_object: bool) -> Self {
+        ExternalCodeType { name, namespace, is_object }
     }
 }
 
 impl CodeType for ExternalCodeType {
     fn type_label(&self, _ci: &ComponentInterface) -> String {
-        format!("{}.{}", self.namespace, self.name)
+        let label = format!("{}.{}", self.namespace, self.name);
+        if self.is_object {
+            format!("*{}", label)
+        } else {
+            label
+        }
     }
 
     fn canonical_name(&self) -> String {
@@ -33,5 +39,9 @@ impl CodeType for ExternalCodeType {
 
     fn ffi_destroyer_name(&self) -> String {
         format!("{}.FfiDestroyer{}", self.namespace, self.canonical_name())
+    }
+
+    fn requires_lower_external(&self) -> bool {
+        !self.is_object
     }
 }

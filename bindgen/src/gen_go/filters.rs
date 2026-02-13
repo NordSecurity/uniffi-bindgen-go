@@ -63,6 +63,13 @@ pub fn lower_external_fn<'a>(
     Ok(oracle().find(type_, ci).lower_external())
 }
 
+pub fn requires_lower_external<'a>(
+    type_: &impl AsType,
+    ci: &'a ComponentInterface,
+) -> Result<bool, askama::Error> {
+    Ok(oracle().find(type_, ci).requires_lower_external())
+}
+
 pub fn destroy_fn<'a>(
     type_: &impl AsType,
     ci: &'a ComponentInterface,
