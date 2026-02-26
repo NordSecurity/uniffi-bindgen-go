@@ -39,6 +39,14 @@ func (c {{ ffi_converter_name }}) Write(writer io.Writer, value {{ type_name }})
 	writeUint64(writer, uint64(c.Lower(value)))
 }
 
+func LiftFromExternal{{ canonical_type_name }}(handle uint64) {{ type_name }} {
+	return {{ ffi_converter_instance }}.Lift(handle)
+}
+
+func LowerToExternal{{ canonical_type_name }}(value {{ type_name }}) uint64 {
+	return uint64({{ ffi_converter_instance }}.Lower(value))
+}
+
 type {{ ffi_destroyer_name }} struct {}
 
 func ({{ ffi_destroyer_name }}) Destroy(value {{ type_name }}) {}

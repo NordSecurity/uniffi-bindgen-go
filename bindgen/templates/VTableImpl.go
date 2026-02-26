@@ -25,9 +25,9 @@ func {{ callback_name }}(
 	result := make(chan C.{{ result_struct }}, 1)
 	cancel := make(chan struct{}, 1)
 	guardHandle := cgo.NewHandle(cancel)
-	*uniffiOutReturn = C.UniffiForeignFuture {
+	*uniffiOutDroppedCallback = C.UniffiForeignFutureDroppedCallbackStruct {
 		handle: C.uint64_t(guardHandle),
-		free: C.UniffiForeignFutureFree(C.{{ config|free_gorutine_callback }}),
+		free: C.UniffiForeignFutureDroppedCallback(C.{{ config|free_gorutine_callback }}),
 	}
 	
 	// Wait for compleation or cancel
@@ -94,25 +94,36 @@ func {{ callback_name }}(
 
 {%- let free_callback = self::oracle().cgo_vtable_free_fn_name(name, module_path) %}
 {%- let free_type = "CallbackInterfaceFree"|ffi_callback_name %}
+{%- let clone_callback = self::oracle().cgo_vtable_clone_fn_name(name, module_path) %}
+{%- let clone_type = "CallbackInterfaceClone"|ffi_callback_name %}
 
 {%- let vtable_name = vtable|cgo_ffi_type -%}
 {%- let vtable_name = format!("{vtable_name}INSTANCE") -%}
 
 var {{ vtable_name }} = {{ vtable|ffi_type_name_cgo_safe }} {
+	uniffiFree: (C.{{ free_type }})(C.{{ free_callback }}),
+	uniffiClone: (C.{{ clone_type }})(C.{{ clone_callback }}),
 	{%- for (ffi_callback, meth) in vtable_methods.iter() %}
 	{% let callback_name = ffi_callback|cgo_callback_fn_name(module_path) -%}
 	{% let callback_type = ffi_callback.name()|ffi_callback_name -%}
-	
-	{{ meth.name()|var_name }}: (C.{{ callback_type }})(C.{{ callback_name }}),
-	
-	{%- endfor %}
 
-	uniffiFree: (C.{{ free_type }})(C.{{ free_callback }}),
+	{{ meth.name()|var_name }}: (C.{{ callback_type }})(C.{{ callback_name }}),
+
+	{%- endfor %}
 }
 
 //export {{ free_callback }}
 func {{ free_callback }}(handle C.uint64_t) {
 	{{ ffi_converter_instance }}.handleMap.remove(uint64(handle))
+}
+
+//export {{ clone_callback }}
+func {{ clone_callback }}(handle C.uint64_t) C.uint64_t {
+	val, ok := {{ ffi_converter_instance }}.handleMap.tryGet(uint64(handle))
+	if !ok {
+		panic(fmt.Errorf("no callback in handle map: %d", handle))
+	}
+	return C.uint64_t({{ ffi_converter_instance }}.handleMap.insert(val))
 }
 
 func (c {{ ffi_converter_name }}) register() {

@@ -19,15 +19,15 @@ func {{ config|future_continuation_name }}(data C.uint64_t, pollResult C.int8_t)
 }
 
 func uniffiRustCallAsync[E any, T any, F any](
-	errConverter BufReader[*E],
+	errConverter BufReader[E],
 	completeFunc rustFutureCompleteFunc[F],
 	liftFunc func(F) T,
 	rustFuture C.uint64_t,
 	pollFunc rustFuturePollFunc,
 	freeFunc rustFutureFreeFunc,
-) (T, *E) {
+) (T, E) {
 	defer freeFunc(rustFuture)
-	
+
 	pollResult := int8(-1)
 	waiter := make(chan int8, 1)
 
@@ -43,17 +43,10 @@ func uniffiRustCallAsync[E any, T any, F any](
 		pollResult = <-waiter
 	}
 
-	var goValue T
-	var ffiValue F
-	var err *E
-	
-	ffiValue, err = rustCallWithError(errConverter, func(status *C.RustCallStatus) F {
-		return completeFunc(rustFuture, status)	
+	ffiValue, err := rustCallWithError(errConverter, func(status *C.RustCallStatus) F {
+		return completeFunc(rustFuture, status)
 	})
-	if err != nil {
-		return goValue, err
-	}
-	return liftFunc(ffiValue), nil
+	return liftFunc(ffiValue), err
 }
 
 //export {{ config|free_gorutine_callback }}

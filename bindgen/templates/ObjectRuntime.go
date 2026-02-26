@@ -62,6 +62,9 @@ func (ffiObject *FfiObject)destroy() {
 }
 
 func (ffiObject *FfiObject)freeRustArcPtr() {
+	if ffiObject.handle == 0 {
+		return
+	}
 	rustCall(func(status *C.RustCallStatus) int32 {
 		ffiObject.freeFunction(ffiObject.handle, status)
 		return 0
