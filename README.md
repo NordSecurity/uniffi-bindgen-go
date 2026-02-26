@@ -67,6 +67,7 @@ The table shows `uniffi-rs` version history for tags that were published before 
 
 | uniffi-bindgen-go version                | uniffi-rs version                                |
 |------------------------------------------|--------------------------------------------------|
+| v0.5.0                                   | v0.29.5                                          |
 | v0.3.0                                   | v0.28.3                                          |
 | v0.2.0                                   | v0.25.0                                          |
 | v0.1.0                                   | v0.23.0                                          |
