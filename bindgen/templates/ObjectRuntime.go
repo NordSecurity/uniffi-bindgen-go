@@ -9,26 +9,26 @@
 {{- self.add_import("sync/atomic") }}
 
 type FfiObject struct {
-	pointer unsafe.Pointer
+	handle C.uint64_t
 	callCounter atomic.Int64
-	cloneFunction func(unsafe.Pointer, *C.RustCallStatus) unsafe.Pointer
-	freeFunction func(unsafe.Pointer, *C.RustCallStatus)
+	cloneFunction func(C.uint64_t, *C.RustCallStatus) C.uint64_t
+	freeFunction func(C.uint64_t, *C.RustCallStatus)
 	destroyed atomic.Bool
 }
 
 func newFfiObject(
-	pointer unsafe.Pointer, 
-	cloneFunction func(unsafe.Pointer, *C.RustCallStatus) unsafe.Pointer, 
-	freeFunction func(unsafe.Pointer, *C.RustCallStatus),
+	handle C.uint64_t,
+	cloneFunction func(C.uint64_t, *C.RustCallStatus) C.uint64_t,
+	freeFunction func(C.uint64_t, *C.RustCallStatus),
 ) FfiObject {
 	return FfiObject {
-		pointer: pointer,
-		cloneFunction: cloneFunction, 
+		handle: handle,
+		cloneFunction: cloneFunction,
 		freeFunction: freeFunction,
 	}
 }
 
-func (ffiObject *FfiObject)incrementPointer(debugName string) unsafe.Pointer {
+func (ffiObject *FfiObject)incrementPointer(debugName string) C.uint64_t {
 	for {
 		counter := ffiObject.callCounter.Load()
 		if counter <= -1 {
@@ -42,8 +42,8 @@ func (ffiObject *FfiObject)incrementPointer(debugName string) unsafe.Pointer {
 		}
 	}
 
-	return rustCall(func(status *C.RustCallStatus) unsafe.Pointer {
-		return ffiObject.cloneFunction(ffiObject.pointer, status)
+	return rustCall(func(status *C.RustCallStatus) C.uint64_t {
+		return ffiObject.cloneFunction(ffiObject.handle, status)
 	})
 }
 
@@ -63,7 +63,7 @@ func (ffiObject *FfiObject)destroy() {
 
 func (ffiObject *FfiObject)freeRustArcPtr() {
 	rustCall(func(status *C.RustCallStatus) int32 {
-		ffiObject.freeFunction(ffiObject.pointer, status)
+		ffiObject.freeFunction(ffiObject.handle, status)
 		return 0
 	})
 }
