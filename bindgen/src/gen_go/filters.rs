@@ -167,7 +167,6 @@ pub fn cgo_callback_fn_name(
 pub fn ffi_type_name<T: Clone + Into<FfiType>>(type_: &T) -> Result<String, askama::Error> {
     let ffi_type: FfiType = type_.clone().into();
     let result = match ffi_type {
-        FfiType::RustArcPtr(_) => "unsafe.Pointer".into(),
         FfiType::RustBuffer(_) => "RustBufferI".into(),
         FfiType::VoidPointer => "*C.void".into(),
         FfiType::MutReference(inner) => format!("*{}", ffi_type_name(&*inner)?),
@@ -182,7 +181,6 @@ pub fn ffi_type_name_cgo_safe<T: Clone + Into<FfiType>>(
 ) -> Result<String, askama::Error> {
     let ffi_type: FfiType = type_.clone().into();
     let result = match ffi_type {
-        FfiType::RustArcPtr(_) => "unsafe.Pointer".into(),
         FfiType::RustBuffer(_) => "C.RustBuffer".into(),
         FfiType::VoidPointer => "*C.void".into(),
         FfiType::Reference(inner) => format!("*{}", ffi_type_name_cgo_safe(&*inner)?),

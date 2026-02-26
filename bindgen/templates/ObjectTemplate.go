@@ -97,6 +97,13 @@ func (_self {{ impl_type_name }}) Hash() uint64 {
 	{% call go::ffi_call_binding(hash, "_pointer") %}
 }
 
+{% when UniffiTrait::Ord { cmp } %}
+func (_self {{ impl_type_name }}) Cmp(other {{ type_name }}) int32 {
+	_pointer := _self.ffiObject.incrementPointer("{{ type_name }}")
+	defer _self.ffiObject.decrementPointer()
+	{% call go::ffi_call_binding(cmp, "_pointer") %}
+}
+
 {% endmatch %}
 {% endfor -%}
 

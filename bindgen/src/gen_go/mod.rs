@@ -493,7 +493,6 @@ impl GoCodeOracle {
             FfiType::UInt64 => "uint64_t".into(),
             FfiType::Float32 => "float".into(),
             FfiType::Float64 => "double".into(),
-            FfiType::RustArcPtr(_) => "void*".into(),
             FfiType::Handle => "uint64_t".into(),
             FfiType::VoidPointer => "void*".into(),
             FfiType::RustBuffer(_) => "RustBuffer".into(),

@@ -50,6 +50,52 @@ func (e {{ type_name }}{{ variant.name()|class_name }}) Destroy() {
 
 {%- endif %}
 
+{%- if e.is_flat() %}
+{%- let trait_methods = e.uniffi_trait_methods() %}
+{%- if let Some(display_fmt) = trait_methods.display_fmt %}
+func (_self {{ type_name }}) String() string {
+	_selfBuf := {{ ffi_converter_instance }}.Lower(_self)
+	{% call go::ffi_call_binding(display_fmt, "_selfBuf") %}
+}
+
+{%- endif %}
+{%- if let Some(debug_fmt) = trait_methods.debug_fmt %}
+func (_self {{ type_name }}) DebugString() string {
+	_selfBuf := {{ ffi_converter_instance }}.Lower(_self)
+	{% call go::ffi_call_binding(debug_fmt, "_selfBuf") %}
+}
+
+{%- endif %}
+{%- if let Some(eq_eq) = trait_methods.eq_eq %}
+func (_self {{ type_name }}) Eq(other {{ type_name }}) bool {
+	_selfBuf := {{ ffi_converter_instance }}.Lower(_self)
+	{% call go::ffi_call_binding(eq_eq, "_selfBuf") %}
+}
+
+{%- endif %}
+{%- if let Some(eq_ne) = trait_methods.eq_ne %}
+func (_self {{ type_name }}) Ne(other {{ type_name }}) bool {
+	_selfBuf := {{ ffi_converter_instance }}.Lower(_self)
+	{% call go::ffi_call_binding(eq_ne, "_selfBuf") %}
+}
+
+{%- endif %}
+{%- if let Some(hash_hash) = trait_methods.hash_hash %}
+func (_self {{ type_name }}) Hash() uint64 {
+	_selfBuf := {{ ffi_converter_instance }}.Lower(_self)
+	{% call go::ffi_call_binding(hash_hash, "_selfBuf") %}
+}
+
+{%- endif %}
+{%- if let Some(ord_cmp) = trait_methods.ord_cmp %}
+func (_self {{ type_name }}) Cmp(other {{ type_name }}) int8 {
+	_selfBuf := {{ ffi_converter_instance }}.Lower(_self)
+	{% call go::ffi_call_binding(ord_cmp, "_selfBuf") %}
+}
+
+{%- endif %}
+{%- endif %}
+
 type {{ ffi_converter_name }} struct {}
 
 var {{ ffi_converter_instance }} = {{ ffi_converter_name }}{}

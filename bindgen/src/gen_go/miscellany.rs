@@ -3,7 +3,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 use paste::paste;
-use uniffi_bindgen::{backend::Literal, ComponentInterface};
+use uniffi_bindgen::{interface::Literal, ComponentInterface};
 
 use super::CodeType;
 
