@@ -65,7 +65,7 @@ func New{{ variant_class_name }}(
 
 func (e {{ variant_class_name }}) destroy() {
 	{%- for field in variant.fields() %}
-		{{ field|destroy_fn }}(e.{{ field.name()|error_field_name|or_pos_field(loop.index0) }})
+		{{ field|destroy_fn(ci) }}(e.{{ field.name()|error_field_name|or_pos_field(loop.index0) }})
 	{%- endfor %}
 }
 
@@ -104,19 +104,23 @@ func (c {{ ffi_converter_name }}) Lower(value {{ type_name }}) C.RustBuffer {
 	return LowerIntoRustBuffer[{{ type_name }}](c, value)
 }
 
+func (c {{ ffi_converter_name }}) LowerExternal(value {{ type_name }}) ExternalCRustBuffer {
+	return RustBufferFromC(LowerIntoRustBuffer[{{ type_name }}](c, value))
+}
+
 func (c {{ ffi_converter_name }}) Read(reader io.Reader) {{ type_name }} {
 	errorID := readUint32(reader)
 
 	{%- if e.is_flat() %}
 
-	message := {{ Type::String.borrow()|read_fn }}(reader)
+	message := {{ Type::String.borrow()|read_fn(ci) }}(reader)
 	switch errorID {
 	{%- for variant in e.variants() %}
 	case {{ loop.index }}:
 		return &{{ canonical_type_name }}{ &{{- canonical_type_name }}{{ variant.name()|class_name }}{message}}
 	{%- endfor %}
 	default:
-		panic(fmt.Sprintf("Unknown error code %d in {{ e|ffi_converter_name }}.Read()", errorID))
+		panic(fmt.Sprintf("Unknown error code %d in {{ e|ffi_converter_name(ci) }}.Read()", errorID))
 	}
 
 	{% else %}
@@ -126,12 +130,12 @@ func (c {{ ffi_converter_name }}) Read(reader io.Reader) {{ type_name }} {
 	case {{ loop.index }}:
 		return &{{ canonical_type_name }}{ &{{- canonical_type_name }}{{ variant.name()|class_name }}{
 			{%- for field in variant.fields() %}
-			{{ field.name()|error_field_name|or_pos_field(loop.index0) }}: {{ field|read_fn }}(reader),
+			{{ field.name()|error_field_name|or_pos_field(loop.index0) }}: {{ field|read_fn(ci) }}(reader),
 			{%- endfor %}
 		}}
 	{%- endfor %}
 	default:
-		panic(fmt.Sprintf("Unknown error code %d in {{ e|ffi_converter_name}}.Read()", errorID))
+		panic(fmt.Sprintf("Unknown error code %d in {{ e|ffi_converter_name(ci) }}.Read()", errorID))
 	}
 
 	{%- endif %}
@@ -143,12 +147,12 @@ func (c {{ ffi_converter_name }}) Write(writer io.Writer, value {{ type_name }})
 		case *{{ canonical_type_name }}{{ variant.name()|class_name }}:
 			writeInt32(writer, {{ loop.index }})
 			{%- for field in variant.fields() %}
-			{{ field|write_fn }}(writer, variantValue.{{ field.name()|error_field_name|or_pos_field(loop.index0) }})
+			{{ field|write_fn(ci) }}(writer, variantValue.{{ field.name()|error_field_name|or_pos_field(loop.index0) }})
 			{%- endfor %}
 		{%- endfor %}
 		default:
 			_ = variantValue
-			panic(fmt.Sprintf("invalid error value `%v` in {{ e|ffi_converter_name }}.Write", value))
+			panic(fmt.Sprintf("invalid error value `%v` in {{ e|ffi_converter_name(ci) }}.Write", value))
 	}
 }
 

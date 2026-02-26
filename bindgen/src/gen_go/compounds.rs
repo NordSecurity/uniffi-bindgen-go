@@ -12,7 +12,7 @@ fn render_literal(literal: &Literal, inner: &Type, ci: &ComponentInterface) -> S
         Literal::None => "nil".into(),
 
         // For optionals
-        _ => super::GoCodeOracle.find(inner).literal(literal, ci),
+        _ => super::GoCodeOracle.find(inner, ci).literal(literal, ci),
     }
 }
 
@@ -20,26 +20,27 @@ macro_rules! impl_code_type_for_compound {
      ($T:ty, $type_label_pattern:literal, $canonical_name_pattern: literal) => {
          paste! {
              #[derive(Debug)]
-             pub struct $T {
+             pub struct $T<'a> {
                  inner: Type,
+                 ci: &'a ComponentInterface,
              }
 
-             impl $T {
-                 pub fn new(inner: Type) -> Self {
-                     Self { inner }
+             impl<'a> $T<'a> {
+                 pub fn new(inner: Type, ci: &'a ComponentInterface) -> Self {
+                     Self { inner, ci }
                  }
                  fn inner(&self) -> &Type {
                      &self.inner
                  }
              }
 
-             impl CodeType for $T  {
+             impl<'a> CodeType for $T<'a>  {
                  fn type_label(&self, ci: &ComponentInterface) -> String {
-                     format!($type_label_pattern, $crate::gen_go::GoCodeOracle.find(self.inner()).type_label(ci))
+                     format!($type_label_pattern, $crate::gen_go::GoCodeOracle.find(self.inner(), ci).type_label(ci))
                  }
 
                  fn canonical_name(&self) -> String {
-                     format!($canonical_name_pattern, $crate::gen_go::GoCodeOracle.find(self.inner()).canonical_name())
+                     format!($canonical_name_pattern, $crate::gen_go::GoCodeOracle.find(self.inner(), self.ci).canonical_name())
                  }
 
                  fn literal(&self, literal: &Literal, ci: &ComponentInterface) -> String {
@@ -54,14 +55,15 @@ impl_code_type_for_compound!(OptionalCodeType, "*{}", "Optional{}");
 impl_code_type_for_compound!(SequenceCodeType, "[]{}", "Sequence{}");
 
 #[derive(Debug)]
-pub struct MapCodeType {
+pub struct MapCodeType<'a> {
     key: Type,
     value: Type,
+    ci: &'a ComponentInterface,
 }
 
-impl MapCodeType {
-    pub fn new(key: Type, value: Type) -> Self {
-        Self { key, value }
+impl<'a> MapCodeType<'a> {
+    pub fn new(key: Type, value: Type, ci: &'a ComponentInterface) -> Self {
+        Self { key, value, ci }
     }
 
     fn key(&self) -> &Type {
@@ -73,20 +75,24 @@ impl MapCodeType {
     }
 }
 
-impl CodeType for MapCodeType {
+impl<'a> CodeType for MapCodeType<'a> {
     fn type_label(&self, ci: &ComponentInterface) -> String {
         format!(
             "map[{}]{}",
-            super::GoCodeOracle.find(self.key()).type_label(ci),
-            super::GoCodeOracle.find(self.value()).type_label(ci),
+            super::GoCodeOracle.find(self.key(), ci).type_label(ci),
+            super::GoCodeOracle.find(self.value(), ci).type_label(ci),
         )
     }
 
     fn canonical_name(&self) -> String {
         format!(
             "Map{}{}",
-            super::GoCodeOracle.find(self.key()).canonical_name(),
-            super::GoCodeOracle.find(self.value()).canonical_name(),
+            super::GoCodeOracle
+                .find(self.key(), self.ci)
+                .canonical_name(),
+            super::GoCodeOracle
+                .find(self.value(), self.ci)
+                .canonical_name(),
         )
     }
 

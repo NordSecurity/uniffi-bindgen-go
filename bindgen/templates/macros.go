@@ -38,10 +38,10 @@
 			var _uniffiDefaultValue {{ return_type|type_name(ci) }}
 			return _uniffiDefaultValue, _uniffiErr
 		} else {
-			return {{ return_type|lift_fn }}(_uniffiRV), nil
+			return {{ return_type|lift_fn(ci) }}(_uniffiRV), nil
 		}
 		{%- when None -%}
-		return {{ return_type|lift_fn }}({% call to_ffi_call(func, prefix) %})
+		return {{ return_type|lift_fn(ci) }}({% call to_ffi_call(func, prefix) %})
 		{%- endmatch -%}
 	{%- when None -%}
 		{%- match func.throws_type() -%}
@@ -57,7 +57,7 @@
 {%- macro to_ffi_call(func, prefix) -%}
 	{%- match func.throws_type() %}
 	{%- when Some with (e) -%}
-	rustCallWithError[{{ e|canonical_name }}]({{ e|ffi_converter_name }}{},
+	rustCallWithError[{{ e|canonical_name(ci) }}]({{ e|ffi_converter_name(ci) }}{},
 	{%- else -%}
 	rustCall(
 	{%- endmatch %}
@@ -137,13 +137,28 @@
     {%- endmatch -%}
 {%- endmacro -%}
 
+{%- macro func_nil_err_check(func) -%}
+    {% match (func.return_type(), func.throws_type()) -%}
+    {%- when (Some(_), Some(_)) -%}
+	if err == nil {
+		return res, nil
+	}
+    {%- when (None, Some(_)) -%}
+	if err == nil {
+		return nil
+	}
+    {%- when (Some(_), None) -%}
+    {%- when (None, None) -%}
+    {%- endmatch -%}
+{%- endmacro -%}
+
 {%- macro async_ffi_call_binding(func, prefix) -%}
 	{%- call func_return_vars_pairs(func, suffix = ":=") -%}
 	
     {%- match (func.return_type(), func.throws_type()) %}
     {%- when (Some(return_type), Some(e)) -%}
-	uniffiRustCallAsync[{{ e|canonical_name }}](
-        {{ e|ffi_converter_instance }},
+	uniffiRustCallAsync[{{ e|canonical_name(ci) }}](
+        {{ e|ffi_converter_instance(ci) }},
 		// completeFn
 		func(handle C.uint64_t, status *C.RustCallStatus) {{ return_type|ffi_type_name }} {
 			res := C.{{ func.ffi_rust_future_complete(ci) }}(handle, status)
@@ -151,11 +166,11 @@
 		},
 		// liftFn
 		func(ffi {{ return_type|ffi_type_name }}) {{ return_type|type_name(ci) }} {
-			return {{ return_type|lift_fn }}(ffi)
+			return {{ return_type|lift_fn(ci) }}(ffi)
 		},
     {%- when (None, Some(e)) -%}
-	uniffiRustCallAsync[{{ e|canonical_name }}](
-        {{ e|ffi_converter_instance }},
+	uniffiRustCallAsync[{{ e|canonical_name(ci) }}](
+        {{ e|ffi_converter_instance(ci) }},
 		// completeFn
 		func(handle C.uint64_t, status *C.RustCallStatus) struct{} {
 			C.{{ func.ffi_rust_future_complete(ci) }}(handle, status)
@@ -173,7 +188,7 @@
 		},
 		// liftFn
 		func(ffi {{ return_type|ffi_type_name }}) {{ return_type|type_name(ci) }} {
-			return {{ return_type|lift_fn }}(ffi)
+			return {{ return_type|lift_fn(ci) }}(ffi)
 		},
     {%- when (None, None) -%}
 	uniffiRustCallAsync[error](
@@ -197,21 +212,17 @@
 		},
 	)
 
+	{% call func_nil_err_check(func) %}
+
 	{% call func_return_vars(func, prefix = "return") %}
 {%- endmacro -%}
 
 {%- macro lower_fn_call(arg) -%}
-{%- match arg.as_type() -%}
-{%- when Type::External with { kind, module_path, name, namespace, tagged } -%}
-{%- match kind -%}
-{%- when ExternalKind::DataClass -%}
-RustBufferFromExternal({{ arg|lower_fn }}({{ arg.name()|var_name }}))
+{%- if arg|requires_lower_external(ci) %}
+CFromRustBuffer({{ arg|lower_external_fn(ci) }}({{ arg.name()|var_name }}))
 {%- else -%}
-{{ arg|lower_fn }}({{ arg.name()|var_name }})
-{%- endmatch -%}
-{%- else -%}
-{{ arg|lower_fn }}({{ arg.name()|var_name }})
-{%- endmatch -%}
+{{ arg|lower_fn(ci) }}({{ arg.name()|var_name }})
+{%- endif %}
 {%- endmacro -%}
 
 {%- macro docstring(defn, indent_tabs) %}

@@ -20,7 +20,7 @@ func checkCallStatus[E any](converter BufReader[*E], status C.RustCallStatus) *E
 		// with the message.  but if that code panics, then it just sends back
 		// an empty buffer.
 		if status.errorBuf.len > 0 {
-			panic(fmt.Errorf("%s", {{ Type::String.borrow()|lift_fn }}(GoRustBuffer { inner: status.errorBuf })))
+			panic(fmt.Errorf("%s", {{ Type::String.borrow()|lift_fn(ci) }}(GoRustBuffer { inner: status.errorBuf })))
 		} else {
 			panic(fmt.Errorf("Rust panicked while handling Rust panic"))
 		}
@@ -40,7 +40,7 @@ func checkCallStatusUnknown(status C.RustCallStatus) error {
 		// with the message.  but if that code panics, then it just sends back
 		// an empty buffer.
 		if status.errorBuf.len > 0 {
-			panic(fmt.Errorf("%s", {{ Type::String.borrow()|lift_fn }}(GoRustBuffer {
+			panic(fmt.Errorf("%s", {{ Type::String.borrow()|lift_fn(ci) }}(GoRustBuffer {
 				inner: status.errorBuf,
 			})))
 		} else {

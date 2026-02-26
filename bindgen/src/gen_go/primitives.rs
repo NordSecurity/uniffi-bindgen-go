@@ -27,7 +27,7 @@ fn render_literal(literal: &Literal, ci: &ComponentInterface) -> String {
             {
                 format!(
                     "{}({})",
-                    super::GoCodeOracle.find(type_).type_label(ci),
+                    super::GoCodeOracle.find(type_, ci).type_label(ci),
                     num_str
                 )
             }

@@ -175,9 +175,9 @@ func (c {{ ffi_converter_name }}) Write(writer io.Writer, value {{ type_name }})
 	writeUint64(writer, uint64(uintptr(c.Lower(value))))
 }
 
-type {{ obj|ffi_destroyer_name }} struct {}
+type {{ obj|ffi_destroyer_name(ci) }} struct {}
 
-func (_ {{ obj|ffi_destroyer_name }}) Destroy(value {{ type_name }}) {
+func (_ {{ obj|ffi_destroyer_name(ci) }}) Destroy(value {{ type_name }}) {
 	{%- if obj.has_callback_interface() %}
 	if val, ok := value.({{ impl_type_name }}); ok {
 		val.Destroy()

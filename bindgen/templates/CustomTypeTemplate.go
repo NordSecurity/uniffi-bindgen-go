@@ -11,9 +11,9 @@
  * It's also what we have an external type that references a custom type.
  */
 type {{ name }} = {{ builtin|type_name(ci) }}
-type {{ ffi_converter_name }} = {{ builtin|ffi_converter_name }}
-type {{ ffi_destroyer_name }} = {{ builtin|ffi_destroyer_name }}
-var {{ ffi_converter_instance }} = {{ builtin|ffi_converter_name }}{}
+type {{ ffi_converter_name }} = {{ builtin|ffi_converter_name(ci) }}
+type {{ ffi_destroyer_name }} = {{ builtin|ffi_destroyer_name(ci) }}
+var {{ ffi_converter_instance }} = {{ builtin|ffi_converter_name(ci) }}{}
 
 {%- when Some with (config) %}
 
@@ -44,31 +44,31 @@ type {{ ffi_converter_name }} struct{}
 var {{ ffi_converter_instance }} = {{ ffi_converter_name }}{}
 
 func ({{ ffi_converter_name }}) Lower(value {{ name }}) {{ ffi_type_name }} {
-	builtinValue := {{ config.from_custom.render("value") }}
-	ffiValue := {{ builtin|lower_fn }}(builtinValue)
+	builtinValue := {{ config.lower("value") }}
+	ffiValue := {{ builtin|lower_fn(ci) }}(builtinValue)
 	return {% call go::remap_ffi_val(builtin, "ffiValue") %}
 }
 
 func ({{ ffi_converter_name }}) Write(writer io.Writer, value {{ name }}) {
-	builtinValue := {{ config.from_custom.render("value") }}
-	{{ builtin|write_fn }}(writer, builtinValue)
+	builtinValue := {{ config.lower("value") }}
+	{{ builtin|write_fn(ci) }}(writer, builtinValue)
 }
 
 func ({{ ffi_converter_name }}) Lift(value {{ ffi_type_name }}) {{ name }} {
-	builtinValue := {{ builtin|lift_fn }}(value)
-	{{ config.into_custom.render("builtinValue") }}
+	builtinValue := {{ builtin|lift_fn(ci) }}(value)
+	{{ config.lift("builtinValue") }}
 }
 
 func ({{ ffi_converter_name }}) Read(reader io.Reader) {{ name }} {
-	builtinValue := {{ builtin|read_fn }}(reader)
-	{{ config.into_custom.render("builtinValue") }}
+	builtinValue := {{ builtin|read_fn(ci) }}(reader)
+	{{ config.lift("builtinValue") }}
 }
 
 type {{ ffi_destroyer_name }} struct {}
 
 func ({{ ffi_destroyer_name }}) Destroy(value {{ name }}) {
-	builtinValue := {{ config.from_custom.render("value") }}
-	{{ builtin|destroy_fn }}(builtinValue)
+	builtinValue := {{ config.lower("value") }}
+	{{ builtin|destroy_fn(ci) }}(builtinValue)
 }
 
 {%- endmatch %}

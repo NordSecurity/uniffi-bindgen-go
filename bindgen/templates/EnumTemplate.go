@@ -43,7 +43,7 @@ type {{ type_name }}{{ variant.name()|class_name }} struct {
 
 func (e {{ type_name }}{{ variant.name()|class_name }}) Destroy() {
 	{%- for field in variant.fields() %}
-		{{ field|destroy_fn }}(e.{{ field.name()|field_name|or_pos_field(loop.index0) }});
+		{{ field|destroy_fn(ci) }}(e.{{ field.name()|field_name|or_pos_field(loop.index0) }});
 	{%- endfor %}
 }
 {%- endfor %}
@@ -60,6 +60,10 @@ func (c {{ ffi_converter_name }}) Lift(rb RustBufferI) {{ type_name }} {
 
 func (c {{ ffi_converter_name }}) Lower(value {{ type_name }}) C.RustBuffer {
 	return LowerIntoRustBuffer[{{ type_name }}](c, value)
+}
+
+func (c {{ ffi_converter_name }}) LowerExternal(value {{ type_name }}) ExternalCRustBuffer {
+	return RustBufferFromC(LowerIntoRustBuffer[{{ type_name }}](c, value))
 }
 
 {%- if e.is_flat() %}
@@ -79,7 +83,7 @@ func ({{ ffi_converter_name }}) Read(reader io.Reader) {{ type_name }} {
 		case {{ loop.index }}:
 			return {{ type_name }}{{ variant.name()|class_name }}{
 				{%- for field in variant.fields() %}
-				{{ field|read_fn }}(reader),
+				{{ field|read_fn(ci) }}(reader),
 				{%- endfor %}
 			};
 		{%- endfor %}
@@ -94,7 +98,7 @@ func ({{ ffi_converter_name }}) Write(writer io.Writer, value {{ type_name }}) {
 		case {{ type_name }}{{ variant.name()|class_name }}:
 			writeInt32(writer, {{ loop.index }})
 			{%- for field in variant.fields() %}
-			{{ field|write_fn }}(writer, variant_value.{{ field.name()|field_name|or_pos_field(loop.index0) }})
+			{{ field|write_fn(ci) }}(writer, variant_value.{{ field.name()|field_name|or_pos_field(loop.index0) }})
 			{%- endfor %}
 		{%- endfor %}
 		default:
