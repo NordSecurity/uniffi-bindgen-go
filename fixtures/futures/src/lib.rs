@@ -353,6 +353,20 @@ pub struct TraitRecord {
     pub rank: u8,
 }
 
+#[uniffi::export]
+impl TraitRecord {
+    fn relabel(&self, suffix: String) -> Self {
+        Self {
+            label: format!("{}-{}", self.label, suffix),
+            rank: self.rank,
+        }
+    }
+
+    fn score(&self, bonus: u8) -> u8 {
+        self.rank + bonus
+    }
+}
+
 impl fmt::Display for TraitRecord {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}:{}", self.label, self.rank)
@@ -364,6 +378,23 @@ impl fmt::Display for TraitRecord {
 pub enum TraitEnum {
     Alpha,
     Beta,
+}
+
+#[uniffi::export]
+impl TraitEnum {
+    fn flipped(&self) -> Self {
+        match self {
+            Self::Alpha => Self::Beta,
+            Self::Beta => Self::Alpha,
+        }
+    }
+
+    fn label(&self) -> String {
+        match self {
+            Self::Alpha => "alpha".to_string(),
+            Self::Beta => "beta".to_string(),
+        }
+    }
 }
 
 impl fmt::Display for TraitEnum {

@@ -1,6 +1,9 @@
 ### v0.7.0+v0.31.0
 - **BREAKING** Upgrade to `uniffi-rs` v0.31.0
 - **BREAKING** Bump MSRV to 1.87
+- Adapt binding loading to UniFFI's `BindgenLoader` / `BindgenPaths` APIs
+- Normalize callback symbol names for full `module_path` values in UniFFI 0.31
+- Add generated methods for records and enums
 
 ### v0.6.0+v0.30.0
 - **BREAKING** Upgrade to `uniffi-rs` v0.30.0

@@ -178,6 +178,12 @@ func TestFuturesRecordAndEnumTraits(t *testing.T) {
 	assert.Equal(t, enum1.Hash(), enum2.Hash())
 	assert.Equal(t, int8(-1), enum1.Cmp(enum3))
 	assert.Equal(t, int8(0), enum1.Cmp(enum2))
+	assert.Equal(t, TraitRecord{Label: "first-bonus", Rank: 1}, record1.Relabel("bonus"))
+	assert.Equal(t, uint8(6), record1.Score(5))
+	assert.Equal(t, TraitEnumBeta, enum1.Flipped())
+	assert.Equal(t, TraitEnumAlpha, enum3.Flipped())
+	assert.Equal(t, "alpha", enum1.Label())
+	assert.Equal(t, "beta", enum3.Label())
 }
 
 type goAsyncParser struct {
