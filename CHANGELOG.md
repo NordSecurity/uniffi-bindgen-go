@@ -1,3 +1,7 @@
+### v0.7.0+v0.31.0
+- **BREAKING** Upgrade to `uniffi-rs` v0.31.0
+- **BREAKING** Bump MSRV to 1.87
+
 ### v0.6.0+v0.30.0
 - **BREAKING** Upgrade to `uniffi-rs` v0.30.0
 - Update object handles to match `uniffi`'s `uint64` FFI representation

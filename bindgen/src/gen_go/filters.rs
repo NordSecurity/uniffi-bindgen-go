@@ -163,6 +163,14 @@ pub fn cgo_callback_fn_name(
     Ok(oracle().cgo_callback_fn_name(f, module_path))
 }
 
+pub fn module_path(type_: &impl AsType) -> Result<String, askama::Error> {
+    Ok(match type_.as_type() {
+        Type::CallbackInterface { module_path, .. } => module_path,
+        Type::Object { module_path, .. } => module_path,
+        _ => unreachable!(),
+    })
+}
+
 /// FFI type name to be used to reference cgo types
 pub fn ffi_type_name<T: Clone + Into<FfiType>>(type_: &T) -> Result<String, askama::Error> {
     let ffi_type: FfiType = type_.clone().into();

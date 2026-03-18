@@ -333,6 +333,23 @@ fn module_path(type_: &impl AsType) -> String {
 pub struct GoCodeOracle;
 
 impl GoCodeOracle {
+    fn sanitize_symbol_component(&self, value: &str) -> String {
+        let mut out = String::with_capacity(value.len());
+        let mut prev_was_underscore = false;
+
+        for ch in value.chars() {
+            if ch.is_ascii_alphanumeric() {
+                out.push(ch);
+                prev_was_underscore = false;
+            } else if !prev_was_underscore {
+                out.push('_');
+                prev_was_underscore = true;
+            }
+        }
+
+        out.trim_matches('_').to_string()
+    }
+
     // Map `Type` instances to a `Box<dyn CodeType>` for that type.
     //
     // There is a companion match in `templates/Types.go` which performs a similar function for the
@@ -507,16 +524,19 @@ impl GoCodeOracle {
 
     /// Get cgo symbol name for a callback function
     fn cgo_callback_fn_name(&self, f: &FfiCallbackFunction, module_path: &str) -> String {
+        let module_path = self.sanitize_symbol_component(module_path);
         format!("{module_path}_cgo_dispatch{}", f.name())
     }
 
     /// Get cgo symbol name for a vtable free function
     fn cgo_vtable_free_fn_name(&self, nm: &str, module_path: &str) -> String {
+        let module_path = self.sanitize_symbol_component(module_path);
         format!("{module_path}_cgo_dispatchCallbackInterface{nm}Free")
     }
 
     /// Get cgo symbol name for a vtable clone function
     fn cgo_vtable_clone_fn_name(&self, nm: &str, module_path: &str) -> String {
+        let module_path = self.sanitize_symbol_component(module_path);
         format!("{module_path}_cgo_dispatchCallbackInterface{nm}Clone")
     }
 
