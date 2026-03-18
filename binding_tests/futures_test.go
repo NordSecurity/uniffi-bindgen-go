@@ -152,6 +152,34 @@ func TestFuturesAsyncUdlTraitMethods(t *testing.T) {
 	assert.Equal(t, "Hello, Bob!", res2)
 }
 
+func TestFuturesRecordAndEnumTraits(t *testing.T) {
+	record1 := MakeTraitRecord("first", 1)
+	record2 := MakeTraitRecord("first", 1)
+	record3 := MakeTraitRecord("second", 2)
+
+	assert.Equal(t, "first:1", record1.String())
+	assert.Equal(t, "TraitRecord { label: \"first\", rank: 1 }", record1.DebugString())
+	assert.True(t, record1.Eq(record2))
+	assert.False(t, record1.Eq(record3))
+	assert.True(t, record1.Ne(record3))
+	assert.Equal(t, record1.Hash(), record2.Hash())
+	assert.Equal(t, int8(-1), record1.Cmp(record3))
+	assert.Equal(t, int8(0), record1.Cmp(record2))
+
+	enum1 := MakeTraitEnum(0)
+	enum2 := MakeTraitEnum(0)
+	enum3 := MakeTraitEnum(1)
+
+	assert.Equal(t, "alpha", enum1.String())
+	assert.Equal(t, "Alpha", enum1.DebugString())
+	assert.True(t, enum1.Eq(enum2))
+	assert.False(t, enum1.Eq(enum3))
+	assert.True(t, enum1.Ne(enum3))
+	assert.Equal(t, enum1.Hash(), enum2.Hash())
+	assert.Equal(t, int8(-1), enum1.Cmp(enum3))
+	assert.Equal(t, int8(0), enum1.Cmp(enum2))
+}
+
 type goAsyncParser struct {
 	completedDelays uint
 }
@@ -214,6 +242,16 @@ func TestFuturesForeignAsyncTraitMethods(t *testing.T) {
 	// Sleep a bit longer then a delay to confirm that task was acutaly cancled
 	time.Sleep(20)
 	assert.Equal(t, uint(2), traitObj.completedDelays)
+}
+
+func TestFuturesForeignTraitRecordRoundtrip(t *testing.T) {
+	traitObj := &goAsyncParser{}
+	holder := RoundtripParserHolder(ParserHolder{Parser: traitObj})
+
+	assert.Equal(t, "7", holder.Parser.AsString(0, 7))
+	holder.Destroy()
+
+	assert.Equal(t, uint(0), traitObj.completedDelays)
 }
 
 func TestFuturesAsyncObjectParam(t *testing.T) {

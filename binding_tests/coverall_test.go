@@ -379,7 +379,7 @@ func TestPath(t *testing.T) {
 		assert.Equal(uint64(2), traits[1].StrongCount())
 
 		traits[0].SetParent(&traits[1])
-		assert.Equal(uint64(2), traits[1].StrongCount())
+		assert.Equal(uint64(3), traits[1].StrongCount())
 		assert.ElementsMatch([]string{"node-2"}, coverall.AncestorNames(traits[0]))
 		assert.ElementsMatch([]string{}, coverall.AncestorNames(traits[1]))
 		assert.Equal("node-2", (*traits[0].GetParent()).Name())

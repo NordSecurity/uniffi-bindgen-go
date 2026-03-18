@@ -1,3 +1,8 @@
+### v0.6.0+v0.30.0
+- **BREAKING** Upgrade to `uniffi-rs` v0.30.0
+- Update object handles to match `uniffi`'s `uint64` FFI representation
+- Adapt generated bindings for `uniffi` v0.30.0 API changes, including async helpers and callback interfaces
+
 ### v0.5.0+v0.29.5
 - **BREAKING** Upgrade to `uniffi-rs` v0.29.5
 - **BREAKING** Bump MSRV to 1.85

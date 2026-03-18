@@ -3,6 +3,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 use std::{
+    fmt,
     future::Future,
     pin::Pin,
     sync::{Arc, Mutex, MutexGuard},
@@ -345,6 +346,59 @@ pub struct SharedResourceOptions {
     pub timeout_ms: u16,
 }
 
+#[derive(uniffi::Record, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[uniffi::export(Display, Debug, Eq, Hash, Ord)]
+pub struct TraitRecord {
+    pub label: String,
+    pub rank: u8,
+}
+
+impl fmt::Display for TraitRecord {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}:{}", self.label, self.rank)
+    }
+}
+
+#[derive(uniffi::Enum, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Clone)]
+#[uniffi::export(Display, Debug, Eq, Hash, Ord)]
+pub enum TraitEnum {
+    Alpha,
+    Beta,
+}
+
+impl fmt::Display for TraitEnum {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Alpha => write!(f, "alpha"),
+            Self::Beta => write!(f, "beta"),
+        }
+    }
+}
+
+#[derive(uniffi::Record)]
+pub struct ParserHolder {
+    pub parser: Arc<dyn AsyncParser>,
+}
+
+#[uniffi::export]
+fn make_trait_record(label: String, rank: u8) -> TraitRecord {
+    TraitRecord { label, rank }
+}
+
+#[uniffi::export]
+fn make_trait_enum(rank: u8) -> TraitEnum {
+    if rank == 0 {
+        TraitEnum::Alpha
+    } else {
+        TraitEnum::Beta
+    }
+}
+
+#[uniffi::export]
+fn roundtrip_parser_holder(holder: ParserHolder) -> ParserHolder {
+    holder
+}
+
 // Our error.
 #[derive(thiserror::Error, uniffi::Error, Debug)]
 pub enum AsyncError {
@@ -384,6 +438,7 @@ pub trait SayAfterTrait: Send + Sync {
 }
 
 // Example of async trait defined in the UDL file
+#[uniffi::trait_interface]
 #[async_trait::async_trait]
 pub trait SayAfterUdlTrait: Send + Sync {
     async fn say_after(&self, ms: u16, who: String) -> String;

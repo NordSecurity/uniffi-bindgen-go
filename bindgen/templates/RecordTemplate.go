@@ -18,6 +18,11 @@ func (r *{{ type_name }}) Destroy() {
 	{%- endfor %}
 }
 
+{%- let trait_methods = rec.uniffi_trait_methods() %}
+{%- let receiver_type = type_name %}
+{%- let self_binding = "_selfBuf" %}
+{%- include "TraitMethods.go" %}
+
 type {{ ffi_converter_name }} struct {}
 
 var {{ ffi_converter_instance }} = {{ ffi_converter_name }}{}

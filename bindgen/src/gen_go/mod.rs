@@ -4,7 +4,7 @@
 
 use anyhow::{Context, Result};
 use askama::Template;
-use external::ExternalCodeType;
+use external::{ExternalCodeType, ExternalKind};
 use heck::{ToLowerCamelCase, ToSnakeCase, ToUpperCamelCase};
 use serde::{Deserialize, Serialize};
 use std::borrow::Borrow;
@@ -277,6 +277,16 @@ impl<'config, 'ci> BridgingHeader<'config, 'ci> {
                 )
             };
 
+        let clone_callback =
+            |name: &str, module: &str| -> (String, Option<FfiType>, Vec<FfiArgument>, bool) {
+                (
+                    oracle().cgo_vtable_clone_fn_name(name, module),
+                    Some(FfiType::Handle),
+                    vec![FfiArgument::new("handle", FfiType::Handle)],
+                    false,
+                )
+            };
+
         let obj_callbacks = self
             .ci
             .object_definitions()
@@ -294,6 +304,7 @@ impl<'config, 'ci> BridgingHeader<'config, 'ci> {
             .chain(cbi_callbacks)
             .flat_map(|(module, name, vtable)| {
                 let free = free_callback(name, &module);
+                let clone = clone_callback(name, &module);
                 vtable
                     .into_iter()
                     .map(move |(ffi_cb, _)| {
@@ -304,7 +315,7 @@ impl<'config, 'ci> BridgingHeader<'config, 'ci> {
                             ffi_cb.has_rust_call_status_arg(),
                         )
                     })
-                    .chain([free])
+                    .chain([free, clone])
             })
             .collect()
     }
@@ -341,8 +352,31 @@ impl GoCodeOracle {
                 .namespace_for_module_path(&module_path)
                 .unwrap()
                 .to_string();
-            let is_object = matches!(type_, Type::Object { .. });
-            return Box::new(ExternalCodeType::new(name, namespace, is_object));
+            let kind = match &type_ {
+                Type::Object { imp, .. } if imp.is_trait_interface() => ExternalKind::Interface,
+                Type::Object { .. } => ExternalKind::Object,
+                Type::CallbackInterface { .. } => ExternalKind::Interface,
+                _ => ExternalKind::Value,
+            };
+            let is_error = matches!(type_, Type::Enum { .. }) && ci.is_name_used_as_error(&name);
+            let custom_builtin = match &type_ {
+                Type::Custom { builtin, .. }
+                    if !matches!(
+                        builtin.as_ref(),
+                        Type::Object { .. } | Type::CallbackInterface { .. }
+                    ) =>
+                {
+                    Some((**builtin).clone())
+                }
+                _ => None,
+            };
+            return Box::new(ExternalCodeType::new(
+                name,
+                namespace,
+                kind,
+                is_error,
+                custom_builtin,
+            ));
         }
 
         match type_ {
@@ -481,6 +515,11 @@ impl GoCodeOracle {
         format!("{module_path}_cgo_dispatchCallbackInterface{nm}Free")
     }
 
+    /// Get cgo symbol name for a vtable clone function
+    fn cgo_vtable_clone_fn_name(&self, nm: &str, module_path: &str) -> String {
+        format!("{module_path}_cgo_dispatchCallbackInterface{nm}Clone")
+    }
+
     fn ffi_type_label(&self, ffi_type: &FfiType) -> String {
         match ffi_type {
             FfiType::Int8 => "int8_t".into(),
@@ -493,7 +532,6 @@ impl GoCodeOracle {
             FfiType::UInt64 => "uint64_t".into(),
             FfiType::Float32 => "float".into(),
             FfiType::Float64 => "double".into(),
-            FfiType::RustArcPtr(_) => "void*".into(),
             FfiType::Handle => "uint64_t".into(),
             FfiType::VoidPointer => "void*".into(),
             FfiType::RustBuffer(_) => "RustBuffer".into(),

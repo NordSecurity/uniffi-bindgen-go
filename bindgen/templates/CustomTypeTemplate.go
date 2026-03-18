@@ -15,6 +15,30 @@ type {{ ffi_converter_name }} = {{ builtin|ffi_converter_name(ci) }}
 type {{ ffi_destroyer_name }} = {{ builtin|ffi_destroyer_name(ci) }}
 var {{ ffi_converter_instance }} = {{ builtin|ffi_converter_name(ci) }}{}
 
+{%- if !ci.is_external(builtin.as_ref()) %}
+{%- match builtin.as_ref() %}
+{%- when Type::Object { .. } | Type::CallbackInterface { .. } %}
+{%- else %}
+{%- if let FfiType::RustBuffer(_) = builtin.as_ref()|into_ffi_type %}
+func LiftFromExternal{{ canonical_type_name }}(value ExternalCRustBuffer) {{ name }} {
+	return {{ ffi_converter_instance }}.Lift(RustBufferFromExternal(value))
+}
+
+func LowerToExternal{{ canonical_type_name }}(value {{ name }}) ExternalCRustBuffer {
+	return RustBufferFromC({{ ffi_converter_instance }}.Lower(value))
+}
+{%- else %}
+func LiftFromExternal{{ canonical_type_name }}(value {{ builtin|type_name(ci) }}) {{ name }} {
+	return {{ ffi_converter_instance }}.Lift({{ builtin.as_ref()|ffi_type_name }}(value))
+}
+
+func LowerToExternal{{ canonical_type_name }}(value {{ name }}) {{ builtin|type_name(ci) }} {
+	return {{ builtin|type_name(ci) }}({{ ffi_converter_instance }}.Lower(value))
+}
+{%- endif %}
+{%- endmatch %}
+{%- endif %}
+
 {%- when Some with (config) %}
 
 {%- let ffi_type_name=builtin.as_ref()|ffi_type_name %}
@@ -58,6 +82,28 @@ func ({{ ffi_converter_name }}) Lift(value {{ ffi_type_name }}) {{ name }} {
 	builtinValue := {{ builtin|lift_fn(ci) }}(value)
 	{{ config.lift("builtinValue") }}
 }
+
+{%- match builtin.as_ref() %}
+{%- when Type::Object { .. } | Type::CallbackInterface { .. } %}
+{%- else %}
+{%- if let FfiType::RustBuffer(_) = builtin.as_ref()|into_ffi_type %}
+func LiftFromExternal{{ canonical_type_name }}(value ExternalCRustBuffer) {{ name }} {
+	return {{ ffi_converter_instance }}.Lift(RustBufferFromExternal(value))
+}
+
+func LowerToExternal{{ canonical_type_name }}(value {{ name }}) ExternalCRustBuffer {
+	return {{ ffi_converter_instance }}.Lower(value)
+}
+{%- else %}
+func LiftFromExternal{{ canonical_type_name }}(value {{ builtin|type_name(ci) }}) {{ name }} {
+	return {{ ffi_converter_instance }}.Lift({{ ffi_type_name }}(value))
+}
+
+func LowerToExternal{{ canonical_type_name }}(value {{ name }}) {{ builtin|type_name(ci) }} {
+	return {{ builtin|type_name(ci) }}({{ ffi_converter_instance }}.Lower(value))
+}
+{%- endif %}
+{%- endmatch %}
 
 func ({{ ffi_converter_name }}) Read(reader io.Reader) {{ name }} {
 	builtinValue := {{ builtin|read_fn(ci) }}(reader)

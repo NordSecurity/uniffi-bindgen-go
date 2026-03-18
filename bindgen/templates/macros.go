@@ -57,7 +57,7 @@
 {%- macro to_ffi_call(func, prefix) -%}
 	{%- match func.throws_type() %}
 	{%- when Some with (e) -%}
-	rustCallWithError[{{ e|canonical_name(ci) }}]({{ e|ffi_converter_name(ci) }}{},
+	rustCallWithError[{{ e|type_name(ci) }}]({{ e|ffi_converter_name(ci) }}{},
 	{%- else -%}
 	rustCall(
 	{%- endmatch %}
@@ -157,7 +157,7 @@
 	
     {%- match (func.return_type(), func.throws_type()) %}
     {%- when (Some(return_type), Some(e)) -%}
-	uniffiRustCallAsync[{{ e|canonical_name(ci) }}](
+	uniffiRustCallAsync[{{ e|type_name(ci) }}](
         {{ e|ffi_converter_instance(ci) }},
 		// completeFn
 		func(handle C.uint64_t, status *C.RustCallStatus) {{ return_type|ffi_type_name }} {
@@ -169,7 +169,7 @@
 			return {{ return_type|lift_fn(ci) }}(ffi)
 		},
     {%- when (None, Some(e)) -%}
-	uniffiRustCallAsync[{{ e|canonical_name(ci) }}](
+	uniffiRustCallAsync[{{ e|type_name(ci) }}](
         {{ e|ffi_converter_instance(ci) }},
 		// completeFn
 		func(handle C.uint64_t, status *C.RustCallStatus) struct{} {

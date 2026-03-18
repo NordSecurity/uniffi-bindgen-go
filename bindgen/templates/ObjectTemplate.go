@@ -97,6 +97,13 @@ func (_self {{ impl_type_name }}) Hash() uint64 {
 	{% call go::ffi_call_binding(hash, "_pointer") %}
 }
 
+{% when UniffiTrait::Ord { cmp } %}
+func (_self {{ impl_type_name }}) Cmp(other {{ type_name }}) int8 {
+	_pointer := _self.ffiObject.incrementPointer("{{ type_name }}")
+	defer _self.ffiObject.decrementPointer()
+	{% call go::ffi_call_binding(cmp, "_pointer") %}
+}
+
 {% endmatch %}
 {% endfor -%}
 
@@ -137,42 +144,84 @@ func (_self {{impl_type_name}}) AsError() error {
 }
 {% endif -%}
 
-func (c {{ ffi_converter_name }}) Lift(pointer unsafe.Pointer) {{ type_name }} {
+func (c {{ ffi_converter_name }}) Lift(handle C.uint64_t) {{ type_name }} {
+	{%- if obj.has_callback_interface() %}
+	if uint64(handle) & 1 == 0 {
+		// Rust-generated handle (even), construct a new object wrapping the handle
+		result := &{{ impl_name }} {
+			newFfiObject(
+				handle,
+				func(handle C.uint64_t, status *C.RustCallStatus) C.uint64_t {
+					return C.{{ obj.ffi_object_clone().name() }}(handle, status)
+				},
+				func(handle C.uint64_t, status *C.RustCallStatus) {
+					C.{{ obj.ffi_object_free().name() }}(handle, status)
+				},
+			),
+		}
+		runtime.SetFinalizer(result, ({{ impl_type_name }}).Destroy)
+		return result
+	} else {
+		// Go-generated handle (odd), retrieve from the handle map
+		val, ok := c.handleMap.tryGet(uint64(handle))
+		if !ok {
+			panic(fmt.Errorf("no callback in handle map: %d", handle))
+		}
+		c.handleMap.remove(uint64(handle))
+		return val
+	}
+	{%- else %}
 	result := &{{ impl_name }} {
 		newFfiObject(
-			pointer,
-			func(pointer unsafe.Pointer, status *C.RustCallStatus) unsafe.Pointer {
-				return C.{{ obj.ffi_object_clone().name() }}(pointer, status)
+			handle,
+			func(handle C.uint64_t, status *C.RustCallStatus) C.uint64_t {
+				return C.{{ obj.ffi_object_clone().name() }}(handle, status)
 			},
-			func(pointer unsafe.Pointer, status *C.RustCallStatus) {
-				C.{{ obj.ffi_object_free().name() }}(pointer, status)
+			func(handle C.uint64_t, status *C.RustCallStatus) {
+				C.{{ obj.ffi_object_free().name() }}(handle, status)
 			},
 		),
 	}
 	runtime.SetFinalizer(result, ({{ impl_type_name }}).Destroy)
 	return result
+	{%- endif %}
 }
 
 func (c {{ ffi_converter_name }}) Read(reader io.Reader) {{ type_name }} {
-	return c.Lift(unsafe.Pointer(uintptr(readUint64(reader))))
+	return c.Lift(C.uint64_t(readUint64(reader)))
 }
 
-func (c {{ ffi_converter_name }}) Lower(value {{ type_name }}) unsafe.Pointer {
+func (c {{ ffi_converter_name }}) Lower(value {{ type_name }}) C.uint64_t {
 	// TODO: this is bad - all synchronization from ObjectRuntime.go is discarded here,
-	// because the pointer will be decremented immediately after this function returns,
-	// and someone will be left holding onto a non-locked pointer.
+	// because the handle will be decremented immediately after this function returns,
+	// and someone will be left holding onto a non-locked handle.
 	{%- if obj.has_callback_interface() %}
-	pointer := unsafe.Pointer(uintptr(c.handleMap.insert(value)))
+	if val, ok := value.({{ impl_type_name }}); ok {
+		// Rust-backed object, clone the handle
+		handle := val.ffiObject.incrementPointer("{{ type_name }}")
+		defer val.ffiObject.decrementPointer()
+		return handle
+	} else {
+		// Go-backed object, insert into handle map
+		return C.uint64_t(c.handleMap.insert(value))
+	}
 	{%- else %}
-	pointer := value.ffiObject.incrementPointer("{{ type_name }}")
+	handle := value.ffiObject.incrementPointer("{{ type_name }}")
 	defer value.ffiObject.decrementPointer()
+	return handle
 	{%- endif %}
-	return pointer
-	
 }
 
 func (c {{ ffi_converter_name }}) Write(writer io.Writer, value {{ type_name }}) {
-	writeUint64(writer, uint64(uintptr(c.Lower(value))))
+	writeUint64(writer, uint64(c.Lower(value)))
+}
+
+func LiftFromExternal{{ canonical_type_name }}(handle uint64) {{ type_name }} {
+	return {{ ffi_converter_instance }}.Lift(C.uint64_t(handle))
+}
+
+func LowerToExternal{{ canonical_type_name }}(value {{ type_name }}) uint64 {
+	return uint64({{ ffi_converter_instance }}.Lower(value))
 }
 
 type {{ obj|ffi_destroyer_name(ci) }} struct {}
@@ -181,8 +230,6 @@ func (_ {{ obj|ffi_destroyer_name(ci) }}) Destroy(value {{ type_name }}) {
 	{%- if obj.has_callback_interface() %}
 	if val, ok := value.({{ impl_type_name }}); ok {
 		val.Destroy()
-	} else {
-		panic("Expected {{ impl_type_name }}")
 	}
 	{%- else %}
 		value.Destroy()
@@ -197,4 +244,3 @@ func (_ {{ obj|ffi_destroyer_name(ci) }}) Destroy(value {{ type_name }}) {
 {%- include "VTableImpl.go" %}
 
 {%- endif %}
-

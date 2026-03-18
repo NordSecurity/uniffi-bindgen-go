@@ -4,7 +4,7 @@
 
 use paste::paste;
 use uniffi_bindgen::interface::{Radix, Type};
-use uniffi_bindgen::{backend::Literal, ComponentInterface};
+use uniffi_bindgen::{interface::Literal, ComponentInterface};
 
 use super::CodeType;
 

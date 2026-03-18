@@ -50,6 +50,13 @@ func (e {{ type_name }}{{ variant.name()|class_name }}) Destroy() {
 
 {%- endif %}
 
+{%- if e.is_flat() %}
+{%- let trait_methods = e.uniffi_trait_methods() %}
+{%- let receiver_type = type_name %}
+{%- let self_binding = "_selfBuf" %}
+{%- include "TraitMethods.go" %}
+{%- endif %}
+
 type {{ ffi_converter_name }} struct {}
 
 var {{ ffi_converter_instance }} = {{ ffi_converter_name }}{}
