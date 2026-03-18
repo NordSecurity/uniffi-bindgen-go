@@ -11,7 +11,7 @@ use fs_err::{self as fs};
 use gen_go::generate_go_bindings;
 use serde::{Deserialize, Serialize};
 use std::process::Command;
-use uniffi_bindgen::{Component, GenerationSettings};
+use uniffi_bindgen::{BindgenLoader, BindgenPaths, Component, GenerationSettings};
 
 #[derive(Parser)]
 #[clap(name = "uniffi-bindgen")]
@@ -32,21 +32,17 @@ struct Cli {
     #[clap(long, short)]
     config: Option<Utf8PathBuf>,
 
-    /// Extract proc-macro metadata from a native lib (cdylib or staticlib) for this crate.
-    #[clap(long, short)]
-    lib_file: Option<Utf8PathBuf>,
-
-    /// Pass in a cdylib path rather than a UDL file
+    /// Compatibility flag for older invocations.
+    ///
+    /// UniFFI v0.31.0 auto-detects whether `source` is a UDL file or a library.
     #[clap(long = "library")]
     library_mode: bool,
 
-    /// When `--library` is passed, only generate bindings for one crate.
-    /// When `--library` is not passed, use this as the crate name instead of attempting to
-    /// locate and parse Cargo.toml.
+    /// Filter generated bindings to a single crate.
     #[clap(long = "crate")]
     crate_name: Option<String>,
 
-    /// Path to the UDL file, or cdylib if `library-mode` is specified
+    /// Path to the UDL file or compiled Rust library.
     source: Utf8PathBuf,
 }
 
@@ -143,48 +139,53 @@ pub fn main() -> anyhow::Result<()> {
         out_dir,
         no_format,
         config,
-        lib_file,
-        library_mode,
+        library_mode: _,
         crate_name,
         source,
     } = Cli::parse();
 
-    let config_supplier = {
-        use uniffi_bindgen::cargo_metadata::CrateConfigSupplier;
-        let cmd = ::cargo_metadata::MetadataCommand::new();
-        let metadata = cmd.exec().context("error running cargo metadata").unwrap();
-        CrateConfigSupplier::from(metadata)
-    };
+    let mut bindgen_paths = BindgenPaths::default();
+    if let Some(config_path) = &config {
+        bindgen_paths.add_config_override_layer(config_path.clone());
+    }
+    bindgen_paths.add_cargo_metadata_layer(false)?;
+
+    let loader = BindgenLoader::new(bindgen_paths);
     let binding_gen = BindingGeneratorGo;
 
-    if library_mode {
-        if lib_file.is_some() {
-            panic!("--lib-file is not compatible with --library.")
-        }
-        let out_dir = out_dir.expect("--out-dir is required when using --library");
-        let library_path = source;
+    let metadata = loader.load_metadata(&source)?;
+    let cis = loader.load_cis(metadata)?;
+    let cdylib = loader.library_name(&source).map(|name| name.to_string());
+    let mut components = loader.load_components(cis, |_ci, root_toml| {
+        uniffi_bindgen::BindingGenerator::new_config(&binding_gen, &root_toml)
+    })?;
 
-        uniffi_bindgen::library_mode::generate_bindings(
-            &library_path,
-            crate_name,
-            &binding_gen,
-            &config_supplier,
-            config.as_deref(),
-            &out_dir,
-            !no_format,
-        )?;
-    } else {
-        let udl_file = source;
-        uniffi_bindgen::generate_external_bindings(
-            &binding_gen,
-            udl_file,
-            config,
-            out_dir,
-            lib_file,
-            crate_name.as_deref(),
-            !no_format,
-        )?;
+    let settings = GenerationSettings {
+        out_dir: out_dir.unwrap_or_else(|| {
+            source
+                .parent()
+                .expect("source should have a parent directory")
+                .to_path_buf()
+        }),
+        try_format_code: !no_format,
+        cdylib,
+    };
+
+    uniffi_bindgen::BindingGenerator::update_component_configs(
+        &binding_gen,
+        &settings,
+        &mut components,
+    )?;
+
+    for component in &mut components {
+        component.ci.derive_ffi_funcs()?;
     }
+
+    if let Some(crate_name) = &crate_name {
+        components.retain(|component| component.ci.crate_name() == crate_name);
+    }
+
+    uniffi_bindgen::BindingGenerator::write_bindings(&binding_gen, &settings, &components)?;
 
     Ok(())
 }

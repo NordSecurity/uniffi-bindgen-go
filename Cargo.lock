@@ -1464,7 +1464,6 @@ dependencies = [
  "anyhow",
  "askama 0.13.1",
  "camino",
- "cargo_metadata",
  "clap",
  "extend",
  "fs-err",
