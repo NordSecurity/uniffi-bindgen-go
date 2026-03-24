@@ -181,3 +181,13 @@ func TestAsyncFailureProperlyCleansFuture(t *testing.T) {
 
 	assert.EqualError(t, err, "ObjectError: InvalidOperation: InvalidOperation")
 }
+
+func TestAsyncFailureReturningRustBufferPropagatesError(t *testing.T) {
+	result, err := objects.FallibleStringAsync(true)
+	assert.Equal(t, "", result)
+	assert.EqualError(t, err, "ObjectError: InvalidOperation: InvalidOperation")
+
+	result, err = objects.FallibleStringAsync(false)
+	assert.NoError(t, err)
+	assert.Equal(t, "all-good", result)
+}
