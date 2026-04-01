@@ -31,6 +31,9 @@ const (
 {%- call go::docstring(e, 0) %}
 type {{ type_name }} interface {
 	Destroy()
+	{%- for meth in e.methods() %}
+	{{ meth.name()|fn_name }}({%- call go::arg_list_decl(meth) -%}) {% call go::return_type_decl(meth) %}
+	{%- endfor %}
 }
 
 {%- for variant in e.variants() %}
@@ -55,6 +58,36 @@ func (e {{ type_name }}{{ variant.name()|class_name }}) Destroy() {
 {%- let receiver_type = type_name %}
 {%- let self_binding = "_selfBuf" %}
 {%- include "TraitMethods.go" %}
+{%- endif %}
+
+{%- if e.is_flat() %}
+{%- for meth in e.methods() %}
+{%- call go::docstring(meth, 0) %}
+func (_self {{ type_name }}) {{ meth.name()|fn_name }}({%- call go::arg_list_decl(meth) -%}) {% call go::return_type_decl(meth) %} {
+	_selfBuf := {{ ffi_converter_instance }}.Lower(_self)
+	{% if meth.is_async() %}
+	{% call go::async_ffi_call_binding(meth, "_selfBuf") %}
+	{% else %}
+	{% call go::ffi_call_binding(meth, "_selfBuf") %}
+	{% endif %}
+}
+
+{%- endfor %}
+{%- else %}
+{%- for variant in e.variants() %}
+{%- for meth in e.methods() %}
+{%- call go::docstring(meth, 0) %}
+func (_self {{ type_name }}{{ variant.name()|class_name }}) {{ meth.name()|fn_name }}({%- call go::arg_list_decl(meth) -%}) {% call go::return_type_decl(meth) %} {
+	_selfBuf := {{ ffi_converter_instance }}.Lower(_self)
+	{% if meth.is_async() %}
+	{% call go::async_ffi_call_binding(meth, "_selfBuf") %}
+	{% else %}
+	{% call go::ffi_call_binding(meth, "_selfBuf") %}
+	{% endif %}
+}
+
+{%- endfor %}
+{%- endfor %}
 {%- endif %}
 
 type {{ ffi_converter_name }} struct {}

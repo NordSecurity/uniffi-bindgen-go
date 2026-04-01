@@ -18,4 +18,4 @@ LIB_FILE="$BINARIES_DIR/libuniffi_fixtures.dylib"
 else 
 LIB_FILE="$BINARIES_DIR/libuniffi_fixtures.so"
 fi
-target/debug/uniffi-bindgen-go $LIB_FILE --out-dir "$BINDINGS_DIR" --library --config "$ROOT_DIR/fixtures/uniffi.toml"
+target/debug/uniffi-bindgen-go "$LIB_FILE" --out-dir "$BINDINGS_DIR" --config "$ROOT_DIR/fixtures/uniffi.toml"

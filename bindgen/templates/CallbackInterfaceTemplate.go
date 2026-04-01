@@ -54,5 +54,6 @@ func ({{ ffi_destroyer_name }}) Destroy(value {{ type_name }}) {}
 {% let vtable = cbi.vtable() %}
 {%- let vtable_methods = cbi.vtable_methods() %}
 {%- let ffi_init_callback = cbi.ffi_init_callback() %}
+{%- let module_path = cbi|module_path %}
 
 {%- include "VTableImpl.go" %}

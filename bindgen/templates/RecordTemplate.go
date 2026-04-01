@@ -23,6 +23,19 @@ func (r *{{ type_name }}) Destroy() {
 {%- let self_binding = "_selfBuf" %}
 {%- include "TraitMethods.go" %}
 
+{%- for meth in rec.methods() %}
+{%- call go::docstring(meth, 0) %}
+func (_self {{ type_name }}) {{ meth.name()|fn_name }}({%- call go::arg_list_decl(meth) -%}) {% call go::return_type_decl(meth) %} {
+	_selfBuf := {{ ffi_converter_instance }}.Lower(_self)
+	{% if meth.is_async() %}
+	{% call go::async_ffi_call_binding(meth, "_selfBuf") %}
+	{% else %}
+	{% call go::ffi_call_binding(meth, "_selfBuf") %}
+	{% endif %}
+}
+
+{%- endfor %}
+
 type {{ ffi_converter_name }} struct {}
 
 var {{ ffi_converter_instance }} = {{ ffi_converter_name }}{}

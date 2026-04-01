@@ -240,6 +240,7 @@ func (_ {{ obj|ffi_destroyer_name(ci) }}) Destroy(value {{ type_name }}) {
 {%- let vtable = obj.vtable().expect("trait interface should have a vtable") %}
 {%- let vtable_methods = obj.vtable_methods() %}
 {%- let ffi_init_callback = obj.ffi_init_callback() %}
+{%- let module_path = obj|module_path %}
 
 {%- include "VTableImpl.go" %}
 

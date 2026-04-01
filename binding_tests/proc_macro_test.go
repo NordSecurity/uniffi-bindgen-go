@@ -78,6 +78,10 @@ func TestProcMacro(t *testing.T) {
 
 	assert.Equal(t, uint8(ReprU8One), uint8(1))
 	assert.Equal(t, uint8(ReprU8Three), uint8(3))
+	assert.Equal(t, MaybeBoolFalse, MaybeBoolTrue.Next())
+	assert.Equal(t, MaybeBoolUncertain, MaybeBoolFalse.Next())
+	assert.False(t, MixedEnumNone{}.IsNotNone())
+	assert.True(t, MixedEnumInt{Field0: 99}.IsNotNone())
 
 	assert.Equal(t, GetMixedEnum(nil), MixedEnumInt{Field0: 1})
 	var me MixedEnum = MixedEnumNone{}
