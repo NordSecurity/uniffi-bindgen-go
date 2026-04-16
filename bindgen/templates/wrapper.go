@@ -18,6 +18,7 @@ import (
 	"unsafe"
 	"encoding/binary"
 	{%- if ci.has_async_fns() %}
+	"reflect"
 	"runtime/cgo"
 	{%- endif %}
 	{%- for imported_package in self.imports() %}

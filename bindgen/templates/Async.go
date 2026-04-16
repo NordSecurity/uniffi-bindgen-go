@@ -43,9 +43,13 @@ func uniffiRustCallAsync[E any, T any, F any](
 		pollResult = <-waiter
 	}
 
+	var goValue T
 	ffiValue, err := rustCallWithError(errConverter, func(status *C.RustCallStatus) F {
 		return completeFunc(rustFuture, status)
 	})
+	if value := reflect.ValueOf(err); value.IsValid() && !value.IsZero() {
+		return goValue, err
+	}
 	return liftFunc(ffiValue), err
 }
 

@@ -36,6 +36,16 @@ pub async fn fallible_object0_async(do_fail: bool) -> Result<Arc<Object0>, Objec
     }
 }
 
+// An async function returning a RustBuffer-backed value that can throw.
+#[uniffi::export]
+pub async fn fallible_string_async(do_fail: bool) -> Result<String, ObjectError> {
+    if do_fail {
+        Err(ObjectError::InvalidOperation)
+    } else {
+        Ok("all-good".to_string())
+    }
+}
+
 pub struct Object1 {
     message: String,
 }
