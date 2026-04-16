@@ -7,7 +7,7 @@ type {{ canonical_type_name }} struct {
 	err error
 }
 
-// Convience method to turn *{{canonical_type_name}} into error
+// Convenience method to turn *{{canonical_type_name}} into error
 // Avoiding treating nil pointer as non nil error interface
 func (err *{{ canonical_type_name }}) AsError() error {
 	if err == nil {
