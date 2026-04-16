@@ -56,7 +56,7 @@ typedef
                                        callback.has_rust_call_status_arg()) -%}
     );
 
-// Making function static works arround:
+// Making function static workaround:
 // https://github.com/golang/go/issues/11263
 static
     {%- match callback.return_type() %}{% when Some(return_type) %} {{ return_type|cgo_ffi_type }} {% when None %} void {% endmatch -%}
