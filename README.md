@@ -11,7 +11,7 @@ Minimum Rust version required to install `uniffi-bindgen-go` is `1.87`.
 Newer Rust versions should also work fine.
 
 ```
-cargo install uniffi-bindgen-go --git https://github.com/NordSecurity/uniffi-bindgen-go --tag v0.7.0+v0.31.0
+cargo install uniffi-bindgen-go --git https://github.com/NordSecurity/uniffi-bindgen-go --tag v0.7.1+v0.31.0
 ```
 
 # How to generate bindings

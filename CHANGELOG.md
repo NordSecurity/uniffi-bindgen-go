@@ -1,3 +1,6 @@
+### v0.7.1+v0.31.0
+- Fix async error propagation for RustBuffer-backed Go returns
+
 ### v0.7.0+v0.31.0
 - **BREAKING** Upgrade to `uniffi-rs` v0.31.0
 - **BREAKING** Bump MSRV to 1.87
