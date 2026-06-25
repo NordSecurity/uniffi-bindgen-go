@@ -39,7 +39,7 @@ func CFromRustBuffer(b ExternalCRustBuffer) C.RustBuffer {
 	return C.RustBuffer {
 		capacity: C.uint64_t(b.Capacity()),
 		len: C.uint64_t(b.Len()),
-		data: (*C.uchar)(b.Data()),
+		data: C.uintptr_t(uintptr(b.Data())),
 	}
 }
 
@@ -48,7 +48,7 @@ func RustBufferFromExternal(b ExternalCRustBuffer) GoRustBuffer {
 		inner: C.RustBuffer {
 			capacity: C.uint64_t(b.Capacity()),
 			len: C.uint64_t(b.Len()),
-			data: (*C.uchar)(b.Data()),
+			data: C.uintptr_t(uintptr(b.Data())),
 		},
 	}
 }
@@ -62,11 +62,17 @@ func (cb GoRustBuffer) Len() uint64 {
 }
 
 func (cb GoRustBuffer) Data() unsafe.Pointer {
-	return unsafe.Pointer(cb.inner.data)
+	if cb.inner.capacity == 0 {
+		return nil
+	}
+	return unsafe.Pointer(uintptr(cb.inner.data))
 }
 
 func (cb GoRustBuffer) AsReader() *bytes.Reader {
-	b := unsafe.Slice((*byte)(cb.inner.data), C.uint64_t(cb.inner.len))
+	if cb.inner.capacity == 0 {
+		return bytes.NewReader(nil)
+	}
+	b := unsafe.Slice((*byte)(unsafe.Pointer(uintptr(cb.inner.data))), C.uint64_t(cb.inner.len))
 	return bytes.NewReader(b)
 }
 
@@ -78,9 +84,11 @@ func (cb GoRustBuffer) Free() {
 }
 
 func (cb GoRustBuffer) ToGoBytes() []byte {
-	return C.GoBytes(unsafe.Pointer(cb.inner.data), C.int(cb.inner.len))
+	if cb.inner.capacity == 0 {
+		return make([]byte, 0)
+	}
+	return C.GoBytes(unsafe.Pointer(uintptr(cb.inner.data)), C.int(cb.inner.len))
 }
-
 
 func stringToRustBuffer(str string) C.RustBuffer {
 	return bytesToRustBuffer([]byte(str))
@@ -96,7 +104,7 @@ func bytesToRustBuffer(b []byte) C.RustBuffer {
 		len: C.int(len(b)),
 		data: (*C.uchar)(unsafe.Pointer(&b[0])),
 	}
-	
+
 	return rustCall(func( status *C.RustCallStatus) C.RustBuffer {
 		return C.{{ ci.ffi_rustbuffer_from_bytes().name() }}(foreign, status)
 	})

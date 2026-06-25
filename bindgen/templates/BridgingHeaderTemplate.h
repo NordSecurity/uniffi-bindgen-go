@@ -15,20 +15,20 @@
 // We ensure they are declared exactly once, with a header guard, UNIFFI_SHARED_H.
 #ifdef UNIFFI_SHARED_H
 	// We also try to prevent mixing versions of shared uniffi header structs.
-	// If you add anything to the #else block, you must increment the version suffix in UNIFFI_SHARED_HEADER_V6
-	#ifndef UNIFFI_SHARED_HEADER_V6
+	// If you add anything to the #else block, you must increment the version suffix in UNIFFI_SHARED_HEADER_V7
+	#ifndef UNIFFI_SHARED_HEADER_V7
 		#error Combining helper code from multiple versions of uniffi is not supported
-	#endif // ndef UNIFFI_SHARED_HEADER_V6
+	#endif // ndef UNIFFI_SHARED_HEADER_V7
 #else
 #define UNIFFI_SHARED_H
-#define UNIFFI_SHARED_HEADER_V6
+#define UNIFFI_SHARED_HEADER_V7
 // ⚠️ Attention: If you change this #else block (ending in `#endif // def UNIFFI_SHARED_H`) you *must* ⚠️
-// ⚠️ increment the version suffix in all instances of UNIFFI_SHARED_HEADER_V6 in this file.           ⚠️
+// ⚠️ increment the version suffix in all instances of UNIFFI_SHARED_HEADER_V7 in this file.           ⚠️
 
 typedef struct RustBuffer {
 	uint64_t capacity;
 	uint64_t len;
-	uint8_t *data;
+	uintptr_t data;
 } RustBuffer;
 
 typedef struct ForeignBytes {
