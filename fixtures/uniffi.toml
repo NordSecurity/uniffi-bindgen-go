@@ -1,4 +1,7 @@
-[bindings.go.custom_types.Url]
+# A global config file, as `--config` expects since uniffi 0.32. `[defaults]` is
+# merged underneath each crate's own `uniffi.toml`.
+
+[defaults.bindings.go.custom_types.Url]
 imports = ["net/url"]
 type_name = "url.URL"
 into_custom = """u, err := url.Parse({})
@@ -10,5 +13,5 @@ into_custom = """u, err := url.Parse({})
 from_custom = "{}.String()"
 
 
-[bindings.go]
+[defaults.bindings.go]
 go_mod = "github.com/NordSecurity/uniffi-bindgen-go/binding_tests/generated"

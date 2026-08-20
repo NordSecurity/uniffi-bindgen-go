@@ -11,7 +11,7 @@ use fs_err::{self as fs};
 use gen_go::generate_go_bindings;
 use serde::{Deserialize, Serialize};
 use std::process::Command;
-use uniffi_bindgen::{BindgenLoader, BindgenPaths, Component, GenerationSettings};
+use uniffi_bindgen::{BindgenLoader, BindgenPaths, Component, GenerationSettings, GlobalConfig};
 
 #[derive(Parser)]
 #[clap(name = "uniffi-bindgen")]
@@ -26,9 +26,9 @@ struct Cli {
     #[clap(long, short)]
     no_format: bool,
 
-    /// Path to optional uniffi config file. This config will be merged on top of default
-    /// `uniffi.toml` config in crate root. The merge recursively upserts TOML keys into
-    /// the default config.
+    /// Path to a global config file. Supports `[defaults]`, `[crates.<name>]`, and
+    /// `[crate-roots]` sections. `[defaults]` is merged with each crate's `uniffi.toml`,
+    /// then `[crates.<name>]` overrides win.
     #[clap(long, short)]
     config: Option<Utf8PathBuf>,
 
@@ -145,12 +145,19 @@ pub fn main() -> anyhow::Result<()> {
     } = Cli::parse();
 
     let mut bindgen_paths = BindgenPaths::default();
-    if let Some(config_path) = &config {
-        bindgen_paths.add_config_override_layer(config_path.clone());
-    }
+    let global_config = match &config {
+        Some(config_path) => {
+            let (global_config, crate_roots_layer) = GlobalConfig::from_file(config_path)?;
+            if let Some(layer) = crate_roots_layer {
+                bindgen_paths.add_layer(layer);
+            }
+            global_config
+        }
+        None => GlobalConfig::default(),
+    };
     bindgen_paths.add_cargo_metadata_layer(false)?;
 
-    let loader = BindgenLoader::new(bindgen_paths);
+    let loader = BindgenLoader::new(bindgen_paths, global_config);
     let binding_gen = BindingGeneratorGo;
 
     let metadata = loader.load_metadata(&source)?;

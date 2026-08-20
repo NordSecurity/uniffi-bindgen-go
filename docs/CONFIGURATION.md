@@ -1,9 +1,21 @@
 # Configuration options
 
-It's possible to configure some settings by passing `--config` argument to the generator. All
-configuration keys are defined in `bindings.go` section.
+Settings come from each crate's own `uniffi.toml`, under a `bindings.go` section. All
+configuration keys below are defined there.
+
+A crate's `uniffi.toml` is picked up automatically. To set values across crates, pass a
+global config file with `--config`, which nests the same keys under `[defaults]` (applied
+under every crate's own config) or `[crates.<name>]` (applied over it).
 ```bash
-uniffi-bindgen-go path/to/definitions.udl --config path/to/uniffi.toml
+uniffi-bindgen-go path/to/definitions.udl --config path/to/global.toml
+```
+```toml
+# global.toml
+[defaults.bindings.go]
+go_mod = "github.com/example/generated"
+
+[crates.my_crate.bindings.go]
+package_name = "mycrate"
 ```
 
 - `package_name` - override the go package name.

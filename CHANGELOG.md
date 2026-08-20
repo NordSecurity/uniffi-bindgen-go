@@ -1,3 +1,11 @@
+### v0.8.0+v0.32.0
+- **BREAKING** Upgrade to `uniffi-rs` v0.32.0
+- **BREAKING** Bump MSRV to 1.91
+- Load config through UniFFI's new `GlobalConfig`, so `--config` takes a global config file
+  with `[defaults]`, `[crates.<name>]`, and `[crate-roots]` sections
+- Add `HashSet<T>` support, generated as Go's `map[T]struct{}`
+- Treat `Box<T>` as a plain `T`, matching the other binding generators
+
 ### v0.7.1+v0.31.0
 - Fix async error propagation for RustBuffer-backed Go returns
 

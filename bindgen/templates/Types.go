@@ -78,6 +78,9 @@
 {%- when Type::Sequence { inner_type }  %}
 {% include "SequenceTemplate.go" %}
 
+{%- when Type::Set { inner_type } %}
+{% include "SetTemplate.go" %}
+
 {%- when Type::Map { key_type, value_type } %}
 {% include "MapTemplate.go" %}
 

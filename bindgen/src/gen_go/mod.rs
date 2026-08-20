@@ -427,6 +427,9 @@ impl GoCodeOracle {
             Type::Sequence { inner_type } => {
                 Box::new(compounds::SequenceCodeType::new(*inner_type, ci))
             }
+            Type::Set { inner_type } => Box::new(compounds::SetCodeType::new(*inner_type, ci)),
+            // `Box<T>` only exists for scaffolding; it crosses the FFI as a plain `T`.
+            Type::Box { inner_type } => self.create_code_type(*inner_type, ci),
             Type::Timestamp => Box::new(miscellany::TimestampCodeType),
             Type::Custom { name, .. } => Box::new(custom::CustomCodeType::new(name)),
 

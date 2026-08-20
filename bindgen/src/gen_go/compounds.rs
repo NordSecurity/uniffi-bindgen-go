@@ -56,6 +56,11 @@ macro_rules! impl_code_type_for_compound {
 
 impl_code_type_for_compound!(OptionalCodeType, "*{}", "Optional{}");
 impl_code_type_for_compound!(SequenceCodeType, "[]{}", "Sequence{}");
+// Go has no set type, so a `HashSet<T>` becomes the idiomatic `map[T]struct{}`. Rust's
+// `Hash + Eq` is wider than Go's comparable types, so an inner type rendering as a slice
+// or map produces Go that does not compile. `MapCodeType` keys have the same bound and
+// the same gap; the two stay consistent rather than one being stricter.
+impl_code_type_for_compound!(SetCodeType, "map[{}]struct{{}}", "Set{}");
 
 #[derive(Debug)]
 pub struct MapCodeType<'a> {
