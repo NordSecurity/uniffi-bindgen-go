@@ -19,16 +19,9 @@ type BufWriter[GoType any] interface {
 }
 
 func LowerIntoRustBuffer[GoType any](bufWriter BufWriter[GoType], value GoType) C.RustBuffer {
-	// This might be not the most efficient way but it does not require knowing allocation size
-	// beforehand
 	var buffer bytes.Buffer
 	bufWriter.Write(&buffer, value)
-
-	bytes, err := io.ReadAll(&buffer)
-	if err != nil {
-		panic(fmt.Errorf("reading written data: %w", err))
-	}
-	return bytesToRustBuffer(bytes)
+	return bytesToRustBuffer(buffer.Bytes())
 }
 
 func LiftFromRustBuffer[GoType any](bufReader BufReader[GoType], rbuf RustBufferI) GoType {
