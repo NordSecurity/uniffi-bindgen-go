@@ -9,7 +9,13 @@ type FfiConverterBytes struct{}
 var FfiConverterBytesINSTANCE = FfiConverterBytes{}
 
 func (c FfiConverterBytes) Lower(value []byte) C.RustBuffer {
-	return LowerIntoRustBuffer[[]byte](c, value)
+	if len(value) > math.MaxInt32 {
+		panic("[]byte is too large to fit into Int32")
+	}
+	rb, dst := rustBufferAlloc(4 + len(value))
+	binary.BigEndian.PutUint32(dst, uint32(len(value)))
+	copy(dst[4:], value)
+	return rb
 }
 
 func (c FfiConverterBytes) LowerExternal(value []byte) ExternalCRustBuffer {

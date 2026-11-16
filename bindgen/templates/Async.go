@@ -11,6 +11,32 @@ type rustFuturePollFunc func(C.uint64_t, C.UniffiRustFutureContinuationCallback,
 type rustFutureCompleteFunc[T any] func(C.uint64_t, *C.RustCallStatus) T
 type rustFutureFreeFunc func(C.uint64_t)
 
+type uniffiAsyncWaiter struct {
+	ch     chan int8
+	handle cgo.Handle
+}
+
+// Not sync.Pool: the GC drops pooled items silently, which would leak their cgo.Handle entries.
+var uniffiAsyncWaiters = make(chan *uniffiAsyncWaiter, 1024)
+
+func uniffiGetAsyncWaiter() *uniffiAsyncWaiter {
+	select {
+	case w := <-uniffiAsyncWaiters:
+		return w
+	default:
+		ch := make(chan int8, 1)
+		return &uniffiAsyncWaiter{ch: ch, handle: cgo.NewHandle(ch)}
+	}
+}
+
+func uniffiPutAsyncWaiter(w *uniffiAsyncWaiter) {
+	select {
+	case uniffiAsyncWaiters <- w:
+	default:
+		w.handle.Delete()
+	}
+}
+
 //export {{ config|future_continuation_name }}
 func {{ config|future_continuation_name }}(data C.uint64_t, pollResult C.int8_t) {
 	h := cgo.Handle(uintptr(data))
@@ -28,20 +54,18 @@ func uniffiRustCallAsync[E any, T any, F any](
 ) (T, E) {
 	defer freeFunc(rustFuture)
 
+	waiter := uniffiGetAsyncWaiter()
 	pollResult := int8(-1)
-	waiter := make(chan int8, 1)
-
-	chanHandle := cgo.NewHandle(waiter)
-	defer chanHandle.Delete()
-
 	for pollResult != uniffiRustFuturePollReady {
 		pollFunc(
 			rustFuture,
 			(C.UniffiRustFutureContinuationCallback)(C.{{ config|future_continuation_name }}),
-			C.uint64_t(chanHandle),
+			C.uint64_t(waiter.handle),
 		)
-		pollResult = <-waiter
+		pollResult = <-waiter.ch
 	}
+	// Each poll fires its continuation exactly once, so after Ready nothing else writes to waiter.ch.
+	uniffiPutAsyncWaiter(waiter)
 
 	var goValue T
 	ffiValue, err := rustCallWithError(errConverter, func(status *C.RustCallStatus) F {

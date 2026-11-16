@@ -83,7 +83,19 @@ func (cb GoRustBuffer) ToGoBytes() []byte {
 
 
 func stringToRustBuffer(str string) C.RustBuffer {
-	return bytesToRustBuffer([]byte(str))
+	if len(str) == 0 {
+		return C.RustBuffer{}
+	}
+	rb, dst := rustBufferAlloc(len(str))
+	copy(dst, str)
+	return rb
+}
+
+func rustBufferAlloc(size int) (C.RustBuffer, []byte) {
+	rb := rustCall(func(status *C.RustCallStatus) C.RustBuffer {
+		return C.{{ ci.ffi_rustbuffer_alloc().name() }}(C.uint64_t(size), status)
+	})
+	return rb, unsafe.Slice((*byte)(rb.data), size)
 }
 
 func bytesToRustBuffer(b []byte) C.RustBuffer {
